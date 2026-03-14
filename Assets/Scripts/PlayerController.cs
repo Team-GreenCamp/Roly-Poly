@@ -1,10 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(PlayerInput))]
-public class PlayerController : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+public class PlayerController : NetworkBehaviour
 {
     private static readonly int MoveXHash = Animator.StringToHash("MoveX");
     private static readonly int MoveYHash = Animator.StringToHash("MoveY");
@@ -18,6 +20,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerInput playerInput;
     [SerializeField] private Animator animator;
     [SerializeField] private Transform cameraRoot;
+    [SerializeField] private NetworkObject networkObject;
 
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 3.5f;
@@ -41,6 +44,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float groundedRadius = 0.25f;
     [SerializeField] private LayerMask groundLayers = 1; // Default layer only
 
+    private readonly NetworkVariable<float> syncedMoveX =
+        new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<float> syncedMoveY =
+        new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<float> syncedSpeed =
+        new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<bool> syncedIsGrounded =
+        new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<float> syncedVerticalVelocity =
+        new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<int> syncedJumpSequence =
+        new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
     private InputAction moveAction;
     private InputAction lookAction;
     private InputAction jumpAction;
@@ -53,6 +69,7 @@ public class PlayerController : MonoBehaviour
     private float cameraPitch;
     private bool isGrounded;
     private bool jumpQueued;
+    private int lastAppliedJumpSequence;
 
     private void Reset()
     {
@@ -70,6 +87,7 @@ public class PlayerController : MonoBehaviour
     {
         CacheReferences();
         ResolveInputActions();
+        EnsureGroundLayersConfigured();
 
         groundLayers &= ~(1 << gameObject.layer);
 
@@ -80,21 +98,28 @@ public class PlayerController : MonoBehaviour
     private void OnEnable()
     {
         ResolveInputActions();
+        EnsureGroundLayersConfigured();
     }
 
     private void Update()
     {
-        if (characterController == null || playerInput == null)
+        if (CanProcessInput())
         {
+            if (characterController == null || playerInput == null)
+            {
+                return;
+            }
+
+            ReadInput();
+            UpdateGroundedState();
+            UpdateLookRotation();
+            UpdateJumpAndGravity();
+            UpdateMovement();
+            UpdateAnimator();
             return;
         }
 
-        ReadInput();
-        UpdateGroundedState();
-        UpdateLookRotation();
-        UpdateJumpAndGravity();
-        UpdateMovement();
-        UpdateAnimator();
+        ApplyRemoteAnimatorState();
     }
 
     private void CacheReferences()
@@ -107,6 +132,11 @@ public class PlayerController : MonoBehaviour
         if (playerInput == null)
         {
             playerInput = GetComponent<PlayerInput>();
+        }
+
+        if (networkObject == null)
+        {
+            networkObject = GetComponent<NetworkObject>();
         }
 
         if (animator == null)
@@ -137,6 +167,14 @@ public class PlayerController : MonoBehaviour
         maxPitch = Mathf.Max(minPitch, maxPitch);
     }
 
+    private void EnsureGroundLayersConfigured()
+    {
+        if (groundLayers.value == 0)
+        {
+            groundLayers = ~0;
+        }
+    }
+
     private void ResolveInputActions()
     {
         if (playerInput == null || playerInput.actions == null)
@@ -148,6 +186,21 @@ public class PlayerController : MonoBehaviour
         lookAction = playerInput.actions["Look"];
         jumpAction = playerInput.actions["Jump"];
         sprintAction = playerInput.actions["Sprint"];
+    }
+
+    private bool CanProcessInput()
+    {
+        if (networkObject == null)
+        {
+            return true;
+        }
+
+        if (networkObject.IsSpawned)
+        {
+            return networkObject.IsOwner;
+        }
+
+        return NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening;
     }
 
     private void ReadInput()
@@ -208,6 +261,11 @@ public class PlayerController : MonoBehaviour
             if (animator != null)
             {
                 animator.SetTrigger(JumpHash);
+            }
+
+            if (networkObject != null && networkObject.IsSpawned && networkObject.IsOwner)
+            {
+                syncedJumpSequence.Value++;
             }
         }
 
@@ -285,6 +343,39 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat(SpeedHash, speedValue, animationDampTime, Time.deltaTime);
         animator.SetBool(IsGroundedHash, isGrounded);
         animator.SetFloat(VerticalVelocityHash, verticalVelocity);
+
+        if (networkObject == null || !networkObject.IsSpawned || !networkObject.IsOwner)
+        {
+            return;
+        }
+
+        syncedMoveX.Value = animationInput.x;
+        syncedMoveY.Value = animationInput.y;
+        syncedSpeed.Value = speedValue;
+        syncedIsGrounded.Value = isGrounded;
+        syncedVerticalVelocity.Value = verticalVelocity;
+    }
+
+    private void ApplyRemoteAnimatorState()
+    {
+        if (animator == null || networkObject == null || !networkObject.IsSpawned || networkObject.IsOwner)
+        {
+            return;
+        }
+
+        animator.SetFloat(MoveXHash, syncedMoveX.Value, animationDampTime, Time.deltaTime);
+        animator.SetFloat(MoveYHash, syncedMoveY.Value, animationDampTime, Time.deltaTime);
+        animator.SetFloat(SpeedHash, syncedSpeed.Value, animationDampTime, Time.deltaTime);
+        animator.SetBool(IsGroundedHash, syncedIsGrounded.Value);
+        animator.SetFloat(VerticalVelocityHash, syncedVerticalVelocity.Value);
+
+        if (syncedJumpSequence.Value == lastAppliedJumpSequence)
+        {
+            return;
+        }
+
+        animator.SetTrigger(JumpHash);
+        lastAppliedJumpSequence = syncedJumpSequence.Value;
     }
 
     private static float NormalizeAngle(float angle)

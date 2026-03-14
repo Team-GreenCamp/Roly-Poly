@@ -1416,9 +1416,9 @@ GameObject:
   - component: {fileID: 2331239718062049963}
   - component: {fileID: 3055640297070688550}
   - component: {fileID: 1693436149286584330}
+  - component: {fileID: -752662279871191066}
   - component: {fileID: 3782511564552465626}
   - component: {fileID: -2608532865400973565}
-  - component: {fileID: -752662279871191066}
   - component: {fileID: -5105889794907920579}
   - component: {fileID: -1357284326032947471}
   m_Layer: 0
@@ -1543,51 +1543,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &3782511564552465626
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2383615707599059421}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5099361562403db4f95177bfce85bee7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  characterController: {fileID: 3055640297070688550}
-  playerInput: {fileID: 1693436149286584330}
-  animator: {fileID: 2331239718062049963}
-  cameraRoot: {fileID: 114892334035800877}
-  walkSpeed: 3.5
-  sprintSpeed: 6
-  rotationSpeed: 720
-  jumpHeight: 1.2
-  gravity: -25
-  terminalVelocity: -50
-  fallGravityMultiplier: 2
-  animationDampTime: 0.15
-  lookSensitivity: 0.12
-  minPitch: -35
-  maxPitch: 60
-  groundedOffset: 0.1
-  groundedRadius: 0.25
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 0
---- !u!114 &-2608532865400973565
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2383615707599059421}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b96555f423eea074087e4eb2a6848857, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MouseController
-  lockCursorOnStart: 0
 --- !u!114 &-752662279871191066
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1613,6 +1568,53 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &3782511564552465626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5099361562403db4f95177bfce85bee7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
+  characterController: {fileID: 3055640297070688550}
+  playerInput: {fileID: 1693436149286584330}
+  animator: {fileID: 2331239718062049963}
+  cameraRoot: {fileID: 114892334035800877}
+  networkObject: {fileID: -752662279871191066}
+  walkSpeed: 3.5
+  sprintSpeed: 6
+  rotationSpeed: 720
+  jumpHeight: 1.2
+  gravity: -25
+  terminalVelocity: -50
+  fallGravityMultiplier: 2
+  animationDampTime: 0.15
+  lookSensitivity: 0.12
+  minPitch: -35
+  maxPitch: 60
+  groundedOffset: 0.1
+  groundedRadius: 0.25
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 64
+--- !u!114 &-2608532865400973565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b96555f423eea074087e4eb2a6848857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MouseController
+  lockCursorOnStart: 0
 --- !u!114 &-5105889794907920579
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1677,9 +1679,25 @@ MonoBehaviour:
   - {fileID: 3782511564552465626}
   - {fileID: -2608532865400973565}
   ownerOnlyObjects: []
+  networkTransform: {fileID: -5105889794907920579}
+  cameraRoot: {fileID: 114892334035800877}
   lockCursorForOwner: 1
   cursorLockSceneNames:
   - Network Test
+  separatePlayerSpawnPositions: 1
+  spawnRadius: 3
+  spawnCenterOffset: {x: 0, y: 0, z: 0}
+  syncTransformState: 1
+  remotePositionLerpSpeed: 20
+  remoteRotationLerpSpeed: 20
+  runtimeVirtualCameraName: Runtime Cinemachine Camera
+  followOffset: {x: 0.65, y: 1.6, z: -3.5}
+  runtimeCameraSceneNames:
+  - GameScene
+  - Network Test
+  showNameLabel: 1
+  nameLabelOffset: {x: 0, y: 2.2, z: 0}
+  nameLabelFontSize: 4
 --- !u!1 &2532744044168256179
 GameObject:
   m_ObjectHideFlags: 0
