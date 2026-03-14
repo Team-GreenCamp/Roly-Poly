@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Threading.Tasks;
 
 [DisallowMultipleComponent]
 public class LobbyUIController : MonoBehaviour
@@ -123,40 +124,35 @@ public class LobbyUIController : MonoBehaviour
 
     private void ApplyDefaultValues()
     {
-        if (sessionManager == null)
-        {
-            return;
-        }
-
         if (addressInputField != null && string.IsNullOrWhiteSpace(addressInputField.text))
         {
-            addressInputField.text = sessionManager.DefaultAddress;
+            addressInputField.text = string.Empty;
         }
 
-        if (portInputField != null && string.IsNullOrWhiteSpace(portInputField.text))
+        if (portInputField != null)
         {
-            portInputField.text = sessionManager.DefaultPort.ToString();
+            portInputField.gameObject.SetActive(false);
         }
     }
 
-    private void HandleHostClicked()
+    private async void HandleHostClicked()
     {
         if (sessionManager == null)
         {
             return;
         }
 
-        sessionManager.StartHost(GetAddress(), GetPort());
+        await RunAsync(sessionManager.StartHostAsync());
     }
 
-    private void HandleJoinClicked()
+    private async void HandleJoinClicked()
     {
         if (sessionManager == null)
         {
             return;
         }
 
-        sessionManager.StartClient(GetAddress(), GetPort());
+        await RunAsync(sessionManager.StartClientAsync(GetJoinCode()));
     }
 
     private void HandleLeaveClicked()
@@ -179,71 +175,85 @@ public class LobbyUIController : MonoBehaviour
         sessionManager.StartGame();
     }
 
-    private string GetAddress()
+    private string GetJoinCode()
     {
         if (addressInputField == null)
         {
-            return sessionManager != null ? sessionManager.DefaultAddress : "127.0.0.1";
+            return string.Empty;
         }
 
         return string.IsNullOrWhiteSpace(addressInputField.text)
-            ? (sessionManager != null ? sessionManager.DefaultAddress : "127.0.0.1")
+            ? string.Empty
             : addressInputField.text.Trim();
     }
 
-    private ushort GetPort()
+    private async Task RunAsync(Task task)
     {
-        if (portInputField == null || string.IsNullOrWhiteSpace(portInputField.text))
+        if (task == null)
         {
-            return sessionManager != null ? sessionManager.DefaultPort : (ushort)7777;
+            return;
         }
 
-        return ushort.TryParse(portInputField.text, out ushort port)
-            ? port
-            : (sessionManager != null ? sessionManager.DefaultPort : (ushort)7777);
+        await task;
     }
 
     private void RefreshUI()
     {
         bool isOnline = sessionManager != null && sessionManager.IsOnline;
         bool isServer = sessionManager != null && sessionManager.IsServer;
+        bool isBusy = sessionManager != null && sessionManager.IsBusy;
         int playerCount = sessionManager != null ? sessionManager.ConnectedPlayerCount : 0;
 
         if (hostButton != null)
         {
-            hostButton.interactable = !isOnline;
+            hostButton.interactable = !isOnline && !isBusy;
         }
 
         if (joinButton != null)
         {
-            joinButton.interactable = !isOnline;
+            joinButton.interactable = !isOnline && !isBusy;
         }
 
         if (leaveButton != null)
         {
-            leaveButton.interactable = isOnline;
+            leaveButton.interactable = isOnline && !isBusy;
         }
 
         if (startGameButton != null)
         {
-            startGameButton.interactable = isServer && playerCount > 0;
+            startGameButton.interactable = isServer && playerCount > 0 && !isBusy;
         }
 
         if (addressInputField != null)
         {
-            addressInputField.interactable = !isOnline;
+            if (sessionManager != null && sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
+            {
+                addressInputField.text = sessionManager.CurrentJoinCode;
+            }
+
+            addressInputField.readOnly = isOnline;
+            addressInputField.interactable = !isBusy;
         }
 
         if (portInputField != null)
         {
-            portInputField.interactable = !isOnline;
+            portInputField.interactable = false;
         }
 
         if (statusText != null)
         {
-            statusText.text = sessionManager != null
-                ? sessionManager.StatusMessage
-                : "NetworkSessionManager가 연결되지 않았습니다.";
+            if (sessionManager == null)
+            {
+                statusText.text = "NetworkSessionManager가 연결되지 않았습니다.";
+            }
+            else if (sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
+            {
+                statusText.text = $"{sessionManager.StatusMessage}\nJoin Code: {sessionManager.CurrentJoinCode}";
+            }
+            else
+            {
+                statusText.text = sessionManager.StatusMessage;
+            }
         }
 
         if (playerCountText != null)

@@ -1,6 +1,12 @@
 using System;
+using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport.Relay;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,10 +18,9 @@ public class NetworkSessionManager : MonoBehaviour
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private UnityTransport unityTransport;
 
-    [Header("Connection Defaults")]
-    [SerializeField] private string defaultAddress = "127.0.0.1";
-    [SerializeField] private ushort defaultPort = 7777;
-    [SerializeField] private string hostListenAddress = "0.0.0.0";
+    [Header("Relay")]
+    [SerializeField] private int maxPlayers = 8;
+    [SerializeField] private string relayConnectionType = "dtls";
 
     [Header("Scene Flow")]
     [SerializeField] private string gameSceneName = "GameScene";
@@ -23,9 +28,10 @@ public class NetworkSessionManager : MonoBehaviour
     public event Action StateChanged;
 
     public string StatusMessage { get; private set; } = "오프라인";
+    public string CurrentJoinCode { get; private set; } = string.Empty;
     public int ConnectedPlayerCount { get; private set; }
-    public string DefaultAddress => defaultAddress;
-    public ushort DefaultPort => defaultPort;
+    public int MaxPlayers => maxPlayers;
+    public bool IsBusy { get; private set; }
     public bool IsOnline => networkManager != null && (networkManager.IsServer || networkManager.IsClient);
     public bool IsHost => networkManager != null && networkManager.IsHost;
     public bool IsServer => networkManager != null && networkManager.IsServer;
@@ -61,44 +67,93 @@ public class NetworkSessionManager : MonoBehaviour
         UnregisterCallbacks();
     }
 
-    public void StartHost(string address, ushort port)
+    public async Task StartHostAsync()
     {
         if (!CanStartSession())
         {
             return;
         }
 
-        ConfigureHostTransport(address, port);
-        isShuttingDown = false;
+        SetBusy(true);
+        SetStatus("Relay 서비스를 초기화하는 중입니다...");
 
-        if (!networkManager.StartHost())
+        try
         {
-            SetStatus("호스트 시작에 실패했습니다.");
-            return;
-        }
+            await EnsureRelayReadyAsync();
 
-        SetStatus("호스트를 시작했습니다. 다른 플레이어의 접속을 기다리는 중입니다.");
-        UpdateConnectedPlayerCount();
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(Mathf.Max(1, maxPlayers - 1));
+            CurrentJoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            unityTransport.SetRelayServerData(allocation.ToRelayServerData(GetRelayConnectionType()));
+            isShuttingDown = false;
+
+            if (!networkManager.StartHost())
+            {
+                CurrentJoinCode = string.Empty;
+                SetStatus("Relay 호스트 시작에 실패했습니다.");
+                return;
+            }
+
+            SetStatus($"Relay 호스트를 시작했습니다. Join Code: {CurrentJoinCode}");
+            UpdateConnectedPlayerCount();
+        }
+        catch (Exception exception)
+        {
+            CurrentJoinCode = string.Empty;
+            SetStatus($"Relay 호스트 생성 실패: {exception.Message}");
+            Debug.LogException(exception);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
     }
 
-    public void StartClient(string address, ushort port)
+    public async Task StartClientAsync(string joinCode)
     {
         if (!CanStartSession())
         {
             return;
         }
 
-        ConfigureClientTransport(address, port);
-        isShuttingDown = false;
-
-        if (!networkManager.StartClient())
+        string normalizedJoinCode = NormalizeJoinCode(joinCode);
+        if (string.IsNullOrWhiteSpace(normalizedJoinCode))
         {
-            SetStatus("클라이언트 시작에 실패했습니다.");
+            SetStatus("참가하려면 Join Code를 입력해야 합니다.");
             return;
         }
 
-        SetStatus("호스트에 접속 중입니다...");
-        UpdateConnectedPlayerCount();
+        SetBusy(true);
+        SetStatus("Relay 세션에 접속하는 중입니다...");
+
+        try
+        {
+            await EnsureRelayReadyAsync();
+
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(normalizedJoinCode);
+            unityTransport.SetRelayServerData(joinAllocation.ToRelayServerData(GetRelayConnectionType()));
+            isShuttingDown = false;
+            CurrentJoinCode = normalizedJoinCode;
+
+            if (!networkManager.StartClient())
+            {
+                CurrentJoinCode = string.Empty;
+                SetStatus("Relay 클라이언트 시작에 실패했습니다.");
+                return;
+            }
+
+            SetStatus($"Join Code {normalizedJoinCode} 로 접속 중입니다...");
+            UpdateConnectedPlayerCount();
+        }
+        catch (Exception exception)
+        {
+            CurrentJoinCode = string.Empty;
+            SetStatus($"Relay 접속 실패: {exception.Message}");
+            Debug.LogException(exception);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
     }
 
     public void Shutdown()
@@ -117,6 +172,7 @@ public class NetworkSessionManager : MonoBehaviour
 
         isShuttingDown = true;
         networkManager.Shutdown();
+        CurrentJoinCode = string.Empty;
         UpdateConnectedPlayerCount();
         SetStatus("세션을 종료했습니다.");
         isShuttingDown = false;
@@ -174,6 +230,12 @@ public class NetworkSessionManager : MonoBehaviour
             return false;
         }
 
+        if (IsBusy)
+        {
+            SetStatus("현재 다른 네트워크 작업이 진행 중입니다.");
+            return false;
+        }
+
         return true;
     }
 
@@ -198,6 +260,8 @@ public class NetworkSessionManager : MonoBehaviour
         {
             networkManager.NetworkConfig.NetworkTransport = unityTransport;
         }
+
+        maxPlayers = Mathf.Max(2, maxPlayers);
     }
 
     private void RegisterCallbacks()
@@ -226,32 +290,39 @@ public class NetworkSessionManager : MonoBehaviour
         callbacksRegistered = false;
     }
 
-    private void ConfigureHostTransport(string address, ushort port)
+    private async Task EnsureRelayReadyAsync()
     {
-        if (unityTransport == null)
+        if (UnityServices.State == ServicesInitializationState.Uninitialized)
         {
-            return;
+            await UnityServices.InitializeAsync();
+        }
+        else
+        {
+            while (UnityServices.State == ServicesInitializationState.Initializing)
+            {
+                await Task.Yield();
+            }
         }
 
-        unityTransport.SetConnectionData(
-            NormalizeAddress(address),
-            port == 0 ? defaultPort : port,
-            string.IsNullOrWhiteSpace(hostListenAddress) ? "0.0.0.0" : hostListenAddress);
+        if (!AuthenticationService.Instance.IsSignedIn)
+        {
+            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        }
     }
 
-    private void ConfigureClientTransport(string address, ushort port)
+    private string GetRelayConnectionType()
     {
-        if (unityTransport == null)
+        if (string.IsNullOrWhiteSpace(relayConnectionType))
         {
-            return;
+            return "dtls";
         }
 
-        unityTransport.SetConnectionData(NormalizeAddress(address), port == 0 ? defaultPort : port);
+        return relayConnectionType.Trim().ToLowerInvariant();
     }
 
-    private string NormalizeAddress(string address)
+    private static string NormalizeJoinCode(string joinCode)
     {
-        return string.IsNullOrWhiteSpace(address) ? defaultAddress : address.Trim();
+        return string.IsNullOrWhiteSpace(joinCode) ? string.Empty : joinCode.Trim().ToUpperInvariant();
     }
 
     private void HandleServerStarted()
@@ -260,7 +331,7 @@ public class NetworkSessionManager : MonoBehaviour
 
         if (networkManager != null && networkManager.IsHost)
         {
-            SetStatus("호스트가 시작되었습니다. 로비에서 대기 중입니다.");
+            SetStatus($"호스트가 시작되었습니다. Join Code: {CurrentJoinCode}");
         }
     }
 
@@ -277,7 +348,7 @@ public class NetworkSessionManager : MonoBehaviour
         {
             if (networkManager.IsHost)
             {
-                SetStatus("호스트로 로비에 입장했습니다.");
+                SetStatus($"호스트로 로비에 입장했습니다. Join Code: {CurrentJoinCode}");
                 return;
             }
 
@@ -306,6 +377,8 @@ public class NetworkSessionManager : MonoBehaviour
             {
                 SetStatus("세션 연결이 종료되었습니다.");
             }
+
+            CurrentJoinCode = string.Empty;
 
             return;
         }
@@ -344,6 +417,12 @@ public class NetworkSessionManager : MonoBehaviour
     private void SetStatus(string message)
     {
         StatusMessage = message;
+        NotifyStateChanged();
+    }
+
+    private void SetBusy(bool isBusy)
+    {
+        IsBusy = isBusy;
         NotifyStateChanged();
     }
 
