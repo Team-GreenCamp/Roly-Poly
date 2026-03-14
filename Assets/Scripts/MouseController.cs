@@ -2,9 +2,24 @@ using UnityEngine;
 
 public class MouseController : MonoBehaviour
 {
-    void Start()
+    [SerializeField] private bool lockCursorOnStart;
+
+    private void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (lockCursorOnStart)
+        {
+            SetCursorLock(true);
+        }
+    }
+
+    public void ApplyCursorState(bool shouldLock)
+    {
+        SetCursorLock(shouldLock);
+    }
+
+    public static void SetCursorLock(bool shouldLock)
+    {
+        Cursor.lockState = shouldLock ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !shouldLock;
     }
 }
