@@ -933,7 +933,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &3805064699409460514
 Transform:
   m_ObjectHideFlags: 0
@@ -1506,13 +1506,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.9620459
-  m_Radius: 0.45
+  m_Height: 1.75
+  m_Radius: 0.2
   m_SlopeLimit: 45
   m_StepOffset: 0.39240918
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.98102295, z: 0}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!114 &1693436149286584330
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1555,7 +1555,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 498835207
+  GlobalObjectIdHash: 2196377955
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1586,8 +1586,8 @@ MonoBehaviour:
   animator: {fileID: 2331239718062049963}
   cameraRoot: {fileID: 114892334035800877}
   networkObject: {fileID: -752662279871191066}
-  walkSpeed: 3.5
-  sprintSpeed: 6
+  walkSpeed: 3
+  sprintSpeed: 5
   rotationSpeed: 720
   jumpHeight: 1.2
   gravity: -25
@@ -2823,7 +2823,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2148034880607706563
 Transform:
   m_ObjectHideFlags: 0
