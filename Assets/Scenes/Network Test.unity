@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b96555f423eea074087e4eb2a6848857, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MouseController
-  lockCursorOnStart: 0
+  lockCursorOnStart: 1
 --- !u!4 &229296258
 Transform:
   m_ObjectHideFlags: 0
