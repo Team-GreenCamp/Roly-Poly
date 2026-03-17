@@ -1,0 +1,177 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &6786396805147340874
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1954995006626563576, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1954995006626563576, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1954995006626563576, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3336099254928483449, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8636655394735531201, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      propertyPath: m_Name
+      value: Assault Rifle Pickup
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8636655394735531201, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8243169182278257746}
+    - targetCorrespondingSourceObject: {fileID: 8636655394735531201, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7957978559779105785}
+    - targetCorrespondingSourceObject: {fileID: 8636655394735531201, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7485078470500792553}
+  m_SourcePrefab: {fileID: 100100000, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+--- !u!1 &3023480653632705675 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8636655394735531201, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+  m_PrefabInstance: {fileID: 6786396805147340874}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8243169182278257746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3023480653632705675}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2014314854
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &7957978559779105785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3023480653632705675}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95009a5e535e9421cba54274525bfb56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponPickup
+  ShowTopMostFoldoutHeaderGroup: 1
+  weaponDefinition: {fileID: 11400000, guid: 6820b5acf192a4493bf636511c36ad07, type: 2}
+  pickupCollider: {fileID: 7485078470500792553}
+  visualRenderers:
+  - {fileID: 4993393334182040866}
+  - {fileID: 4993505901465558772}
+  - {fileID: 4993820981865740226}
+  - {fileID: 4992926755844336018}
+  - {fileID: 4992984324923601790}
+--- !u!135 &7485078470500792553
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3023480653632705675}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0.05, z: 0.05}
+--- !u!23 &4992926755844336018 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1973825263171148248, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+  m_PrefabInstance: {fileID: 6786396805147340874}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4992984324923601790 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1973908394939843380, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+  m_PrefabInstance: {fileID: 6786396805147340874}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4993393334182040866 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1973147524782777704, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+  m_PrefabInstance: {fileID: 6786396805147340874}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4993505901465558772 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1973246072319700670, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+  m_PrefabInstance: {fileID: 6786396805147340874}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4993820981865740226 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1973564312909301640, guid: a7bccc4d136e24acab1eafb721f44ed9, type: 3}
+  m_PrefabInstance: {fileID: 6786396805147340874}
+  m_PrefabAsset: {fileID: 0}

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Collections;
 using Unity.Netcode;
 
 [DisallowMultipleComponent]
@@ -44,6 +45,12 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float groundedRadius = 0.25f;
     [SerializeField] private LayerMask groundLayers = 1; // Default layer only
 
+    [Header("Weapon")]
+    [SerializeField] private Transform weaponHolder;
+    [SerializeField] private float pickupRange = 2f;
+    [SerializeField] private LayerMask pickupLayers = ~0;
+    [SerializeField] private LeftHandIKFollower leftHandIKFollower;
+
     private readonly NetworkVariable<float> syncedMoveX =
         new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<float> syncedMoveY =
@@ -56,11 +63,14 @@ public class PlayerController : NetworkBehaviour
         new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<int> syncedJumpSequence =
         new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<FixedString64Bytes> equippedWeaponId =
+        new NetworkVariable<FixedString64Bytes>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private InputAction moveAction;
     private InputAction lookAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
+    private InputAction interactAction;
 
     private Vector2 moveInput;
     private Vector2 lookInput;
@@ -69,7 +79,10 @@ public class PlayerController : NetworkBehaviour
     private float cameraPitch;
     private bool isGrounded;
     private bool jumpQueued;
+    private bool interactQueued;
     private int lastAppliedJumpSequence;
+    private GameObject equippedWeaponInstance;
+    private readonly Collider[] pickupResults = new Collider[16];
 
     private void Reset()
     {
@@ -101,6 +114,18 @@ public class PlayerController : NetworkBehaviour
         EnsureGroundLayersConfigured();
     }
 
+    public override void OnNetworkSpawn()
+    {
+        equippedWeaponId.OnValueChanged += HandleEquippedWeaponChanged;
+        RefreshEquippedWeaponVisual();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        equippedWeaponId.OnValueChanged -= HandleEquippedWeaponChanged;
+        ClearEquippedWeaponVisual();
+    }
+
     private void Update()
     {
         if (CanProcessInput())
@@ -116,6 +141,7 @@ public class PlayerController : NetworkBehaviour
             UpdateJumpAndGravity();
             UpdateMovement();
             UpdateAnimator();
+            TryHandleWeaponPickup();
             return;
         }
 
@@ -152,6 +178,20 @@ public class PlayerController : NetworkBehaviour
                 cameraRoot = candidate;
             }
         }
+
+        if (weaponHolder == null)
+        {
+            Transform candidate = transform.Find("WeaponHolder");
+            if (candidate != null)
+            {
+                weaponHolder = candidate;
+            }
+        }
+
+        if (leftHandIKFollower == null)
+        {
+            leftHandIKFollower = GetComponent<LeftHandIKFollower>();
+        }
     }
 
     private void ApplySafeRanges()
@@ -173,6 +213,11 @@ public class PlayerController : NetworkBehaviour
         {
             groundLayers = ~0;
         }
+
+        if (pickupLayers.value == 0)
+        {
+            pickupLayers = ~0;
+        }
     }
 
     private void ResolveInputActions()
@@ -186,6 +231,7 @@ public class PlayerController : NetworkBehaviour
         lookAction = playerInput.actions["Look"];
         jumpAction = playerInput.actions["Jump"];
         sprintAction = playerInput.actions["Sprint"];
+        interactAction = playerInput.actions["Interact"];
     }
 
     private bool CanProcessInput()
@@ -211,6 +257,11 @@ public class PlayerController : NetworkBehaviour
         if (jumpAction != null && jumpAction.WasPressedThisFrame())
         {
             jumpQueued = true;
+        }
+
+        if (interactAction != null && interactAction.WasPressedThisFrame())
+        {
+            interactQueued = true;
         }
     }
 
@@ -376,6 +427,161 @@ public class PlayerController : NetworkBehaviour
 
         animator.SetTrigger(JumpHash);
         lastAppliedJumpSequence = syncedJumpSequence.Value;
+    }
+
+    private void TryHandleWeaponPickup()
+    {
+        if (!interactQueued)
+        {
+            return;
+        }
+
+        interactQueued = false;
+
+        if (!IsSpawned || !IsOwner)
+        {
+            return;
+        }
+
+        WeaponPickup pickup = FindClosestWeaponPickup();
+        if (pickup == null)
+        {
+            return;
+        }
+
+        RequestPickupServerRpc(pickup.NetworkObject);
+    }
+
+    private WeaponPickup FindClosestWeaponPickup()
+    {
+        int hitCount = Physics.OverlapSphereNonAlloc(
+            transform.position,
+            pickupRange,
+            pickupResults,
+            pickupLayers,
+            QueryTriggerInteraction.Collide);
+
+        WeaponPickup closestPickup = null;
+        float closestDistanceSqr = float.MaxValue;
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider hit = pickupResults[i];
+            if (hit == null)
+            {
+                continue;
+            }
+
+            WeaponPickup pickup = hit.GetComponentInParent<WeaponPickup>();
+            if (pickup == null || !pickup.CanBePickedUp)
+            {
+                continue;
+            }
+
+            float distanceSqr = (pickup.transform.position - transform.position).sqrMagnitude;
+            if (distanceSqr >= closestDistanceSqr)
+            {
+                continue;
+            }
+
+            closestDistanceSqr = distanceSqr;
+            closestPickup = pickup;
+        }
+
+        return closestPickup;
+    }
+
+    [ServerRpc]
+    private void RequestPickupServerRpc(NetworkObjectReference pickupReference)
+    {
+        if (!pickupReference.TryGet(out NetworkObject pickupObject))
+        {
+            return;
+        }
+
+        WeaponPickup pickup = pickupObject.GetComponent<WeaponPickup>();
+        if (pickup == null)
+        {
+            return;
+        }
+
+        float maxPickupDistanceSqr = pickupRange * pickupRange * 2.25f;
+        if ((pickup.transform.position - transform.position).sqrMagnitude > maxPickupDistanceSqr)
+        {
+            return;
+        }
+
+        if (!pickup.TryConsume(out WeaponDefinition definition))
+        {
+            return;
+        }
+
+        equippedWeaponId.Value = new FixedString64Bytes(definition.WeaponId);
+    }
+
+    private void HandleEquippedWeaponChanged(FixedString64Bytes previousWeaponId, FixedString64Bytes newWeaponId)
+    {
+        RefreshEquippedWeaponVisual();
+    }
+
+    private void RefreshEquippedWeaponVisual()
+    {
+        ClearEquippedWeaponVisual();
+
+        if (weaponHolder == null || equippedWeaponId.Value.Length == 0)
+        {
+            return;
+        }
+
+        WeaponDefinition definition = WeaponCatalog.GetById(equippedWeaponId.Value.ToString());
+        if (definition == null || definition.EquippedPrefab == null)
+        {
+            return;
+        }
+
+        equippedWeaponInstance = Instantiate(definition.EquippedPrefab, weaponHolder);
+        equippedWeaponInstance.name = $"{definition.WeaponId}_Equipped";
+        equippedWeaponInstance.transform.localPosition = definition.EquippedLocalPosition;
+        equippedWeaponInstance.transform.localEulerAngles = definition.EquippedLocalRotation;
+        equippedWeaponInstance.transform.localScale = definition.EquippedLocalScale;
+        PrepareEquippedWeaponInstance(equippedWeaponInstance);
+
+        if (leftHandIKFollower != null)
+        {
+            leftHandIKFollower.SyncToWeapon(equippedWeaponInstance.transform);
+        }
+    }
+
+    private void ClearEquippedWeaponVisual()
+    {
+        if (equippedWeaponInstance == null)
+        {
+            return;
+        }
+
+        Destroy(equippedWeaponInstance);
+        equippedWeaponInstance = null;
+
+        if (leftHandIKFollower != null)
+        {
+            leftHandIKFollower.SetGrip(null);
+        }
+    }
+
+    private static void PrepareEquippedWeaponInstance(GameObject weaponInstance)
+    {
+        Collider[] colliders = weaponInstance.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            colliders[i].enabled = false;
+        }
+
+        Rigidbody[] rigidbodies = weaponInstance.GetComponentsInChildren<Rigidbody>(true);
+        for (int i = 0; i < rigidbodies.Length; i++)
+        {
+            rigidbodies[i].isKinematic = true;
+            rigidbodies[i].detectCollisions = false;
+        }
     }
 
     private static float NormalizeAngle(float angle)
