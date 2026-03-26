@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
@@ -15,16 +16,24 @@ public class LeftHandIKFollower : MonoBehaviour
 
     [SerializeField] private Transform leftHandTarget;
     [SerializeField] private Transform weaponHolder;
+    [SerializeField] private TwoBoneIKConstraint leftHandConstraint;
     [SerializeField] private RigBuilder rigBuilder;
     [SerializeField] private Transform currentGrip;
 
     private Transform trackedWeaponRoot;
+    private Transform defaultConstraintTarget;
     private bool forceRefresh = true;
 
     private void Awake()
     {
         CacheReferences();
         ForceRefresh();
+    }
+
+    private IEnumerator Start()
+    {
+        yield return null;
+        ForceRigRebuild("Start");
     }
 
     private void OnEnable()
@@ -55,14 +64,8 @@ public class LeftHandIKFollower : MonoBehaviour
             trackedWeaponRoot = activeWeaponRoot;
             currentGrip = FindGrip(activeWeaponRoot);
             forceRefresh = false;
+            ApplyConstraintTarget(currentGrip);
         }
-
-        if (leftHandTarget == null || currentGrip == null)
-        {
-            return;
-        }
-
-        leftHandTarget.SetPositionAndRotation(currentGrip.position, currentGrip.rotation);
     }
 
     public void SetGrip(Transform grip)
@@ -70,6 +73,7 @@ public class LeftHandIKFollower : MonoBehaviour
         currentGrip = grip;
         trackedWeaponRoot = GetWeaponRootForGrip(grip);
         forceRefresh = false;
+        ApplyConstraintTarget(grip);
     }
 
     public void SyncToWeapon(Transform weaponRoot)
@@ -77,6 +81,8 @@ public class LeftHandIKFollower : MonoBehaviour
         trackedWeaponRoot = weaponRoot;
         currentGrip = FindGrip(weaponRoot);
         forceRefresh = false;
+        ApplyConstraintTarget(currentGrip);
+        ForceRigRebuild("SyncToWeapon");
     }
 
     public void ForceRefresh()
@@ -84,6 +90,7 @@ public class LeftHandIKFollower : MonoBehaviour
         trackedWeaponRoot = null;
         currentGrip = null;
         forceRefresh = true;
+        ForceRigRebuild("ForceRefresh");
     }
 
     private void CacheReferences()
@@ -101,6 +108,18 @@ public class LeftHandIKFollower : MonoBehaviour
         if (rigBuilder == null)
         {
             rigBuilder = GetComponent<RigBuilder>();
+        }
+
+        if (leftHandConstraint == null)
+        {
+            leftHandConstraint = GetComponentInChildren<TwoBoneIKConstraint>(true);
+        }
+
+        if (defaultConstraintTarget == null && leftHandConstraint != null)
+        {
+            defaultConstraintTarget = leftHandConstraint.data.target != null
+                ? leftHandConstraint.data.target
+                : leftHandTarget;
         }
     }
 
@@ -215,5 +234,44 @@ public class LeftHandIKFollower : MonoBehaviour
         }
 
         return current;
+    }
+
+    private void ApplyConstraintTarget(Transform grip)
+    {
+        if (leftHandConstraint == null)
+        {
+            return;
+        }
+
+        TwoBoneIKConstraintData data = leftHandConstraint.data;
+        data.target = grip != null ? grip : defaultConstraintTarget;
+        leftHandConstraint.data = data;
+    }
+
+    private void ForceRigRebuild(string reason)
+    {
+        if (rigBuilder == null)
+        {
+            Debug.LogWarning($"[{nameof(LeftHandIKFollower)}] Rig rebuild skipped. reason={reason}, rigBuilder=null", this);
+            return;
+        }
+
+        string weaponName = trackedWeaponRoot != null ? trackedWeaponRoot.name : "null";
+        string gripName = currentGrip != null ? currentGrip.name : "null";
+        string targetName = leftHandConstraint != null && leftHandConstraint.data.target != null
+            ? leftHandConstraint.data.target.name
+            : "null";
+
+        Debug.Log(
+            $"[{nameof(LeftHandIKFollower)}] Rebuild rig. reason={reason}, weapon={weaponName}, grip={gripName}, target={targetName}, rigEnabledBefore={rigBuilder.enabled}",
+            this);
+
+        rigBuilder.enabled = false;
+        rigBuilder.Clear();
+        rigBuilder.enabled = true;
+
+        Debug.Log(
+            $"[{nameof(LeftHandIKFollower)}] Rebuild complete. reason={reason}, rigEnabledAfter={rigBuilder.enabled}",
+            this);
     }
 }
