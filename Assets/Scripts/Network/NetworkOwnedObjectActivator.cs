@@ -46,8 +46,6 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     private CinemachineCamera boundCamera;
     private TextMeshPro nameLabel;
-    private CharacterController characterController;
-    private bool disabledCharacterControllerForRemoteSync;
 
     private void Reset()
     {
@@ -196,10 +194,6 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             }
         }
 
-        if (characterController == null)
-        {
-            characterController = GetComponent<CharacterController>();
-        }
     }
 
     private void ConfigureOwnershipAuthority()
@@ -224,12 +218,24 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         Vector3 targetPosition = spawnCenterOffset + GetSpawnOffset(OwnerClientId);
 
-        if (TryGetComponent(out CharacterController controller))
+        if (TryGetComponent(out Rigidbody body))
         {
-            bool wasEnabled = controller.enabled;
-            controller.enabled = false;
-            transform.position = targetPosition;
-            controller.enabled = wasEnabled;
+            Vector3 previousVelocity = body.linearVelocity;
+            Vector3 previousAngularVelocity = body.angularVelocity;
+            bool wasKinematic = body.isKinematic;
+
+            body.isKinematic = true;
+            body.position = targetPosition;
+            body.rotation = transform.rotation;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            body.isKinematic = wasKinematic;
+
+            if (!wasKinematic)
+            {
+                body.linearVelocity = previousVelocity;
+                body.angularVelocity = previousAngularVelocity;
+            }
         }
         else
         {
@@ -462,40 +468,15 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         if (IsOwner)
         {
-            RestoreCharacterController();
             syncedPosition.Value = transform.position;
             syncedRotation.Value = transform.rotation;
             return;
         }
-
-        DisableCharacterControllerForRemoteSync();
 
         float positionLerpFactor = 1f - Mathf.Exp(-remotePositionLerpSpeed * Time.deltaTime);
         float rotationLerpFactor = 1f - Mathf.Exp(-remoteRotationLerpSpeed * Time.deltaTime);
 
         transform.position = Vector3.Lerp(transform.position, syncedPosition.Value, positionLerpFactor);
         transform.rotation = Quaternion.Slerp(transform.rotation, syncedRotation.Value, rotationLerpFactor);
-    }
-
-    private void DisableCharacterControllerForRemoteSync()
-    {
-        if (characterController == null || !characterController.enabled || disabledCharacterControllerForRemoteSync)
-        {
-            return;
-        }
-
-        characterController.enabled = false;
-        disabledCharacterControllerForRemoteSync = true;
-    }
-
-    private void RestoreCharacterController()
-    {
-        if (characterController == null || !disabledCharacterControllerForRemoteSync)
-        {
-            return;
-        }
-
-        characterController.enabled = true;
-        disabledCharacterControllerForRemoteSync = false;
     }
 }

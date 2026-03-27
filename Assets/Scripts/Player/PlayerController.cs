@@ -1,88 +1,89 @@
+using System;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Unity.Collections;
-using Unity.Netcode;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(NetworkObject))]
 public class PlayerController : NetworkBehaviour
 {
-    private static readonly int MoveXHash = Animator.StringToHash("MoveX");
-    private static readonly int MoveYHash = Animator.StringToHash("MoveY");
-    private static readonly int SpeedHash = Animator.StringToHash("Speed");
-    private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
-    private static readonly int VerticalVelocityHash = Animator.StringToHash("VerticalVelocity");
-    private static readonly int JumpHash = Animator.StringToHash("Jump");
-
     [Header("References")]
-    [SerializeField] private CharacterController characterController;
+    [SerializeField] private Rigidbody physicsBody;
+    [SerializeField] private CapsuleCollider physicsCollider;
     [SerializeField] private PlayerInput playerInput;
-    [SerializeField] private Animator animator;
-    [SerializeField] private Transform cameraRoot;
     [SerializeField] private NetworkObject networkObject;
+    [SerializeField] private Transform holdPoint;
 
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 3.5f;
     [SerializeField] private float sprintSpeed = 6f;
     [SerializeField] private float rotationSpeed = 720f;
+    [SerializeField] private float movementAcceleration = 24f;
+    [SerializeField] private float airAcceleration = 10f;
     [SerializeField] private float jumpHeight = 1.2f;
     [SerializeField] private float gravity = -25f;
     [SerializeField] private float terminalVelocity = -50f;
     [SerializeField] private float fallGravityMultiplier = 2f;
 
-    [Header("Animation")]
-    [SerializeField] private float animationDampTime = 0.15f;
+    [Header("Balance")]
+    [SerializeField] private Vector3 centerOfMassOffset = new Vector3(0f, -0.35f, 0f);
+    [SerializeField] private float uprightTorque = 90f;
+    [SerializeField] private float uprightDamping = 10f;
+    [SerializeField] private float fallenTiltAngle = 35f;
+    [SerializeField] private float recoveryDelay = 1f;
+    [SerializeField] private float recoveryTorqueMultiplier = 2.5f;
+    [SerializeField] private float turnTorque = 35f;
+    [SerializeField] private float turnDamping = 6f;
+    [SerializeField] private float maxAngularVelocity = 25f;
 
-    [Header("Look")]
-    [SerializeField] private float lookSensitivity = 0.12f;
-    [SerializeField] private float minPitch = -35f;
-    [SerializeField] private float maxPitch = 60f;
+    [Header("Interaction")]
+    [SerializeField] private float interactionDistance = 2.2f;
+    [SerializeField] private float interactionRadius = 0.25f;
+    [SerializeField] private LayerMask interactionLayers = ~0;
+    [SerializeField] private float maxCarryMass = 20f;
+    [SerializeField] private Vector3 holdPointLocalOffset = new Vector3(0.35f, 1.2f, 1.5f);
 
     [Header("Ground Check")]
     [SerializeField] private float groundedOffset = 0.1f;
     [SerializeField] private float groundedRadius = 0.25f;
-    [SerializeField] private LayerMask groundLayers = 1; // Default layer only
+    [SerializeField] private LayerMask groundLayers = ~0;
 
-    [Header("Weapon")]
-    [SerializeField] private Transform weaponHolder;
-    [SerializeField] private float pickupRange = 2f;
-    [SerializeField] private LayerMask pickupLayers = ~0;
-    [SerializeField] private LeftHandIKFollower leftHandIKFollower;
+    [Header("Impact")]
+    [SerializeField] private float playerCollisionImpact = 5f;
+    [SerializeField] private float rigidbodyImpactSpeedThreshold = 5f;
+    [SerializeField] private float heavyObjectMassThreshold = 20f;
+    [SerializeField] private float heavyObjectDownwardSpeedThreshold = 6f;
+    [SerializeField] private float landingImpactThreshold = 10f;
+    [SerializeField] private float landingTorqueMultiplier = 0.2f;
+    [SerializeField] private float externalImpactForceMultiplier = 1f;
+    [SerializeField] private float externalImpactTorqueMultiplier = 0.35f;
 
-    private readonly NetworkVariable<float> syncedMoveX =
-        new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    private readonly NetworkVariable<float> syncedMoveY =
-        new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    private readonly NetworkVariable<float> syncedSpeed =
-        new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    private readonly NetworkVariable<bool> syncedIsGrounded =
-        new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    private readonly NetworkVariable<float> syncedVerticalVelocity =
-        new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    private readonly NetworkVariable<int> syncedJumpSequence =
-        new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    private readonly NetworkVariable<FixedString64Bytes> equippedWeaponId =
-        new NetworkVariable<FixedString64Bytes>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    [Header("Slope")]
+    [SerializeField] private float slideSlopeAngle = 32f;
+    [SerializeField] private float slideForce = 18f;
 
     private InputAction moveAction;
-    private InputAction lookAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
     private InputAction interactAction;
 
     private Vector2 moveInput;
-    private Vector2 lookInput;
-    private float verticalVelocity;
-    private float targetYaw;
-    private float cameraPitch;
+    private Vector3 currentHorizontalVelocity;
+    private Vector3 groundNormal = Vector3.up;
     private bool isGrounded;
     private bool jumpQueued;
-    private bool interactQueued;
-    private int lastAppliedJumpSequence;
-    private GameObject equippedWeaponInstance;
-    private readonly Collider[] pickupResults = new Collider[16];
+    private bool isPhysicsOwner;
+    private float lastVerticalVelocity;
+    private float timeSinceLargeTilt;
+
+    private Rigidbody heldRigidbody;
+    private Transform heldOriginalParent;
+    private Collider[] heldColliders = Array.Empty<Collider>();
+    private bool heldUseGravity;
+    private bool heldIsKinematic;
+    private RigidbodyInterpolation heldInterpolation;
+    private CollisionDetectionMode heldCollisionMode;
 
     private void Reset()
     {
@@ -99,60 +100,100 @@ public class PlayerController : NetworkBehaviour
     private void Awake()
     {
         CacheReferences();
+        ApplySafeRanges();
         ResolveInputActions();
-        EnsureGroundLayersConfigured();
-
-        groundLayers &= ~(1 << gameObject.layer);
-
-        targetYaw = transform.eulerAngles.y;
-        cameraPitch = cameraRoot != null ? NormalizeAngle(cameraRoot.localEulerAngles.x) : 0f;
+        EnsureLayerMasksConfigured();
+        EnsureRuntimePhysicsComponents();
+        UpdatePhysicsOwnershipState(force: true);
     }
 
     private void OnEnable()
     {
         ResolveInputActions();
-        EnsureGroundLayersConfigured();
+        EnsureLayerMasksConfigured();
     }
 
-    public override void OnNetworkSpawn()
+    private void OnDisable()
     {
-        equippedWeaponId.OnValueChanged += HandleEquippedWeaponChanged;
-        RefreshEquippedWeaponVisual();
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        equippedWeaponId.OnValueChanged -= HandleEquippedWeaponChanged;
-        ClearEquippedWeaponVisual();
+        ForceDropHeldObject();
     }
 
     private void Update()
     {
-        if (CanProcessInput())
-        {
-            if (characterController == null || playerInput == null)
-            {
-                return;
-            }
+        UpdatePhysicsOwnershipState();
 
-            ReadInput();
-            UpdateGroundedState();
-            UpdateLookRotation();
-            UpdateJumpAndGravity();
-            UpdateMovement();
-            UpdateAnimator();
-            TryHandleWeaponPickup();
+        if (!CanProcessInput())
+        {
             return;
         }
 
-        ApplyRemoteAnimatorState();
+        if (playerInput == null || physicsBody == null)
+        {
+            return;
+        }
+
+        ReadInput();
+        HandleInteractionInput();
+        UpdateHeldObjectPose();
+    }
+
+    private void FixedUpdate()
+    {
+        if (!CanProcessInput() || physicsBody == null || physicsBody.isKinematic)
+        {
+            return;
+        }
+
+        UpdateGroundedState();
+        ApplyCustomGravity();
+        ApplyJump();
+        UpdateMovement();
+        ApplySlopeSlide();
+        ApplyBalanceTorques();
+        ClampVerticalVelocity();
+    }
+
+    public bool IsInteractPressedThisFrame()
+    {
+        return CanProcessInput() && interactAction != null && interactAction.WasPressedThisFrame();
+    }
+
+    public void ApplyWobbleImpulse(Vector3 worldDirection, float strength)
+    {
+        Vector3 direction = worldDirection.sqrMagnitude > 0.0001f
+            ? worldDirection.normalized
+            : transform.forward;
+        Vector3 hitPoint = physicsBody != null
+            ? physicsBody.worldCenterOfMass + Vector3.up * 0.5f
+            : transform.position + Vector3.up * 0.5f;
+
+        ApplyExternalImpulse(direction * strength, hitPoint);
+    }
+
+    public void ApplyExternalImpulse(Vector3 force, Vector3 hitPoint)
+    {
+        if (!CanProcessInput() || physicsBody == null || physicsBody.isKinematic)
+        {
+            return;
+        }
+
+        physicsBody.AddForce(force * externalImpactForceMultiplier, ForceMode.Impulse);
+
+        Vector3 lever = hitPoint - physicsBody.worldCenterOfMass;
+        Vector3 torque = Vector3.Cross(lever, force) * externalImpactTorqueMultiplier;
+        physicsBody.AddTorque(torque, ForceMode.Impulse);
     }
 
     private void CacheReferences()
     {
-        if (characterController == null)
+        if (physicsBody == null)
         {
-            characterController = GetComponent<CharacterController>();
+            physicsBody = GetComponent<Rigidbody>();
+        }
+
+        if (physicsCollider == null)
+        {
+            physicsCollider = GetComponent<CapsuleCollider>();
         }
 
         if (playerInput == null)
@@ -165,32 +206,13 @@ public class PlayerController : NetworkBehaviour
             networkObject = GetComponent<NetworkObject>();
         }
 
-        if (animator == null)
+        if (holdPoint == null)
         {
-            animator = GetComponentInChildren<Animator>();
-        }
-
-        if (cameraRoot == null)
-        {
-            Transform candidate = transform.Find("CameraRoot");
+            Transform candidate = transform.Find("HoldPoint");
             if (candidate != null)
             {
-                cameraRoot = candidate;
+                holdPoint = candidate;
             }
-        }
-
-        if (weaponHolder == null)
-        {
-            Transform candidate = transform.Find("WeaponHolder");
-            if (candidate != null)
-            {
-                weaponHolder = candidate;
-            }
-        }
-
-        if (leftHandIKFollower == null)
-        {
-            leftHandIKFollower = GetComponent<LeftHandIKFollower>();
         }
     }
 
@@ -198,26 +220,76 @@ public class PlayerController : NetworkBehaviour
     {
         walkSpeed = Mathf.Max(0f, walkSpeed);
         sprintSpeed = Mathf.Max(walkSpeed, sprintSpeed);
-        rotationSpeed = Mathf.Max(0f, rotationSpeed);
+        rotationSpeed = Mathf.Max(1f, rotationSpeed);
+        movementAcceleration = Mathf.Max(0f, movementAcceleration);
+        airAcceleration = Mathf.Max(0f, airAcceleration);
         jumpHeight = Mathf.Max(0.1f, jumpHeight);
         gravity = Mathf.Min(-0.01f, gravity);
         terminalVelocity = Mathf.Min(-1f, terminalVelocity);
         fallGravityMultiplier = Mathf.Max(1f, fallGravityMultiplier);
+        uprightTorque = Mathf.Max(0f, uprightTorque);
+        uprightDamping = Mathf.Max(0f, uprightDamping);
+        fallenTiltAngle = Mathf.Clamp(fallenTiltAngle, 1f, 89f);
+        recoveryDelay = Mathf.Max(0f, recoveryDelay);
+        recoveryTorqueMultiplier = Mathf.Max(1f, recoveryTorqueMultiplier);
+        turnTorque = Mathf.Max(0f, turnTorque);
+        turnDamping = Mathf.Max(0f, turnDamping);
+        maxAngularVelocity = Mathf.Max(1f, maxAngularVelocity);
+        interactionDistance = Mathf.Max(0.25f, interactionDistance);
+        interactionRadius = Mathf.Max(0f, interactionRadius);
+        maxCarryMass = Mathf.Max(0.1f, maxCarryMass);
+        groundedOffset = Mathf.Max(0.01f, groundedOffset);
         groundedRadius = Mathf.Max(0.01f, groundedRadius);
-        maxPitch = Mathf.Max(minPitch, maxPitch);
+        playerCollisionImpact = Mathf.Max(0f, playerCollisionImpact);
+        rigidbodyImpactSpeedThreshold = Mathf.Max(0f, rigidbodyImpactSpeedThreshold);
+        heavyObjectMassThreshold = Mathf.Max(0f, heavyObjectMassThreshold);
+        heavyObjectDownwardSpeedThreshold = Mathf.Max(0f, heavyObjectDownwardSpeedThreshold);
+        landingImpactThreshold = Mathf.Max(0f, landingImpactThreshold);
+        landingTorqueMultiplier = Mathf.Max(0f, landingTorqueMultiplier);
+        externalImpactForceMultiplier = Mathf.Max(0f, externalImpactForceMultiplier);
+        externalImpactTorqueMultiplier = Mathf.Max(0f, externalImpactTorqueMultiplier);
+        slideSlopeAngle = Mathf.Clamp(slideSlopeAngle, 1f, 89f);
+        slideForce = Mathf.Max(0f, slideForce);
     }
 
-    private void EnsureGroundLayersConfigured()
+    private void EnsureLayerMasksConfigured()
     {
         if (groundLayers.value == 0)
         {
             groundLayers = ~0;
         }
 
-        if (pickupLayers.value == 0)
+        if (interactionLayers.value == 0)
         {
-            pickupLayers = ~0;
+            interactionLayers = ~0;
         }
+
+        int selfLayerMask = 1 << gameObject.layer;
+        groundLayers &= ~selfLayerMask;
+        interactionLayers &= ~selfLayerMask;
+    }
+
+    private void EnsureRuntimePhysicsComponents()
+    {
+        if (physicsBody == null)
+        {
+            physicsBody = gameObject.AddComponent<Rigidbody>();
+        }
+
+        if (physicsCollider == null)
+        {
+            physicsCollider = gameObject.AddComponent<CapsuleCollider>();
+            physicsCollider.height = 1.75f;
+            physicsCollider.radius = 0.2f;
+            physicsCollider.center = new Vector3(0f, 0.9f, 0f);
+            physicsCollider.direction = 1;
+        }
+
+        physicsBody.useGravity = false;
+        physicsBody.interpolation = RigidbodyInterpolation.Interpolate;
+        physicsBody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        physicsBody.maxAngularVelocity = maxAngularVelocity;
+        physicsBody.centerOfMass = centerOfMassOffset;
     }
 
     private void ResolveInputActions()
@@ -228,7 +300,6 @@ public class PlayerController : NetworkBehaviour
         }
 
         moveAction = playerInput.actions["Move"];
-        lookAction = playerInput.actions["Look"];
         jumpAction = playerInput.actions["Jump"];
         sprintAction = playerInput.actions["Sprint"];
         interactAction = playerInput.actions["Interact"];
@@ -249,119 +320,243 @@ public class PlayerController : NetworkBehaviour
         return NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening;
     }
 
+    private void UpdatePhysicsOwnershipState(bool force = false)
+    {
+        if (physicsBody == null)
+        {
+            return;
+        }
+
+        bool shouldSimulate = CanProcessInput();
+        if (!force && isPhysicsOwner == shouldSimulate)
+        {
+            return;
+        }
+
+        isPhysicsOwner = shouldSimulate;
+        physicsBody.isKinematic = !shouldSimulate;
+        physicsBody.useGravity = false;
+        physicsBody.maxAngularVelocity = maxAngularVelocity;
+        physicsBody.centerOfMass = centerOfMassOffset;
+
+        if (!shouldSimulate)
+        {
+            physicsBody.linearVelocity = Vector3.zero;
+            physicsBody.angularVelocity = Vector3.zero;
+        }
+    }
+
     private void ReadInput()
     {
         moveInput = moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
-        lookInput = lookAction != null ? lookAction.ReadValue<Vector2>() : Vector2.zero;
 
         if (jumpAction != null && jumpAction.WasPressedThisFrame())
         {
             jumpQueued = true;
         }
-
-        if (interactAction != null && interactAction.WasPressedThisFrame())
-        {
-            interactQueued = true;
-        }
     }
 
-    private void UpdateGroundedState()
-    {
-        Vector3 spherePosition = transform.position + Vector3.up * groundedOffset;
-        bool groundedCheck = Physics.CheckSphere(
-            spherePosition,
-            groundedRadius,
-            groundLayers,
-            QueryTriggerInteraction.Ignore);
-
-        // While the character is still moving upward after a jump, don't snap back
-        // to grounded just because the ground check sphere still overlaps the floor.
-        isGrounded = groundedCheck && verticalVelocity <= 0f;
-
-        if (isGrounded && verticalVelocity < 0f)
-        {
-            verticalVelocity = -2f;
-        }
-    }
-
-    private void UpdateLookRotation()
-    {
-        targetYaw += lookInput.x * lookSensitivity;
-        cameraPitch = Mathf.Clamp(cameraPitch - (lookInput.y * lookSensitivity), minPitch, maxPitch);
-
-        float currentYaw = transform.eulerAngles.y;
-        float nextYaw = rotationSpeed > 0f
-            ? Mathf.MoveTowardsAngle(currentYaw, targetYaw, rotationSpeed * Time.deltaTime)
-            : targetYaw;
-
-        transform.rotation = Quaternion.Euler(0f, nextYaw, 0f);
-
-        if (cameraRoot != null)
-        {
-            cameraRoot.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
-        }
-    }
-
-    private void UpdateJumpAndGravity()
-    {
-        if (isGrounded && jumpQueued)
-        {
-            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            isGrounded = false;
-
-            if (animator != null)
-            {
-                animator.SetTrigger(JumpHash);
-            }
-
-            if (networkObject != null && networkObject.IsSpawned && networkObject.IsOwner)
-            {
-                syncedJumpSequence.Value++;
-            }
-        }
-
-        if (!isGrounded)
-        {
-            float appliedGravity = verticalVelocity < 0f
-                ? gravity * fallGravityMultiplier
-                : gravity;
-
-            verticalVelocity = Mathf.Max(verticalVelocity + (appliedGravity * Time.deltaTime), terminalVelocity);
-        }
-
-        jumpQueued = false;
-    }
-
-    private void UpdateMovement()
-    {
-        Vector3 worldMove = GetCameraRelativeMove(moveInput);
-        float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);
-        float speed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude;
-
-        Vector3 horizontalVelocity = worldMove * speed;
-        Vector3 frameVelocity = horizontalVelocity + (Vector3.up * verticalVelocity);
-
-        characterController.Move(frameVelocity * Time.deltaTime);
-    }
-
-    private Vector3 GetCameraRelativeMove(Vector2 input)
+    private Vector3 GetMoveDirection(Vector2 input)
     {
         if (input.sqrMagnitude <= 0.0001f)
         {
             return Vector3.zero;
         }
 
-        Vector3 forward = transform.forward;
-        Vector3 right = transform.right;
+        Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+        Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+        Vector3 direction = (forward * input.y) + (right * input.x);
+        return direction.sqrMagnitude > 1f ? direction.normalized : direction;
+    }
 
-        if (cameraRoot != null)
+    private void UpdateGroundedState()
+    {
+        if (physicsCollider == null || physicsBody == null)
         {
-            forward = Vector3.ProjectOnPlane(cameraRoot.forward, Vector3.up).normalized;
-            right = Vector3.ProjectOnPlane(cameraRoot.right, Vector3.up).normalized;
+            isGrounded = false;
+            groundNormal = Vector3.up;
+            return;
         }
 
-        Vector3 move = (forward * input.y) + (right * input.x);
-        return move.sqrMagnitude > 1f ? move.normalized : move;
+        bool wasGrounded = isGrounded;
+        float previousVerticalVelocity = lastVerticalVelocity;
+
+        Vector3 center = transform.TransformPoint(physicsCollider.center);
+        float worldRadius = GetWorldRadius();
+        float halfHeight = GetWorldHalfHeight();
+        float castDistance = Mathf.Max(groundedOffset, groundedRadius) + 0.05f;
+        Vector3 castOrigin = center + (Vector3.up * Mathf.Max(0f, halfHeight - worldRadius + 0.02f));
+
+        bool hitGround = Physics.SphereCast(
+            castOrigin,
+            Mathf.Max(groundedRadius, worldRadius * 0.95f),
+            Vector3.down,
+            out RaycastHit hit,
+            (halfHeight - worldRadius) + castDistance,
+            groundLayers,
+            QueryTriggerInteraction.Ignore);
+
+        groundNormal = hitGround ? hit.normal : Vector3.up;
+        isGrounded = hitGround && physicsBody.linearVelocity.y <= 1f;
+
+        if (!wasGrounded && isGrounded && previousVerticalVelocity <= -landingImpactThreshold)
+        {
+            Vector3 landingDirection = currentHorizontalVelocity.sqrMagnitude > 0.01f
+                ? currentHorizontalVelocity.normalized
+                : transform.forward;
+            Vector3 landingForce = landingDirection * (Mathf.Abs(previousVerticalVelocity) * landingTorqueMultiplier);
+            ApplyExternalImpulse(landingForce, center + (Vector3.up * 0.5f));
+        }
+
+        lastVerticalVelocity = physicsBody.linearVelocity.y;
+    }
+
+    private float GetWorldRadius()
+    {
+        if (physicsCollider == null)
+        {
+            return groundedRadius;
+        }
+
+        Vector3 scale = transform.lossyScale;
+        float horizontalScale = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+        return physicsCollider.radius * horizontalScale;
+    }
+
+    private float GetWorldHalfHeight()
+    {
+        if (physicsCollider == null)
+        {
+            return 0.5f;
+        }
+
+        return (physicsCollider.height * Mathf.Abs(transform.lossyScale.y)) * 0.5f;
+    }
+
+    private void ApplyCustomGravity()
+    {
+        float verticalVelocity = physicsBody.linearVelocity.y;
+        float appliedGravity = verticalVelocity < 0f
+            ? gravity * fallGravityMultiplier
+            : gravity;
+
+        physicsBody.AddForce(Vector3.up * appliedGravity, ForceMode.Acceleration);
+    }
+
+    private void ApplyJump()
+    {
+        bool shouldJump = jumpQueued;
+        jumpQueued = false;
+
+        if (!shouldJump || !isGrounded)
+        {
+            return;
+        }
+
+        Vector3 velocity = physicsBody.linearVelocity;
+        velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        physicsBody.linearVelocity = velocity;
+        isGrounded = false;
+    }
+
+    private void UpdateMovement()
+    {
+        Vector3 moveDirection = GetMoveDirection(moveInput);
+        float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);
+        float targetSpeed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude;
+        float acceleration = isGrounded ? movementAcceleration : airAcceleration;
+
+        Vector3 velocity = physicsBody.linearVelocity;
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(velocity, Vector3.up);
+        Vector3 desiredVelocity = moveDirection * targetSpeed;
+        Vector3 nextPlanarVelocity = Vector3.MoveTowards(planarVelocity, desiredVelocity, acceleration * Time.fixedDeltaTime);
+
+        physicsBody.linearVelocity = nextPlanarVelocity + (Vector3.up * velocity.y);
+        currentHorizontalVelocity = nextPlanarVelocity;
+
+        if (moveDirection.sqrMagnitude > 0.0001f)
+        {
+            ApplyTurnTorque(moveDirection);
+        }
+    }
+
+    private void ApplyTurnTorque(Vector3 moveDirection)
+    {
+        Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        if (flatForward.sqrMagnitude <= 0.0001f)
+        {
+            flatForward = Vector3.forward;
+        }
+
+        float currentYaw = Mathf.Atan2(flatForward.x, flatForward.z) * Mathf.Rad2Deg;
+        float targetYaw = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
+        float maxStep = rotationSpeed * Time.fixedDeltaTime;
+        float desiredYaw = Mathf.MoveTowardsAngle(currentYaw, targetYaw, maxStep);
+        float yawDelta = Mathf.DeltaAngle(currentYaw, desiredYaw);
+        float desiredYawVelocity = yawDelta * Mathf.Deg2Rad / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
+        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
+        float torque = (desiredYawVelocity - currentYawVelocity) * turnTorque - (currentYawVelocity * turnDamping);
+
+        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
+    }
+
+    private void ApplySlopeSlide()
+    {
+        if (!isGrounded)
+        {
+            return;
+        }
+
+        float slopeAngle = Vector3.Angle(groundNormal, Vector3.up);
+        if (slopeAngle < slideSlopeAngle)
+        {
+            return;
+        }
+
+        Vector3 slideDirection = Vector3.ProjectOnPlane(Vector3.down, groundNormal);
+        if (slideDirection.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        slideDirection.Normalize();
+        float slopeFactor = Mathf.InverseLerp(slideSlopeAngle, 89f, slopeAngle);
+        physicsBody.AddForce(slideDirection * (slideForce * slopeFactor), ForceMode.Acceleration);
+    }
+
+    private void ApplyBalanceTorques()
+    {
+        float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
+        if (tiltAngle >= fallenTiltAngle)
+        {
+            timeSinceLargeTilt += Time.fixedDeltaTime;
+        }
+        else
+        {
+            timeSinceLargeTilt = 0f;
+        }
+
+        float recoveryMultiplier = timeSinceLargeTilt >= recoveryDelay ? recoveryTorqueMultiplier : 1f;
+        Vector3 uprightAxis = Vector3.Cross(transform.up, Vector3.up);
+        Vector3 tiltAngularVelocity = Vector3.ProjectOnPlane(physicsBody.angularVelocity, Vector3.up);
+
+        Vector3 correctiveTorque =
+            (uprightAxis * (uprightTorque * recoveryMultiplier)) -
+            (tiltAngularVelocity * (uprightDamping * recoveryMultiplier));
+
+        physicsBody.AddTorque(correctiveTorque, ForceMode.Acceleration);
+    }
+
+    private void ClampVerticalVelocity()
+    {
+        Vector3 velocity = physicsBody.linearVelocity;
+        if (velocity.y < terminalVelocity)
+        {
+            velocity.y = terminalVelocity;
+            physicsBody.linearVelocity = velocity;
+        }
+
+        lastVerticalVelocity = physicsBody.linearVelocity.y;
     }
 
     private bool CanSprint()
@@ -371,232 +566,263 @@ public class PlayerController : NetworkBehaviour
             return false;
         }
 
-        return isGrounded && moveInput.y > 0.1f && moveInput.sqrMagnitude > 0.01f;
+        return moveInput.sqrMagnitude > 0.01f;
     }
 
-    private void UpdateAnimator()
+    private void HandleInteractionInput()
     {
-        if (animator == null)
+        if (!IsInteractPressedThisFrame())
         {
             return;
         }
 
-        Vector2 animationInput = moveInput;
-        animationInput.x *= 0.5f;
-        animationInput.y *= CanSprint() ? 1f : 0.5f;
+        if (heldRigidbody != null)
+        {
+            DropHeldObject();
+            return;
+        }
 
-        float speedValue = moveInput.sqrMagnitude > 0.001f
-            ? (CanSprint() ? 1f : Mathf.Clamp01(moveInput.magnitude) * 0.5f)
-            : 0f;
-
-        animator.SetFloat(MoveXHash, animationInput.x, animationDampTime, Time.deltaTime);
-        animator.SetFloat(MoveYHash, animationInput.y, animationDampTime, Time.deltaTime);
-        animator.SetFloat(SpeedHash, speedValue, animationDampTime, Time.deltaTime);
-        animator.SetBool(IsGroundedHash, isGrounded);
-        animator.SetFloat(VerticalVelocityHash, verticalVelocity);
-
-        if (networkObject == null || !networkObject.IsSpawned || !networkObject.IsOwner)
+        if (!TryGetInteractionHit(out RaycastHit hit))
         {
             return;
         }
 
-        syncedMoveX.Value = animationInput.x;
-        syncedMoveY.Value = animationInput.y;
-        syncedSpeed.Value = speedValue;
-        syncedIsGrounded.Value = isGrounded;
-        syncedVerticalVelocity.Value = verticalVelocity;
+        if (TryGetInteractable(hit.collider, out IPlayerInteractable interactable)
+            && interactable.CanInteract(this))
+        {
+            interactable.Interact(this);
+            return;
+        }
+
+        if (hit.rigidbody != null)
+        {
+            TryPickUp(hit.rigidbody);
+        }
     }
 
-    private void ApplyRemoteAnimatorState()
+    private bool TryGetInteractionHit(out RaycastHit hit)
     {
-        if (animator == null || networkObject == null || !networkObject.IsSpawned || networkObject.IsOwner)
+        Vector3 rayOrigin = transform.position + (transform.forward * 0.1f);
+        Vector3 rayDirection = transform.forward;
+
+        if (interactionRadius > 0f)
         {
-            return;
+            return Physics.SphereCast(
+                rayOrigin,
+                interactionRadius,
+                rayDirection,
+                out hit,
+                interactionDistance,
+                interactionLayers,
+                QueryTriggerInteraction.Ignore);
         }
 
-        animator.SetFloat(MoveXHash, syncedMoveX.Value, animationDampTime, Time.deltaTime);
-        animator.SetFloat(MoveYHash, syncedMoveY.Value, animationDampTime, Time.deltaTime);
-        animator.SetFloat(SpeedHash, syncedSpeed.Value, animationDampTime, Time.deltaTime);
-        animator.SetBool(IsGroundedHash, syncedIsGrounded.Value);
-        animator.SetFloat(VerticalVelocityHash, syncedVerticalVelocity.Value);
-
-        if (syncedJumpSequence.Value == lastAppliedJumpSequence)
-        {
-            return;
-        }
-
-        animator.SetTrigger(JumpHash);
-        lastAppliedJumpSequence = syncedJumpSequence.Value;
+        return Physics.Raycast(
+            rayOrigin,
+            rayDirection,
+            out hit,
+            interactionDistance,
+            interactionLayers,
+            QueryTriggerInteraction.Ignore);
     }
 
-    private void TryHandleWeaponPickup()
+    private void OnCollisionEnter(Collision collision)
     {
-        if (!interactQueued)
-        {
-            return;
-        }
-
-        interactQueued = false;
-
-        if (!IsSpawned || !IsOwner)
-        {
-            return;
-        }
-
-        WeaponPickup pickup = FindClosestWeaponPickup();
-        if (pickup == null)
-        {
-            return;
-        }
-
-        RequestPickupServerRpc(pickup.NetworkObject);
+        EvaluateImpactCollision(collision);
     }
 
-    private WeaponPickup FindClosestWeaponPickup()
+    private void EvaluateImpactCollision(Collision collision)
     {
-        int hitCount = Physics.OverlapSphereNonAlloc(
-            transform.position,
-            pickupRange,
-            pickupResults,
-            pickupLayers,
-            QueryTriggerInteraction.Collide);
-
-        WeaponPickup closestPickup = null;
-        float closestDistanceSqr = float.MaxValue;
-
-        for (int i = 0; i < hitCount; i++)
+        if (!CanProcessInput() || physicsBody == null || physicsBody.isKinematic || collision.contactCount == 0)
         {
-            Collider hit = pickupResults[i];
-            if (hit == null)
+            return;
+        }
+
+        ContactPoint contact = collision.GetContact(0);
+        Vector3 impactDirection = -contact.normal;
+        float relativeSpeed = collision.relativeVelocity.magnitude;
+
+        PlayerController otherPlayer = collision.collider.GetComponentInParent<PlayerController>();
+        if (otherPlayer != null && otherPlayer != this && relativeSpeed > 0.5f)
+        {
+            ApplyExternalImpulse(impactDirection.normalized * playerCollisionImpact, contact.point);
+        }
+
+        Rigidbody otherBody = collision.rigidbody;
+        if (otherBody == null)
+        {
+            return;
+        }
+
+        if (relativeSpeed >= rigidbodyImpactSpeedThreshold)
+        {
+            ApplyExternalImpulse(collision.relativeVelocity * 0.08f, contact.point);
+        }
+
+        bool isHeavyDownwardImpact =
+            contact.normal.y < -0.2f &&
+            otherBody.mass >= heavyObjectMassThreshold &&
+            otherBody.linearVelocity.y <= -heavyObjectDownwardSpeedThreshold;
+
+        if (isHeavyDownwardImpact)
+        {
+            ApplyExternalImpulse(Vector3.down * (otherBody.mass * 0.1f), contact.point);
+        }
+    }
+
+    private bool TryPickUp(Rigidbody target)
+    {
+        if (target == null || target == heldRigidbody)
+        {
+            return false;
+        }
+
+        if (target.isKinematic || target.mass > maxCarryMass)
+        {
+            return false;
+        }
+
+        EnsureHoldPointExists();
+        if (holdPoint == null)
+        {
+            return false;
+        }
+
+        heldRigidbody = target;
+        heldOriginalParent = target.transform.parent;
+        heldUseGravity = target.useGravity;
+        heldIsKinematic = target.isKinematic;
+        heldInterpolation = target.interpolation;
+        heldCollisionMode = target.collisionDetectionMode;
+        heldColliders = target.GetComponentsInChildren<Collider>(true);
+
+        target.linearVelocity = Vector3.zero;
+        target.angularVelocity = Vector3.zero;
+        target.useGravity = false;
+        target.isKinematic = true;
+        target.interpolation = RigidbodyInterpolation.None;
+        target.collisionDetectionMode = CollisionDetectionMode.Discrete;
+        target.transform.SetParent(holdPoint, true);
+
+        UpdateHeldObjectPose();
+        SetHeldObjectCollisionIgnored(true);
+        return true;
+    }
+
+    private void DropHeldObject()
+    {
+        if (heldRigidbody == null)
+        {
+            return;
+        }
+
+        SetHeldObjectCollisionIgnored(false);
+
+        Rigidbody body = heldRigidbody;
+        Transform originalParent = heldOriginalParent;
+
+        body.transform.SetParent(originalParent, true);
+        body.useGravity = heldUseGravity;
+        body.isKinematic = heldIsKinematic;
+        body.interpolation = heldInterpolation;
+        body.collisionDetectionMode = heldCollisionMode;
+        body.linearVelocity = currentHorizontalVelocity;
+
+        ClearHeldObjectState();
+    }
+
+    private void ForceDropHeldObject()
+    {
+        if (heldRigidbody == null)
+        {
+            return;
+        }
+
+        SetHeldObjectCollisionIgnored(false);
+
+        Rigidbody body = heldRigidbody;
+        Transform originalParent = heldOriginalParent;
+
+        body.transform.SetParent(originalParent, true);
+        body.useGravity = heldUseGravity;
+        body.isKinematic = heldIsKinematic;
+        body.interpolation = heldInterpolation;
+        body.collisionDetectionMode = heldCollisionMode;
+
+        ClearHeldObjectState();
+    }
+
+    private void ClearHeldObjectState()
+    {
+        heldRigidbody = null;
+        heldOriginalParent = null;
+        heldColliders = Array.Empty<Collider>();
+    }
+
+    private void UpdateHeldObjectPose()
+    {
+        if (heldRigidbody == null || holdPoint == null)
+        {
+            return;
+        }
+
+        heldRigidbody.transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
+    }
+
+    private void EnsureHoldPointExists()
+    {
+        if (holdPoint != null)
+        {
+            return;
+        }
+
+        Transform existing = transform.Find("HoldPoint");
+        if (existing != null)
+        {
+            holdPoint = existing;
+        }
+        else
+        {
+            GameObject holdPointObject = new GameObject("HoldPoint");
+            holdPoint = holdPointObject.transform;
+            holdPoint.SetParent(transform, false);
+        }
+
+        holdPoint.localPosition = holdPointLocalOffset;
+        holdPoint.localRotation = Quaternion.identity;
+    }
+
+    private void SetHeldObjectCollisionIgnored(bool shouldIgnore)
+    {
+        if (heldColliders == null || physicsCollider == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < heldColliders.Length; i++)
+        {
+            Collider heldCollider = heldColliders[i];
+            if (heldCollider != null)
             {
-                continue;
+                Physics.IgnoreCollision(physicsCollider, heldCollider, shouldIgnore);
             }
+        }
+    }
 
-            WeaponPickup pickup = hit.GetComponentInParent<WeaponPickup>();
-            if (pickup == null || !pickup.CanBePickedUp)
+    private static bool TryGetInteractable(Collider source, out IPlayerInteractable interactable)
+    {
+        MonoBehaviour[] behaviours = source.GetComponentsInParent<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is IPlayerInteractable candidate)
             {
-                continue;
+                interactable = candidate;
+                return true;
             }
-
-            float distanceSqr = (pickup.transform.position - transform.position).sqrMagnitude;
-            if (distanceSqr >= closestDistanceSqr)
-            {
-                continue;
-            }
-
-            closestDistanceSqr = distanceSqr;
-            closestPickup = pickup;
         }
 
-        return closestPickup;
-    }
-
-    [ServerRpc]
-    private void RequestPickupServerRpc(NetworkObjectReference pickupReference)
-    {
-        if (!pickupReference.TryGet(out NetworkObject pickupObject))
-        {
-            return;
-        }
-
-        WeaponPickup pickup = pickupObject.GetComponent<WeaponPickup>();
-        if (pickup == null)
-        {
-            return;
-        }
-
-        float maxPickupDistanceSqr = pickupRange * pickupRange * 2.25f;
-        if ((pickup.transform.position - transform.position).sqrMagnitude > maxPickupDistanceSqr)
-        {
-            return;
-        }
-
-        if (!pickup.TryConsume(out WeaponDefinition definition))
-        {
-            return;
-        }
-
-        equippedWeaponId.Value = new FixedString64Bytes(definition.WeaponId);
-    }
-
-    private void HandleEquippedWeaponChanged(FixedString64Bytes previousWeaponId, FixedString64Bytes newWeaponId)
-    {
-        RefreshEquippedWeaponVisual();
-    }
-
-    private void RefreshEquippedWeaponVisual()
-    {
-        ClearEquippedWeaponVisual();
-
-        if (weaponHolder == null || equippedWeaponId.Value.Length == 0)
-        {
-            return;
-        }
-
-        WeaponDefinition definition = WeaponCatalog.GetById(equippedWeaponId.Value.ToString());
-        if (definition == null || definition.EquippedPrefab == null)
-        {
-            return;
-        }
-
-        equippedWeaponInstance = Instantiate(definition.EquippedPrefab, weaponHolder);
-        equippedWeaponInstance.name = $"{definition.WeaponId}_Equipped";
-        equippedWeaponInstance.transform.localPosition = definition.EquippedLocalPosition;
-        equippedWeaponInstance.transform.localEulerAngles = definition.EquippedLocalRotation;
-        equippedWeaponInstance.transform.localScale = definition.EquippedLocalScale;
-        PrepareEquippedWeaponInstance(equippedWeaponInstance);
-
-        if (leftHandIKFollower != null)
-        {
-            leftHandIKFollower.SyncToWeapon(equippedWeaponInstance.transform);
-        }
-    }
-
-    private void ClearEquippedWeaponVisual()
-    {
-        if (equippedWeaponInstance == null)
-        {
-            return;
-        }
-
-        Destroy(equippedWeaponInstance);
-        equippedWeaponInstance = null;
-
-        if (leftHandIKFollower != null)
-        {
-            leftHandIKFollower.SetGrip(null);
-        }
-    }
-
-    private static void PrepareEquippedWeaponInstance(GameObject weaponInstance)
-    {
-        Collider[] colliders = weaponInstance.GetComponentsInChildren<Collider>(true);
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            colliders[i].enabled = false;
-        }
-
-        Rigidbody[] rigidbodies = weaponInstance.GetComponentsInChildren<Rigidbody>(true);
-        for (int i = 0; i < rigidbodies.Length; i++)
-        {
-            rigidbodies[i].isKinematic = true;
-            rigidbodies[i].detectCollisions = false;
-        }
-    }
-
-    private static float NormalizeAngle(float angle)
-    {
-        while (angle > 180f)
-        {
-            angle -= 360f;
-        }
-
-        while (angle < -180f)
-        {
-            angle += 360f;
-        }
-
-        return angle;
+        interactable = null;
+        return false;
     }
 
     private void OnDrawGizmosSelected()
@@ -604,5 +830,24 @@ public class PlayerController : NetworkBehaviour
         Gizmos.color = isGrounded ? Color.green : Color.red;
         Vector3 spherePosition = transform.position + Vector3.up * groundedOffset;
         Gizmos.DrawWireSphere(spherePosition, groundedRadius);
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(transform.position, transform.position + (transform.forward * interactionDistance));
+
+        if (holdPoint != null)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(holdPoint.position, 0.1f);
+        }
+
+        Gizmos.color = Color.blue;
+        Vector3 normalOrigin = transform.position + Vector3.up * groundedOffset;
+        Gizmos.DrawLine(normalOrigin, normalOrigin + (groundNormal.normalized * 1.2f));
     }
+}
+
+public interface IPlayerInteractable
+{
+    bool CanInteract(PlayerController controller);
+    void Interact(PlayerController controller);
 }
