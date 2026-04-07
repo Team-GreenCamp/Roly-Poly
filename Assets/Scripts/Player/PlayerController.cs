@@ -363,10 +363,31 @@ public class PlayerController : NetworkBehaviour
             return Vector3.zero;
         }
 
-        Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-        Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+        Transform movementReference = GetMovementReference();
+        Vector3 forward = Vector3.ProjectOnPlane(movementReference.forward, Vector3.up).normalized;
+        Vector3 right = Vector3.ProjectOnPlane(movementReference.right, Vector3.up).normalized;
         Vector3 direction = (forward * input.y) + (right * input.x);
         return direction.sqrMagnitude > 1f ? direction.normalized : direction;
+    }
+
+    private Transform GetMovementReference()
+    {
+        // 카메라가 실제로 바라보는 방향 기준으로 이동한다.
+        Camera currentCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+        if (currentCamera != null)
+        {
+            return currentCamera.transform;
+        }
+
+        Transform cameraRoot = transform.Find("CameraRoot");
+        return cameraRoot != null ? cameraRoot : transform;
+    }
+
+    private Vector3 GetFacingDirection()
+    {
+        Transform movementReference = GetMovementReference();
+        Vector3 facingDirection = Vector3.ProjectOnPlane(movementReference.forward, Vector3.up);
+        return facingDirection.sqrMagnitude > 0.0001f ? facingDirection.normalized : transform.forward;
     }
 
     private void UpdateGroundedState()
@@ -476,11 +497,16 @@ public class PlayerController : NetworkBehaviour
 
         if (moveDirection.sqrMagnitude > 0.0001f)
         {
+            // 이동 입력이 있을 때만 이동 방향을 향해 돈다.
             ApplyTurnTorque(moveDirection);
+        }
+        else
+        {
+            StabilizeIdleYaw();
         }
     }
 
-    private void ApplyTurnTorque(Vector3 moveDirection)
+    private void ApplyTurnTorque(Vector3 facingDirection)
     {
         Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
         if (flatForward.sqrMagnitude <= 0.0001f)
@@ -489,7 +515,8 @@ public class PlayerController : NetworkBehaviour
         }
 
         float currentYaw = Mathf.Atan2(flatForward.x, flatForward.z) * Mathf.Rad2Deg;
-        float targetYaw = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
+        // 좌우 이동에도 몸이 옆으로 꺾이지 않게 카메라 전방 기준으로 회전한다.
+        float targetYaw = Mathf.Atan2(facingDirection.x, facingDirection.z) * Mathf.Rad2Deg;
         float maxStep = rotationSpeed * Time.fixedDeltaTime;
         float desiredYaw = Mathf.MoveTowardsAngle(currentYaw, targetYaw, maxStep);
         float yawDelta = Mathf.DeltaAngle(currentYaw, desiredYaw);
@@ -497,6 +524,13 @@ public class PlayerController : NetworkBehaviour
         float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
         float torque = (desiredYawVelocity - currentYawVelocity) * turnTorque - (currentYawVelocity * turnDamping);
 
+        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
+    }
+
+    private void StabilizeIdleYaw()
+    {
+        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
+        float torque = (-currentYawVelocity * turnDamping);
         physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
     }
 

@@ -9,13 +9,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8740561361255514374}
-  - component: {fileID: 2331239718062049963}
-  - component: {fileID: 3055640297070688550}
-  - component: {fileID: 1693436149286584330}
   - component: {fileID: -752662279871191066}
-  - component: {fileID: 3782511564552465626}
+  - component: {fileID: 8952032033408616040}
+  - component: {fileID: 2331239718062049963}
+  - component: {fileID: 1693436149286584330}
   - component: {fileID: -5105889794907920579}
   - component: {fileID: -1357284326032947471}
+  - component: {fileID: 5103745207573382375}
+  - component: {fileID: 3482339306295923204}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -40,6 +41,89 @@ Transform:
   - {fileID: 6016745152171355528}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-752662279871191066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 705982483
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &8952032033408616040
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5099361562403db4f95177bfce85bee7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
+  physicsBody: {fileID: 5103745207573382375}
+  physicsCollider: {fileID: 3482339306295923204}
+  playerInput: {fileID: 1693436149286584330}
+  networkObject: {fileID: -752662279871191066}
+  holdPoint: {fileID: 0}
+  walkSpeed: 3.5
+  sprintSpeed: 6
+  rotationSpeed: 720
+  movementAcceleration: 24
+  airAcceleration: 10
+  jumpHeight: 1.2
+  gravity: -25
+  terminalVelocity: -50
+  fallGravityMultiplier: 2
+  centerOfMassOffset: {x: 0, y: -0.35, z: 0}
+  uprightTorque: 90
+  uprightDamping: 10
+  fallenTiltAngle: 35
+  recoveryDelay: 1
+  recoveryTorqueMultiplier: 2.5
+  turnTorque: 35
+  turnDamping: 6
+  maxAngularVelocity: 25
+  interactionDistance: 2.2
+  interactionRadius: 0.25
+  interactionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  maxCarryMass: 20
+  holdPointLocalOffset: {x: 0.35, y: 1.2, z: 1.5}
+  groundedOffset: 0.1
+  groundedRadius: 0.25
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  playerCollisionImpact: 5
+  rigidbodyImpactSpeedThreshold: 5
+  heavyObjectMassThreshold: 20
+  heavyObjectDownwardSpeedThreshold: 6
+  landingImpactThreshold: 10
+  landingTorqueMultiplier: 0.2
+  externalImpactForceMultiplier: 1
+  externalImpactTorqueMultiplier: 0.35
+  slideSlopeAngle: 32
+  slideForce: 18
 --- !u!95 &2331239718062049963
 Animator:
   serializedVersion: 7
@@ -62,31 +146,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!143 &3055640297070688550
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2383615707599059421}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 1.75
-  m_Radius: 0.2
-  m_SlopeLimit: 45
-  m_StepOffset: 0.39240918
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!114 &1693436149286584330
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,71 +176,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &-752662279871191066
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2383615707599059421}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 498835207
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
---- !u!114 &3782511564552465626
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2383615707599059421}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5099361562403db4f95177bfce85bee7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  ShowTopMostFoldoutHeaderGroup: 1
-  characterController: {fileID: 3055640297070688550}
-  playerInput: {fileID: 1693436149286584330}
-  animator: {fileID: 2331239718062049963}
-  cameraRoot: {fileID: 114892334035800877}
-  networkObject: {fileID: -752662279871191066}
-  walkSpeed: 3
-  sprintSpeed: 5
-  rotationSpeed: 720
-  jumpHeight: 1.2
-  gravity: -25
-  terminalVelocity: -50
-  fallGravityMultiplier: 2
-  animationDampTime: 0.15
-  lookSensitivity: 0.12
-  minPitch: -35
-  maxPitch: 60
-  groundedOffset: 0.1
-  groundedRadius: 0.25
-  groundLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  weaponHolder: {fileID: 0}
-  pickupRange: 2
-  pickupLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  leftHandIKFollower: {fileID: 0}
 --- !u!114 &-5105889794907920579
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -243,7 +237,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   ownerOnlyBehaviours:
   - {fileID: 1693436149286584330}
-  - {fileID: 3782511564552465626}
+  - {fileID: 0}
   - {fileID: 0}
   ownerOnlyObjects: []
   networkTransform: {fileID: -5105889794907920579}
@@ -265,6 +259,56 @@ MonoBehaviour:
   showNameLabel: 1
   nameLabelOffset: {x: 0, y: 2.2, z: 0}
   nameLabelFontSize: 4
+--- !u!54 &5103745207573382375
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: -0.35, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 0
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 2
+--- !u!136 &3482339306295923204
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &2790217993094878390
 GameObject:
   m_ObjectHideFlags: 0
@@ -290,7 +334,7 @@ Transform:
   m_GameObject: {fileID: 2790217993094878390}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.75, z: 0}
+  m_LocalPosition: {x: 0, y: 1.61, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -286,7 +286,12 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         cinemachineCamera.Follow = cameraRoot;
-        cinemachineCamera.LookAt = cameraRoot;
+
+        // Pan Tilt 카메라는 LookAt을 강제로 잡으면 수동 회전 입력이 꼬일 수 있다.
+        if (cinemachineCamera.GetComponent<CinemachinePanTilt>() == null)
+        {
+            cinemachineCamera.LookAt = cameraRoot;
+        }
         boundCamera = cinemachineCamera;
     }
 
@@ -310,7 +315,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             cinemachineCamera.Follow = null;
         }
 
-        if (cinemachineCamera.LookAt == cameraRoot)
+        if (cinemachineCamera.GetComponent<CinemachinePanTilt>() == null &&
+            cinemachineCamera.LookAt == cameraRoot)
         {
             cinemachineCamera.LookAt = null;
         }
