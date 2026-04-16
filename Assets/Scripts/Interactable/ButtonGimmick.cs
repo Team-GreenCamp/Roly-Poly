@@ -1,6 +1,7 @@
 // 파일 경로: Assets/Scripts/Interactable/ButtonGimmick.cs
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class ButtonGimmick : MonoBehaviour, IInteractable
 {
@@ -18,6 +19,10 @@ public class ButtonGimmick : MonoBehaviour, IInteractable
 
     private Vector3 originalPos;
     private Vector3 pressedPos;
+
+    [Header("작동 이벤트")]
+    public UnityEvent onActivate;   // 눌렸을 때 실행할 일
+    public UnityEvent onDeactivate; // 튀어나올 때 실행할 일
 
     private void Start()
     {
@@ -45,6 +50,8 @@ public class ButtonGimmick : MonoBehaviour, IInteractable
     {
         isActivated = true;
         Debug.Log($"🔲 {interactor.name}이(가) [{gameObject.name}] 버튼을 눌렀습니다! ({resetTime}초 뒤 복구)");
+
+        onActivate.Invoke();
 
         if (movingPart != null)
         {
@@ -75,5 +82,7 @@ public class ButtonGimmick : MonoBehaviour, IInteractable
 
         isActivated = false;
         Debug.Log($"🔲 [{gameObject.name}] 버튼이 원상복구 되었습니다.");
+
+        onDeactivate.Invoke();
     }
 }
