@@ -44,6 +44,9 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private LayerMask interactionLayers = ~0;
     [SerializeField] private float maxCarryMass = 20f;
     [SerializeField] private Vector3 holdPointLocalOffset = new Vector3(0.35f, 1.2f, 1.5f);
+    [SerializeField] private Color interactableOutlineColor = new Color(1f, 0.85f, 0.2f, 1f);
+    [SerializeField] private float interactableOutlineWidth = 4f;
+    [SerializeField] private Outline.Mode interactableOutlineMode = Outline.Mode.OutlineVisible;
 
     [Header("Throw")]
     [SerializeField] private float throwForce = 8f;
@@ -99,6 +102,7 @@ public class PlayerController : NetworkBehaviour
     private CarryableObject activeCarryableObject;
     private float activeCarrySpeedMultiplier = 1f;
     private bool activeCarryBlocksJump;
+    private InteractableOutlineHighlight currentInteractionHighlight;
     private Vector3 fallbackRespawnPosition;
     private Quaternion fallbackRespawnRotation;
 
@@ -133,6 +137,7 @@ public class PlayerController : NetworkBehaviour
 
     private void OnDisable()
     {
+        ClearInteractionHighlight();
         ForceDropHeldObject();
         activeCarryableObject?.ReleaseCarrier(this);
         ClearActiveCarryRule();
@@ -144,15 +149,18 @@ public class PlayerController : NetworkBehaviour
 
         if (!CanProcessInput())
         {
+            ClearInteractionHighlight();
             return;
         }
 
         if (playerInput == null || physicsBody == null)
         {
+            ClearInteractionHighlight();
             return;
         }
 
         ReadInput();
+        UpdateInteractionHighlight();
         HandleThrowInput();
         HandleInteractionInput();
         UpdateHeldObjectPose();
@@ -359,6 +367,7 @@ public class PlayerController : NetworkBehaviour
         interactionDistance = Mathf.Max(0.25f, interactionDistance);
         interactionRadius = Mathf.Max(0f, interactionRadius);
         maxCarryMass = Mathf.Max(0.1f, maxCarryMass);
+        interactableOutlineWidth = Mathf.Clamp(interactableOutlineWidth, 0f, 10f);
         throwForce = Mathf.Max(0f, throwForce);
         throwUpwardRatio = Mathf.Clamp01(throwUpwardRatio);
         throwVelocityInheritance = Mathf.Max(0f, throwVelocityInheritance);
@@ -754,6 +763,46 @@ public class PlayerController : NetworkBehaviour
         TryThrowHeldObject();
     }
 
+    private void UpdateInteractionHighlight()
+    {
+        InteractableOutlineHighlight nextHighlight = null;
+        if (heldRigidbody == null
+            && activeCarryableObject == null
+            && TryGetInteractionHit(out RaycastHit hit)
+            && TryGetInteractionHighlight(hit, out InteractableOutlineHighlight highlight))
+        {
+            nextHighlight = highlight;
+        }
+
+        if (currentInteractionHighlight == nextHighlight)
+        {
+            return;
+        }
+
+        ClearInteractionHighlight();
+        currentInteractionHighlight = nextHighlight;
+
+        if (currentInteractionHighlight != null)
+        {
+            currentInteractionHighlight.Configure(
+                interactableOutlineColor,
+                interactableOutlineWidth,
+                interactableOutlineMode);
+            currentInteractionHighlight.SetHighlighted(true);
+        }
+    }
+
+    private void ClearInteractionHighlight()
+    {
+        if (currentInteractionHighlight == null)
+        {
+            return;
+        }
+
+        currentInteractionHighlight.SetHighlighted(false);
+        currentInteractionHighlight = null;
+    }
+
     private void HandleInteractionInput()
     {
         if (!IsInteractPressedThisFrame())
@@ -857,6 +906,66 @@ public class PlayerController : NetworkBehaviour
             interactionDistance,
             interactionLayers,
             QueryTriggerInteraction.Ignore);
+    }
+
+    private bool TryGetInteractionHighlight(RaycastHit hit, out InteractableOutlineHighlight highlight)
+    {
+        if (TryGetInteractable(hit.collider, out IPlayerInteractable interactable)
+            && interactable.CanInteract(this))
+        {
+            highlight = GetOrAddInteractionHighlight(hit.collider);
+            return highlight != null;
+        }
+
+        if (CanHighlightRigidbody(hit.rigidbody))
+        {
+            highlight = GetOrAddInteractionHighlight(hit.rigidbody.gameObject);
+            return highlight != null;
+        }
+
+        highlight = null;
+        return false;
+    }
+
+    private bool CanHighlightRigidbody(Rigidbody target)
+    {
+        return target != null
+            && target != heldRigidbody
+            && !target.isKinematic
+            && target.mass <= maxCarryMass
+            && target.GetComponentInParent<PlayerController>() == null;
+    }
+
+    private InteractableOutlineHighlight GetOrAddInteractionHighlight(Collider source)
+    {
+        MonoBehaviour[] behaviours = source.GetComponentsInParent<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is IPlayerInteractable)
+            {
+                GameObject targetObject = behaviours[i].gameObject;
+                InteractableOutlineHighlight highlight = targetObject.GetComponent<InteractableOutlineHighlight>();
+                if (highlight == null)
+                {
+                    highlight = targetObject.AddComponent<InteractableOutlineHighlight>();
+                }
+
+                return highlight;
+            }
+        }
+
+        return null;
+    }
+
+    private static InteractableOutlineHighlight GetOrAddInteractionHighlight(GameObject targetObject)
+    {
+        InteractableOutlineHighlight highlight = targetObject.GetComponent<InteractableOutlineHighlight>();
+        if (highlight == null)
+        {
+            highlight = targetObject.AddComponent<InteractableOutlineHighlight>();
+        }
+
+        return highlight;
     }
 
     private void OnCollisionEnter(Collision collision)
