@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -44,6 +45,12 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float maxCarryMass = 20f;
     [SerializeField] private Vector3 holdPointLocalOffset = new Vector3(0.35f, 1.2f, 1.5f);
 
+    [Header("Throw")]
+    [SerializeField] private float throwForce = 8f;
+    [SerializeField] private float throwUpwardRatio = 0.18f;
+    [SerializeField] private float throwVelocityInheritance = 0.75f;
+    [SerializeField] private float throwCollisionIgnoreTime = 0.25f;
+
     [Header("Ground Check")]
     [SerializeField] private float groundedOffset = 0.1f;
     [SerializeField] private float groundedRadius = 0.25f;
@@ -63,10 +70,15 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float slideSlopeAngle = 32f;
     [SerializeField] private float slideForce = 18f;
 
+    [Header("Respawn")]
+    [SerializeField] private Transform currentCheckpoint;
+    [SerializeField] private float respawnUpOffset = 0.25f;
+
     private InputAction moveAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
     private InputAction interactAction;
+    private InputAction throwAction;
 
     private Vector2 moveInput;
     private Vector3 currentHorizontalVelocity;
@@ -84,6 +96,11 @@ public class PlayerController : NetworkBehaviour
     private bool heldIsKinematic;
     private RigidbodyInterpolation heldInterpolation;
     private CollisionDetectionMode heldCollisionMode;
+    private CarryableObject activeCarryableObject;
+    private float activeCarrySpeedMultiplier = 1f;
+    private bool activeCarryBlocksJump;
+    private Vector3 fallbackRespawnPosition;
+    private Quaternion fallbackRespawnRotation;
 
     private void Reset()
     {
@@ -101,6 +118,7 @@ public class PlayerController : NetworkBehaviour
     {
         CacheReferences();
         ApplySafeRanges();
+        CacheFallbackRespawnPoint();
         ResolveInputActions();
         EnsureLayerMasksConfigured();
         EnsureRuntimePhysicsComponents();
@@ -116,6 +134,8 @@ public class PlayerController : NetworkBehaviour
     private void OnDisable()
     {
         ForceDropHeldObject();
+        activeCarryableObject?.ReleaseCarrier(this);
+        ClearActiveCarryRule();
     }
 
     private void Update()
@@ -133,6 +153,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         ReadInput();
+        HandleThrowInput();
         HandleInteractionInput();
         UpdateHeldObjectPose();
     }
@@ -156,6 +177,106 @@ public class PlayerController : NetworkBehaviour
     public bool IsInteractPressedThisFrame()
     {
         return CanProcessInput() && interactAction != null && interactAction.WasPressedThisFrame();
+    }
+
+    public bool CanCarryObject(CarryableObject carryableObject)
+    {
+        return CanProcessInput()
+            && carryableObject != null
+            && heldRigidbody == null
+            && activeCarryableObject == null;
+    }
+
+    public bool TryStartCarryObject(CarryableObject carryableObject)
+    {
+        if (!CanCarryObject(carryableObject))
+        {
+            return false;
+        }
+
+        return TryPickUp(carryableObject.AttachedRigidbody, carryableObject);
+    }
+
+    public void ApplyCarryRule(CarryableObject carryableObject)
+    {
+        if (carryableObject == null)
+        {
+            return;
+        }
+
+        if (activeCarryableObject != null && activeCarryableObject != carryableObject)
+        {
+            return;
+        }
+
+        activeCarryableObject = carryableObject;
+        activeCarrySpeedMultiplier = Mathf.Clamp(carryableObject.MoveSpeedMultiplier, 0.1f, 1f);
+        activeCarryBlocksJump = carryableObject.BlockJumpWhileCarrying;
+    }
+
+    public void ClearCarryRule(CarryableObject carryableObject)
+    {
+        if (activeCarryableObject != carryableObject)
+        {
+            return;
+        }
+
+        ClearActiveCarryRule();
+    }
+
+    public Collider GetCarryCollisionCollider()
+    {
+        return physicsCollider;
+    }
+
+    public void DropCarriedObject()
+    {
+        if (heldRigidbody != null)
+        {
+            DropHeldObject();
+            return;
+        }
+
+        activeCarryableObject?.ReleaseCarrier(this);
+    }
+
+    public void SetCheckpoint(Transform checkpoint)
+    {
+        if (checkpoint == null || !CanProcessInput())
+        {
+            return;
+        }
+
+        currentCheckpoint = checkpoint;
+    }
+
+    public void RespawnAtCheckpoint()
+    {
+        if (!CanProcessInput() || physicsBody == null)
+        {
+            return;
+        }
+
+        ForceDropHeldObject();
+        activeCarryableObject?.ReleaseCarrier(this);
+        ClearActiveCarryRule();
+
+        Vector3 spawnPosition = currentCheckpoint != null
+            ? currentCheckpoint.position
+            : fallbackRespawnPosition;
+        Quaternion spawnRotation = currentCheckpoint != null
+            ? currentCheckpoint.rotation
+            : fallbackRespawnRotation;
+
+        spawnPosition += Vector3.up * respawnUpOffset;
+        physicsBody.linearVelocity = Vector3.zero;
+        physicsBody.angularVelocity = Vector3.zero;
+        physicsBody.position = spawnPosition;
+        physicsBody.rotation = spawnRotation;
+        transform.SetPositionAndRotation(spawnPosition, spawnRotation);
+        currentHorizontalVelocity = Vector3.zero;
+        lastVerticalVelocity = 0f;
+        jumpQueued = false;
     }
 
     public void ApplyWobbleImpulse(Vector3 worldDirection, float strength)
@@ -238,6 +359,10 @@ public class PlayerController : NetworkBehaviour
         interactionDistance = Mathf.Max(0.25f, interactionDistance);
         interactionRadius = Mathf.Max(0f, interactionRadius);
         maxCarryMass = Mathf.Max(0.1f, maxCarryMass);
+        throwForce = Mathf.Max(0f, throwForce);
+        throwUpwardRatio = Mathf.Clamp01(throwUpwardRatio);
+        throwVelocityInheritance = Mathf.Max(0f, throwVelocityInheritance);
+        throwCollisionIgnoreTime = Mathf.Max(0f, throwCollisionIgnoreTime);
         groundedOffset = Mathf.Max(0.01f, groundedOffset);
         groundedRadius = Mathf.Max(0.01f, groundedRadius);
         playerCollisionImpact = Mathf.Max(0f, playerCollisionImpact);
@@ -250,6 +375,13 @@ public class PlayerController : NetworkBehaviour
         externalImpactTorqueMultiplier = Mathf.Max(0f, externalImpactTorqueMultiplier);
         slideSlopeAngle = Mathf.Clamp(slideSlopeAngle, 1f, 89f);
         slideForce = Mathf.Max(0f, slideForce);
+        respawnUpOffset = Mathf.Max(0f, respawnUpOffset);
+    }
+
+    private void CacheFallbackRespawnPoint()
+    {
+        fallbackRespawnPosition = transform.position;
+        fallbackRespawnRotation = transform.rotation;
     }
 
     private void EnsureLayerMasksConfigured()
@@ -303,6 +435,7 @@ public class PlayerController : NetworkBehaviour
         jumpAction = playerInput.actions["Jump"];
         sprintAction = playerInput.actions["Sprint"];
         interactAction = playerInput.actions["Interact"];
+        throwAction = playerInput.actions.FindAction("Throw", false);
     }
 
     private bool CanProcessInput()
@@ -390,6 +523,13 @@ public class PlayerController : NetworkBehaviour
         return facingDirection.sqrMagnitude > 0.0001f ? facingDirection.normalized : transform.forward;
     }
 
+    private Vector3 GetCharacterForwardDirection()
+    {
+        // 던지기는 카메라가 아니라 캐릭터 몸체가 바라보는 방향을 기준으로 한다.
+        Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        return forward.sqrMagnitude > 0.0001f ? forward.normalized : Vector3.forward;
+    }
+
     private void UpdateGroundedState()
     {
         if (physicsCollider == null || physicsBody == null)
@@ -469,7 +609,7 @@ public class PlayerController : NetworkBehaviour
         bool shouldJump = jumpQueued;
         jumpQueued = false;
 
-        if (!shouldJump || !isGrounded)
+        if (!shouldJump || !isGrounded || activeCarryBlocksJump)
         {
             return;
         }
@@ -484,7 +624,8 @@ public class PlayerController : NetworkBehaviour
     {
         Vector3 moveDirection = GetMoveDirection(moveInput);
         float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);
-        float targetSpeed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude;
+        // 운반 중에는 오브젝트별 이동 속도 제한을 적용한다.
+        float targetSpeed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude * activeCarrySpeedMultiplier;
         float acceleration = isGrounded ? movementAcceleration : airAcceleration;
 
         Vector3 velocity = physicsBody.linearVelocity;
@@ -603,6 +744,16 @@ public class PlayerController : NetworkBehaviour
         return moveInput.sqrMagnitude > 0.01f;
     }
 
+    private void HandleThrowInput()
+    {
+        if (throwAction == null || !throwAction.WasPressedThisFrame())
+        {
+            return;
+        }
+
+        TryThrowHeldObject();
+    }
+
     private void HandleInteractionInput()
     {
         if (!IsInteractPressedThisFrame())
@@ -613,6 +764,12 @@ public class PlayerController : NetworkBehaviour
         if (heldRigidbody != null)
         {
             DropHeldObject();
+            return;
+        }
+
+        if (activeCarryableObject != null)
+        {
+            activeCarryableObject.ReleaseCarrier(this);
             return;
         }
 
@@ -634,10 +791,52 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    private bool TryThrowHeldObject()
+    {
+        if (heldRigidbody == null)
+        {
+            return false;
+        }
+
+        SetHeldObjectCollisionIgnored(true);
+
+        Rigidbody body = heldRigidbody;
+        Transform originalParent = heldOriginalParent;
+        Collider[] thrownColliders = heldColliders;
+        CarryableObject carryableObject = activeCarryableObject;
+
+        body.transform.SetParent(originalParent, true);
+        body.useGravity = heldUseGravity;
+        body.isKinematic = heldIsKinematic;
+        body.interpolation = heldInterpolation;
+        body.collisionDetectionMode = heldCollisionMode;
+        body.linearVelocity = currentHorizontalVelocity * throwVelocityInheritance;
+
+        Vector3 throwDirection = (GetCharacterForwardDirection() + (Vector3.up * throwUpwardRatio)).normalized;
+        // 던질 때 플레이어 속도를 일부 이어받고 전방으로 즉시 힘을 준다.
+        body.AddForce(throwDirection * throwForce, ForceMode.Impulse);
+
+        ClearHeldObjectState();
+        ClearActiveCarryRule();
+        carryableObject?.NotifyCarrierReleased(this);
+
+        if (throwCollisionIgnoreTime > 0f && physicsCollider != null && thrownColliders != null)
+        {
+            StartCoroutine(RestoreThrownCollision(thrownColliders, throwCollisionIgnoreTime));
+        }
+        else
+        {
+            SetCollisionIgnoredForColliders(thrownColliders, false);
+        }
+
+        return true;
+    }
+
     private bool TryGetInteractionHit(out RaycastHit hit)
     {
-        Vector3 rayOrigin = transform.position + (transform.forward * 0.1f);
-        Vector3 rayDirection = transform.forward;
+        // 상호작용은 몸체 회전보다 플레이어가 바라보는 카메라 방향을 우선한다.
+        Vector3 rayDirection = GetFacingDirection();
+        Vector3 rayOrigin = transform.position + (Vector3.up * 0.9f) + (rayDirection * 0.1f);
 
         if (interactionRadius > 0f)
         {
@@ -706,12 +905,17 @@ public class PlayerController : NetworkBehaviour
 
     private bool TryPickUp(Rigidbody target)
     {
+        return TryPickUp(target, null);
+    }
+
+    private bool TryPickUp(Rigidbody target, CarryableObject carryableObject)
+    {
         if (target == null || target == heldRigidbody)
         {
             return false;
         }
 
-        if (target.isKinematic || target.mass > maxCarryMass)
+        if (target.isKinematic || (carryableObject == null && target.mass > maxCarryMass))
         {
             return false;
         }
@@ -729,6 +933,12 @@ public class PlayerController : NetworkBehaviour
         heldInterpolation = target.interpolation;
         heldCollisionMode = target.collisionDetectionMode;
         heldColliders = target.GetComponentsInChildren<Collider>(true);
+        activeCarryableObject = carryableObject;
+        if (carryableObject != null)
+        {
+            activeCarrySpeedMultiplier = Mathf.Clamp(carryableObject.MoveSpeedMultiplier, 0.1f, 1f);
+            activeCarryBlocksJump = carryableObject.BlockJumpWhileCarrying;
+        }
 
         target.linearVelocity = Vector3.zero;
         target.angularVelocity = Vector3.zero;
@@ -754,6 +964,7 @@ public class PlayerController : NetworkBehaviour
 
         Rigidbody body = heldRigidbody;
         Transform originalParent = heldOriginalParent;
+        CarryableObject carryableObject = activeCarryableObject;
 
         body.transform.SetParent(originalParent, true);
         body.useGravity = heldUseGravity;
@@ -763,6 +974,8 @@ public class PlayerController : NetworkBehaviour
         body.linearVelocity = currentHorizontalVelocity;
 
         ClearHeldObjectState();
+        ClearActiveCarryRule();
+        carryableObject?.NotifyCarrierReleased(this);
     }
 
     private void ForceDropHeldObject()
@@ -776,6 +989,7 @@ public class PlayerController : NetworkBehaviour
 
         Rigidbody body = heldRigidbody;
         Transform originalParent = heldOriginalParent;
+        CarryableObject carryableObject = activeCarryableObject;
 
         body.transform.SetParent(originalParent, true);
         body.useGravity = heldUseGravity;
@@ -784,6 +998,8 @@ public class PlayerController : NetworkBehaviour
         body.collisionDetectionMode = heldCollisionMode;
 
         ClearHeldObjectState();
+        ClearActiveCarryRule();
+        carryableObject?.NotifyCarrierReleased(this);
     }
 
     private void ClearHeldObjectState()
@@ -791,6 +1007,13 @@ public class PlayerController : NetworkBehaviour
         heldRigidbody = null;
         heldOriginalParent = null;
         heldColliders = Array.Empty<Collider>();
+    }
+
+    private void ClearActiveCarryRule()
+    {
+        activeCarryableObject = null;
+        activeCarrySpeedMultiplier = 1f;
+        activeCarryBlocksJump = false;
     }
 
     private void UpdateHeldObjectPose()
@@ -828,14 +1051,25 @@ public class PlayerController : NetworkBehaviour
 
     private void SetHeldObjectCollisionIgnored(bool shouldIgnore)
     {
-        if (heldColliders == null || physicsCollider == null)
+        SetCollisionIgnoredForColliders(heldColliders, shouldIgnore);
+    }
+
+    private IEnumerator RestoreThrownCollision(Collider[] thrownColliders, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SetCollisionIgnoredForColliders(thrownColliders, false);
+    }
+
+    private void SetCollisionIgnoredForColliders(Collider[] targetColliders, bool shouldIgnore)
+    {
+        if (targetColliders == null || physicsCollider == null)
         {
             return;
         }
 
-        for (int i = 0; i < heldColliders.Length; i++)
+        for (int i = 0; i < targetColliders.Length; i++)
         {
-            Collider heldCollider = heldColliders[i];
+            Collider heldCollider = targetColliders[i];
             if (heldCollider != null)
             {
                 Physics.IgnoreCollision(physicsCollider, heldCollider, shouldIgnore);
