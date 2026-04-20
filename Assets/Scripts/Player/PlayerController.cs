@@ -147,6 +147,11 @@ public class PlayerController : NetworkBehaviour
     {
         UpdatePhysicsOwnershipState();
 
+        if (IsServer && heldRigidbody != null)
+        {
+            UpdateHeldObjectPose();
+        }
+
         if (!CanProcessInput())
         {
             ClearInteractionHighlight();
@@ -853,17 +858,25 @@ public class PlayerController : NetworkBehaviour
         Transform originalParent = heldOriginalParent;
         Collider[] thrownColliders = heldColliders;
         CarryableObject carryableObject = activeCarryableObject;
+        Vector3 releaseVelocity = currentHorizontalVelocity * throwVelocityInheritance;
+        Vector3 throwDirection = (GetCharacterForwardDirection() + (Vector3.up * throwUpwardRatio)).normalized;
+        Vector3 throwImpulse = throwDirection * throwForce;
 
-        body.transform.SetParent(originalParent, true);
+        if (TryGetSpawnedNetworkObject(body, out NetworkObject targetNetworkObject) && !IsServer)
+        {
+            // 던지기도 서버가 부모 해제와 힘 적용을 처리해야 다른 클라이언트에 동기화된다.
+            RequestThrowNetworkObjectServerRpc(targetNetworkObject, releaseVelocity, throwImpulse);
+        }
+
+        SetHeldObjectParent(body, originalParent, true);
         body.useGravity = heldUseGravity;
         body.isKinematic = heldIsKinematic;
         body.interpolation = heldInterpolation;
         body.collisionDetectionMode = heldCollisionMode;
-        body.linearVelocity = currentHorizontalVelocity * throwVelocityInheritance;
+        body.linearVelocity = releaseVelocity;
 
-        Vector3 throwDirection = (GetCharacterForwardDirection() + (Vector3.up * throwUpwardRatio)).normalized;
         // 던질 때 플레이어 속도를 일부 이어받고 전방으로 즉시 힘을 준다.
-        body.AddForce(throwDirection * throwForce, ForceMode.Impulse);
+        body.AddForce(throwImpulse, ForceMode.Impulse);
 
         ClearHeldObjectState();
         ClearActiveCarryRule();
@@ -879,6 +892,72 @@ public class PlayerController : NetworkBehaviour
         }
 
         return true;
+    }
+
+    [ServerRpc]
+    private void RequestPickUpNetworkObjectServerRpc(NetworkObjectReference targetReference)
+    {
+        if (!targetReference.TryGet(out NetworkObject targetNetworkObject))
+        {
+            return;
+        }
+
+        Rigidbody targetBody = targetNetworkObject.GetComponent<Rigidbody>();
+        if (targetBody == null)
+        {
+            return;
+        }
+
+        CarryableObject carryableObject = targetNetworkObject.GetComponent<CarryableObject>();
+        TryPickUp(targetBody, carryableObject);
+    }
+
+    [ServerRpc]
+    private void RequestDropNetworkObjectServerRpc(NetworkObjectReference targetReference, Vector3 releaseVelocity)
+    {
+        ReleaseNetworkHeldObject(targetReference, releaseVelocity, Vector3.zero, false);
+    }
+
+    [ServerRpc]
+    private void RequestThrowNetworkObjectServerRpc(NetworkObjectReference targetReference, Vector3 releaseVelocity, Vector3 throwImpulse)
+    {
+        ReleaseNetworkHeldObject(targetReference, releaseVelocity, throwImpulse, true);
+    }
+
+    private void ReleaseNetworkHeldObject(
+        NetworkObjectReference targetReference,
+        Vector3 releaseVelocity,
+        Vector3 throwImpulse,
+        bool shouldThrow)
+    {
+        if (!targetReference.TryGet(out NetworkObject targetNetworkObject))
+        {
+            return;
+        }
+
+        Rigidbody body = targetNetworkObject.GetComponent<Rigidbody>();
+        if (body == null || body != heldRigidbody)
+        {
+            return;
+        }
+
+        SetHeldObjectCollisionIgnored(false);
+        SetHeldObjectParent(body, heldOriginalParent, true);
+        body.useGravity = heldUseGravity;
+        body.isKinematic = heldIsKinematic;
+        body.interpolation = heldInterpolation;
+        body.collisionDetectionMode = heldCollisionMode;
+        body.linearVelocity = releaseVelocity;
+
+        if (shouldThrow)
+        {
+            body.AddForce(throwImpulse, ForceMode.Impulse);
+        }
+
+        CarryableObject carryableObject = activeCarryableObject;
+        ClearHeldObjectState();
+        ClearActiveCarryRule();
+        carryableObject?.NotifyCarrierReleased(this);
     }
 
     private bool TryGetInteractionHit(out RaycastHit hit)
@@ -1049,13 +1128,19 @@ public class PlayerController : NetworkBehaviour
             activeCarryBlocksJump = carryableObject.BlockJumpWhileCarrying;
         }
 
+        if (TryGetSpawnedNetworkObject(target, out NetworkObject targetNetworkObject) && !IsServer)
+        {
+            // 네트워크 오브젝트 부모 변경은 서버만 가능하므로 서버에 잡기 처리를 요청한다.
+            RequestPickUpNetworkObjectServerRpc(targetNetworkObject);
+        }
+
         target.linearVelocity = Vector3.zero;
         target.angularVelocity = Vector3.zero;
         target.useGravity = false;
         target.isKinematic = true;
         target.interpolation = RigidbodyInterpolation.None;
         target.collisionDetectionMode = CollisionDetectionMode.Discrete;
-        target.transform.SetParent(holdPoint, true);
+        SetHeldObjectParent(target, holdPoint, true);
 
         UpdateHeldObjectPose();
         SetHeldObjectCollisionIgnored(true);
@@ -1075,7 +1160,13 @@ public class PlayerController : NetworkBehaviour
         Transform originalParent = heldOriginalParent;
         CarryableObject carryableObject = activeCarryableObject;
 
-        body.transform.SetParent(originalParent, true);
+        if (TryGetSpawnedNetworkObject(body, out NetworkObject targetNetworkObject) && !IsServer)
+        {
+            // 클라이언트는 직접 re-parent하지 않고 서버가 최종 부모/물리 상태를 복구한다.
+            RequestDropNetworkObjectServerRpc(targetNetworkObject, currentHorizontalVelocity);
+        }
+
+        SetHeldObjectParent(body, originalParent, true);
         body.useGravity = heldUseGravity;
         body.isKinematic = heldIsKinematic;
         body.interpolation = heldInterpolation;
@@ -1100,7 +1191,7 @@ public class PlayerController : NetworkBehaviour
         Transform originalParent = heldOriginalParent;
         CarryableObject carryableObject = activeCarryableObject;
 
-        body.transform.SetParent(originalParent, true);
+        SetHeldObjectParent(body, originalParent, true);
         body.useGravity = heldUseGravity;
         body.isKinematic = heldIsKinematic;
         body.interpolation = heldInterpolation;
@@ -1133,6 +1224,39 @@ public class PlayerController : NetworkBehaviour
         }
 
         heldRigidbody.transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
+    }
+
+    private void SetHeldObjectParent(Rigidbody body, Transform parent, bool worldPositionStays)
+    {
+        if (!TryGetSpawnedNetworkObject(body, out NetworkObject targetNetworkObject))
+        {
+            body.transform.SetParent(parent, worldPositionStays);
+            return;
+        }
+
+        if (!IsServer)
+        {
+            return;
+        }
+
+        NetworkObject parentNetworkObject = parent != null
+            ? parent.GetComponentInParent<NetworkObject>()
+            : null;
+
+        if (parentNetworkObject != null && parentNetworkObject.IsSpawned)
+        {
+            targetNetworkObject.TrySetParent(parentNetworkObject, worldPositionStays);
+        }
+        else
+        {
+            targetNetworkObject.TryRemoveParent(worldPositionStays);
+        }
+    }
+
+    private static bool TryGetSpawnedNetworkObject(Rigidbody body, out NetworkObject targetNetworkObject)
+    {
+        targetNetworkObject = body != null ? body.GetComponent<NetworkObject>() : null;
+        return targetNetworkObject != null && targetNetworkObject.IsSpawned;
     }
 
     private void EnsureHoldPointExists()
