@@ -147,7 +147,7 @@ public class PlayerController : NetworkBehaviour
     {
         UpdatePhysicsOwnershipState();
 
-        if (IsServer && heldRigidbody != null)
+        if (IsServer && heldRigidbody != null && (!IsSpawned || IsOwner))
         {
             UpdateHeldObjectPose();
         }
@@ -168,6 +168,18 @@ public class PlayerController : NetworkBehaviour
         UpdateInteractionHighlight();
         HandleThrowInput();
         HandleInteractionInput();
+        UpdateHeldObjectPose();
+        SendHeldObjectPoseToServer();
+    }
+
+    private void LateUpdate()
+    {
+        if (!CanProcessInput())
+        {
+            return;
+        }
+
+        // 네트워크 보간이 로컬 예측 위치를 덮어쓴 뒤에도 손 위치에 붙어 보이게 한다.
         UpdateHeldObjectPose();
     }
 
@@ -960,6 +972,27 @@ public class PlayerController : NetworkBehaviour
         carryableObject?.NotifyCarrierReleased(this);
     }
 
+    [ServerRpc(Delivery = RpcDelivery.Unreliable)]
+    private void UpdateHeldObjectPoseServerRpc(
+        NetworkObjectReference targetReference,
+        Vector3 targetPosition,
+        Quaternion targetRotation)
+    {
+        if (!targetReference.TryGet(out NetworkObject targetNetworkObject))
+        {
+            return;
+        }
+
+        Rigidbody body = targetNetworkObject.GetComponent<Rigidbody>();
+        if (body == null || body != heldRigidbody)
+        {
+            return;
+        }
+
+        // 클라이언트가 보는 HoldPoint 위치를 서버에 반영해 서버 보간 지연을 줄인다.
+        body.transform.SetPositionAndRotation(targetPosition, targetRotation);
+    }
+
     private bool TryGetInteractionHit(out RaycastHit hit)
     {
         // 상호작용은 몸체 회전보다 플레이어가 바라보는 카메라 방향을 우선한다.
@@ -1224,6 +1257,22 @@ public class PlayerController : NetworkBehaviour
         }
 
         heldRigidbody.transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
+    }
+
+    private void SendHeldObjectPoseToServer()
+    {
+        if (IsServer || heldRigidbody == null || holdPoint == null)
+        {
+            return;
+        }
+
+        if (!TryGetSpawnedNetworkObject(heldRigidbody, out NetworkObject targetNetworkObject))
+        {
+            return;
+        }
+
+        // 로컬 HoldPoint 기준 위치를 서버에 보내 원격 서버의 플레이어 보간 지연을 피한다.
+        UpdateHeldObjectPoseServerRpc(targetNetworkObject, holdPoint.position, holdPoint.rotation);
     }
 
     private void SetHeldObjectParent(Rigidbody body, Transform parent, bool worldPositionStays)
