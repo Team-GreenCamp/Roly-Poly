@@ -630,7 +630,9 @@ public class PlayerController : NetworkBehaviour
 
         if (hit.rigidbody != null)
         {
-            TryPickUp(hit.rigidbody);
+            // [수정됨] PlayerInteractor 스크립트와 충돌을 막기 위해 
+            // 기본 컨트롤러에서 무조건 Rigidbody를 주워버리는 코드를 주석 처리합니다!
+            // TryPickUp(hit.rigidbody);
         }
     }
 
