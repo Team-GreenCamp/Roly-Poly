@@ -1,4 +1,3 @@
-// 파일 경로: Assets/Scripts/Player/PlayerInteractor.cs
 using UnityEngine;
 using UnityEngine.InputSystem;
 

@@ -1098,6 +1098,7 @@ MonoBehaviour:
   tiltAngle: 15
   tiltSpeed: 10
   interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  grabAction: {fileID: -8626289477208822049, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!4 &1080381800 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8740561361255514374, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}

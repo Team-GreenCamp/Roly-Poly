@@ -1,4 +1,3 @@
-// 파일 경로: Assets/Scripts/Interactable/DoorController.cs
 using System.Collections;
 using UnityEngine;
 
@@ -16,6 +15,12 @@ public class DoorController : MonoBehaviour, IInteractable
     [Header("상호작용 설정")]
     [Tooltip("체크하면 플레이어가 다가가서 직접 E키로 열고 닫을 수 있습니다.\n체크 해제하면 버튼이나 레버 같은 외부 스위치로만 열립니다.")]
     public bool canDirectInteract = false;
+
+    [Header("자동 반복 타이머 (Auto Timing Trap)")]
+    [Tooltip("체크하면 설정한 시간에 맞춰 자동으로 열리고 닫히기를 무한 반복합니다.")]
+    public bool isAutoLoop = false;
+    public float openDuration = 3f;
+    public float closeDuration = 2f;
 
     private bool isOpen = false; // 현재 문이 열려있는지 상태 저장
 
@@ -37,6 +42,12 @@ public class DoorController : MonoBehaviour, IInteractable
         else
         {
             openRotation = closedRotation * Quaternion.Euler(openOffset);
+        }
+
+        // ⭐ 자동 루프가 켜져있다면 코루틴 시작
+        if (isAutoLoop)
+        {
+            StartCoroutine(AutoLoopRoutine());
         }
     }
 
@@ -103,5 +114,18 @@ public class DoorController : MonoBehaviour, IInteractable
             yield return null;
         }
         transform.localRotation = targetRot;
+    }
+
+    // ⭐ 3초 열리고 2초 닫히는 무한 루프 코루틴
+    private IEnumerator AutoLoopRoutine()
+    {
+        while (true)
+        {
+            OpenDoor();
+            yield return new WaitForSeconds(openDuration);
+
+            CloseDoor();
+            yield return new WaitForSeconds(closeDuration);
+        }
     }
 }

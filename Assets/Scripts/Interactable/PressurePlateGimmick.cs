@@ -1,4 +1,3 @@
-// 파일 경로: Assets/Scripts/Interactable/PressurePlateGimmick.cs
 using UnityEngine;
 using UnityEngine.Events;
 

@@ -1,4 +1,3 @@
-// 파일 경로: Assets/Scripts/Interactable/GrabbableObject.cs
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]

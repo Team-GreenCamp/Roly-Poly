@@ -1,4 +1,3 @@
-// 파일 경로: Assets/Scripts/Interactable/ButtonGimmick.cs
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
