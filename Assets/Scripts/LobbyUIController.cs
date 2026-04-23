@@ -645,6 +645,11 @@ public class LobbyUIController : MonoBehaviour
 
     private int GetDisplayedPlayerCount()
     {
+        if (sessionManager != null && sessionManager.IsServer)
+        {
+            return sessionManager.ConnectedPlayerCount;
+        }
+
         if (backendConnectedPlayerCount > 0)
         {
             return backendConnectedPlayerCount;
