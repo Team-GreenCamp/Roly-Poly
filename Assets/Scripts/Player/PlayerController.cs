@@ -34,7 +34,6 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float fallenTiltAngle = 35f;
     [SerializeField] private float recoveryDelay = 1f;
     [SerializeField] private float recoveryTorqueMultiplier = 2.5f;
-    [SerializeField] private float turnTorque = 35f;
     [SerializeField] private float turnDamping = 6f;
     [SerializeField] private float maxAngularVelocity = 25f;
 
@@ -378,7 +377,6 @@ public class PlayerController : NetworkBehaviour
         fallenTiltAngle = Mathf.Clamp(fallenTiltAngle, 1f, 89f);
         recoveryDelay = Mathf.Max(0f, recoveryDelay);
         recoveryTorqueMultiplier = Mathf.Max(1f, recoveryTorqueMultiplier);
-        turnTorque = Mathf.Max(0f, turnTorque);
         turnDamping = Mathf.Max(0f, turnDamping);
         maxAngularVelocity = Mathf.Max(1f, maxAngularVelocity);
         interactionDistance = Mathf.Max(0.25f, interactionDistance);
@@ -665,7 +663,7 @@ public class PlayerController : NetworkBehaviour
         if (moveDirection.sqrMagnitude > 0.0001f)
         {
             // 이동 입력이 있을 때만 이동 방향을 향해 돈다.
-            ApplyTurnTorque(moveDirection);
+            ApplyDirectYawRotation(moveDirection);
         }
         else
         {
@@ -673,7 +671,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private void ApplyTurnTorque(Vector3 facingDirection)
+    private void ApplyDirectYawRotation(Vector3 facingDirection)
     {
         Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
         if (flatForward.sqrMagnitude <= 0.0001f)
@@ -687,11 +685,11 @@ public class PlayerController : NetworkBehaviour
         float maxStep = rotationSpeed * Time.fixedDeltaTime;
         float desiredYaw = Mathf.MoveTowardsAngle(currentYaw, targetYaw, maxStep);
         float yawDelta = Mathf.DeltaAngle(currentYaw, desiredYaw);
-        float desiredYawVelocity = yawDelta * Mathf.Deg2Rad / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
-        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
-        float torque = (desiredYawVelocity - currentYawVelocity) * turnTorque - (currentYawVelocity * turnDamping);
 
-        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
+        // 토크 대신 yaw를 직접 반영해 입력 방향 전환이 늦게 따라오는 느낌을 줄인다.
+        Quaternion nextRotation = Quaternion.AngleAxis(yawDelta, Vector3.up) * physicsBody.rotation;
+        physicsBody.MoveRotation(nextRotation);
+        physicsBody.angularVelocity = Vector3.ProjectOnPlane(physicsBody.angularVelocity, Vector3.up);
     }
 
     private void StabilizeIdleYaw()
@@ -995,8 +993,8 @@ public class PlayerController : NetworkBehaviour
 
     private bool TryGetInteractionHit(out RaycastHit hit)
     {
-        // 상호작용은 몸체 회전보다 플레이어가 바라보는 카메라 방향을 우선한다.
-        Vector3 rayDirection = GetFacingDirection();
+        // 상호작용은 카메라가 아니라 플레이어 몸체가 바라보는 방향을 기준으로 한다.
+        Vector3 rayDirection = GetCharacterForwardDirection();
         Vector3 rayOrigin = transform.position + (Vector3.up * 0.9f) + (rayDirection * 0.1f);
 
         if (interactionRadius > 0f)
