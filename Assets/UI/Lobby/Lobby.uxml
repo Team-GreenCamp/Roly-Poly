@@ -1,0 +1,51 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="Lobby.uss" />
+    <ui:VisualElement name="lobby-root" class="lobby-root">
+        <ui:VisualElement class="lobby-panel">
+            <ui:VisualElement class="lobby-header">
+                <ui:Label text="Battle Royal" class="game-title" />
+                <ui:Label text="대기실" class="scene-title" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="status-box">
+                <ui:Label text="오프라인" name="status-label" class="status-label" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="offline-root" class="section">
+                <ui:Label text="방 이름" class="field-label" />
+                <ui:TextField name="room-name-field" value="Puzzle Room" class="room-name-field" />
+
+                <ui:Label text="Join Code" class="field-label" />
+                <ui:TextField name="join-code-field" class="join-code-field" />
+
+                <ui:VisualElement class="button-row">
+                    <ui:Button text="호스트" name="host-button" class="primary-button" />
+                    <ui:Button text="참가" name="join-button" class="secondary-button" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="room-list-header">
+                    <ui:Label text="공개 방 목록" class="room-list-title" />
+                    <ui:Button text="새로고침" name="refresh-rooms-button" class="small-button" />
+                </ui:VisualElement>
+                <ui:Label text="방 목록을 불러오는 중입니다..." name="room-list-status-label" class="room-list-status" />
+                <ui:ScrollView name="room-list-view" class="room-list-view" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="online-root" class="section online-section">
+                <ui:VisualElement class="info-row">
+                    <ui:Label text="현재 인원" class="info-label" />
+                    <ui:Label text="0 / 0" name="player-count-label" class="info-value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="info-row">
+                    <ui:Label text="Join Code" class="info-label" />
+                    <ui:Label text="-" name="join-code-label" class="info-value join-code-value" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="button-row">
+                    <ui:Button text="게임 시작" name="start-game-button" class="primary-button" />
+                    <ui:Button text="나가기" name="leave-button" class="danger-button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

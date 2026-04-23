@@ -22,6 +22,11 @@ public class NetworkSessionManager : MonoBehaviour
     [SerializeField] private int maxPlayers = 8;
     [SerializeField] private string relayConnectionType = "dtls";
 
+    [Header("Local")]
+    [SerializeField] private string localAdvertisedAddress = "127.0.0.1";
+    [SerializeField] private string localListenAddress = "0.0.0.0";
+    [SerializeField] private int localPort = 7777;
+
     [Header("Scene Flow")]
     [SerializeField] private string gameSceneName = "GameScene";
 
@@ -29,6 +34,7 @@ public class NetworkSessionManager : MonoBehaviour
 
     public string StatusMessage { get; private set; } = "오프라인";
     public string CurrentJoinCode { get; private set; } = string.Empty;
+    public string LocalConnectionValue => $"{GetLocalAdvertisedAddress()}:{GetLocalPort()}";
     public int ConnectedPlayerCount { get; private set; }
     public int MaxPlayers => maxPlayers;
     public bool IsBusy { get; private set; }
@@ -108,6 +114,47 @@ public class NetworkSessionManager : MonoBehaviour
         }
     }
 
+    public Task StartLocalHostAsync()
+    {
+        if (!CanStartSession())
+        {
+            return Task.CompletedTask;
+        }
+
+        SetBusy(true);
+        SetStatus("로컬 호스트를 시작하는 중입니다...");
+
+        try
+        {
+            // 로컬 개발에서는 Relay 없이 Unity Transport 주소/포트만 설정합니다.
+            unityTransport.SetConnectionData(GetLocalAdvertisedAddress(), GetLocalPort(), GetLocalListenAddress());
+            CurrentJoinCode = LocalConnectionValue;
+            isShuttingDown = false;
+
+            if (!networkManager.StartHost())
+            {
+                CurrentJoinCode = string.Empty;
+                SetStatus("로컬 호스트 시작에 실패했습니다.");
+                return Task.CompletedTask;
+            }
+
+            SetStatus($"로컬 호스트를 시작했습니다. 주소: {CurrentJoinCode}");
+            UpdateConnectedPlayerCount();
+        }
+        catch (Exception exception)
+        {
+            CurrentJoinCode = string.Empty;
+            SetStatus($"로컬 호스트 생성 실패: {exception.Message}");
+            Debug.LogException(exception);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public async Task StartClientAsync(string joinCode)
     {
         if (!CanStartSession())
@@ -154,6 +201,52 @@ public class NetworkSessionManager : MonoBehaviour
         {
             SetBusy(false);
         }
+    }
+
+    public Task StartLocalClientAsync(string connectionValue)
+    {
+        if (!CanStartSession())
+        {
+            return Task.CompletedTask;
+        }
+
+        if (!TryParseLocalConnectionValue(connectionValue, out string address, out ushort port))
+        {
+            SetStatus("로컬 방 주소 형식이 올바르지 않습니다. 예: 127.0.0.1:7777");
+            return Task.CompletedTask;
+        }
+
+        SetBusy(true);
+        SetStatus("로컬 세션에 접속하는 중입니다...");
+
+        try
+        {
+            unityTransport.SetConnectionData(address, port);
+            isShuttingDown = false;
+            CurrentJoinCode = $"{address}:{port}";
+
+            if (!networkManager.StartClient())
+            {
+                CurrentJoinCode = string.Empty;
+                SetStatus("로컬 클라이언트 시작에 실패했습니다.");
+                return Task.CompletedTask;
+            }
+
+            SetStatus($"{CurrentJoinCode} 로 접속 중입니다...");
+            UpdateConnectedPlayerCount();
+        }
+        catch (Exception exception)
+        {
+            CurrentJoinCode = string.Empty;
+            SetStatus($"로컬 접속 실패: {exception.Message}");
+            Debug.LogException(exception);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+
+        return Task.CompletedTask;
     }
 
     public void Shutdown()
@@ -262,6 +355,10 @@ public class NetworkSessionManager : MonoBehaviour
         }
 
         maxPlayers = Mathf.Max(2, maxPlayers);
+        if (localPort <= 0 || localPort > ushort.MaxValue)
+        {
+            localPort = 7777;
+        }
     }
 
     private void RegisterCallbacks()
@@ -323,6 +420,45 @@ public class NetworkSessionManager : MonoBehaviour
     private static string NormalizeJoinCode(string joinCode)
     {
         return string.IsNullOrWhiteSpace(joinCode) ? string.Empty : joinCode.Trim().ToUpperInvariant();
+    }
+
+    private string GetLocalAdvertisedAddress()
+    {
+        return string.IsNullOrWhiteSpace(localAdvertisedAddress) ? "127.0.0.1" : localAdvertisedAddress.Trim();
+    }
+
+    private string GetLocalListenAddress()
+    {
+        return string.IsNullOrWhiteSpace(localListenAddress) ? "0.0.0.0" : localListenAddress.Trim();
+    }
+
+    private ushort GetLocalPort()
+    {
+        return localPort > 0 && localPort <= ushort.MaxValue ? (ushort)localPort : (ushort)7777;
+    }
+
+    private static bool TryParseLocalConnectionValue(string connectionValue, out string address, out ushort port)
+    {
+        address = string.Empty;
+        port = 0;
+
+        if (string.IsNullOrWhiteSpace(connectionValue))
+        {
+            return false;
+        }
+
+        string normalizedValue = connectionValue.Trim();
+        int separatorIndex = normalizedValue.LastIndexOf(':');
+
+        if (separatorIndex <= 0 || separatorIndex >= normalizedValue.Length - 1)
+        {
+            return false;
+        }
+
+        address = normalizedValue.Substring(0, separatorIndex).Trim();
+        return !string.IsNullOrWhiteSpace(address)
+            && ushort.TryParse(normalizedValue.Substring(separatorIndex + 1), out port)
+            && port > 0;
     }
 
     private void HandleServerStarted()

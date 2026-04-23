@@ -1,0 +1,223 @@
+.lobby-root {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+    padding: 48px;
+    background-color: rgba(15, 18, 24, 0.82);
+}
+
+.lobby-panel {
+    width: 520px;
+    max-width: 100%;
+    padding: 32px;
+    border-radius: 8px;
+    background-color: rgb(34, 39, 49);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgba(255, 255, 255, 0.16);
+    border-right-color: rgba(255, 255, 255, 0.16);
+    border-top-color: rgba(255, 255, 255, 0.16);
+    border-bottom-color: rgba(255, 255, 255, 0.16);
+}
+
+.lobby-header {
+    margin-bottom: 24px;
+}
+
+.game-title {
+    -unity-font-style: bold;
+    font-size: 34px;
+    color: rgb(245, 247, 250);
+}
+
+.scene-title {
+    margin-top: 4px;
+    font-size: 18px;
+    color: rgb(163, 174, 190);
+}
+
+.status-box {
+    min-height: 76px;
+    padding: 16px;
+    margin-bottom: 24px;
+    border-radius: 6px;
+    background-color: rgb(24, 28, 36);
+}
+
+.status-label {
+    white-space: normal;
+    font-size: 16px;
+    color: rgb(232, 237, 244);
+}
+
+.section {
+    margin-top: 4px;
+}
+
+.online-section {
+    display: none;
+}
+
+.field-label {
+    margin-bottom: 8px;
+    color: rgb(189, 199, 214);
+    font-size: 14px;
+}
+
+.join-code-field,
+.room-name-field {
+    height: 44px;
+    margin-bottom: 18px;
+    font-size: 18px;
+}
+
+.button-row {
+    flex-direction: row;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+    flex-grow: 1;
+    height: 46px;
+    border-radius: 6px;
+    -unity-font-style: bold;
+    font-size: 16px;
+    color: rgb(255, 255, 255);
+}
+
+.primary-button {
+    background-color: rgb(53, 115, 230);
+}
+
+.secondary-button {
+    background-color: rgb(73, 83, 100);
+}
+
+.danger-button {
+    background-color: rgb(190, 68, 70);
+}
+
+.secondary-button,
+.danger-button {
+    margin-left: 12px;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.danger-button:disabled {
+    background-color: rgb(70, 76, 88);
+    color: rgb(145, 152, 164);
+}
+
+.info-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 36px;
+    margin-bottom: 10px;
+}
+
+.info-label {
+    color: rgb(169, 180, 195);
+    font-size: 15px;
+}
+
+.info-value {
+    color: rgb(248, 250, 252);
+    -unity-font-style: bold;
+    font-size: 18px;
+}
+
+.join-code-value {
+    color: rgb(102, 212, 164);
+}
+
+.room-list-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    margin-bottom: 8px;
+}
+
+.room-list-title {
+    color: rgb(232, 237, 244);
+    -unity-font-style: bold;
+    font-size: 17px;
+}
+
+.small-button {
+    width: 104px;
+    height: 34px;
+    border-radius: 6px;
+    background-color: rgb(73, 83, 100);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    font-size: 13px;
+}
+
+.small-button:disabled {
+    background-color: rgb(70, 76, 88);
+    color: rgb(145, 152, 164);
+}
+
+.room-list-status {
+    min-height: 24px;
+    margin-bottom: 8px;
+    color: rgb(163, 174, 190);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.room-list-view {
+    height: 190px;
+    padding: 8px;
+    border-radius: 6px;
+    background-color: rgb(24, 28, 36);
+}
+
+.room-row {
+    min-height: 58px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    background-color: rgb(40, 46, 58);
+}
+
+.room-info {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.room-name {
+    color: rgb(248, 250, 252);
+    -unity-font-style: bold;
+    font-size: 15px;
+}
+
+.room-detail {
+    margin-top: 4px;
+    color: rgb(169, 180, 195);
+    font-size: 12px;
+}
+
+.room-join-button {
+    width: 72px;
+    height: 34px;
+    border-radius: 6px;
+    background-color: rgb(53, 115, 230);
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+    font-size: 13px;
+}
+
+.room-join-button:disabled {
+    background-color: rgb(70, 76, 88);
+    color: rgb(145, 152, 164);
+}
