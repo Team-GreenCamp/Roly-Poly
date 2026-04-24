@@ -44,7 +44,7 @@ curl -s http://localhost:3000/rooms
 ## API
 
 - `GET /health`
-- `GET /rooms`
+- `GET /rooms` - 공개 상태이고 대기중인 방만 반환합니다.
 - `POST /rooms`
 - `POST /rooms/:id/join`
 - `POST /rooms/:id/leave`

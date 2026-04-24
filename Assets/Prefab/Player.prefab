@@ -54,7 +54,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 498835207
+  GlobalObjectIdHash: 3712661095
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -85,12 +85,12 @@ MonoBehaviour:
   playerInput: {fileID: 1693436149286584330}
   networkObject: {fileID: -752662279871191066}
   holdPoint: {fileID: 2081467351840265412}
-  walkSpeed: 3.5
+  walkSpeed: 4
   sprintSpeed: 6
   rotationSpeed: 720
   movementAcceleration: 24
   airAcceleration: 10
-  jumpHeight: 1.2
+  jumpHeight: 1.5
   gravity: -25
   terminalVelocity: -50
   fallGravityMultiplier: 2
@@ -100,7 +100,6 @@ MonoBehaviour:
   fallenTiltAngle: 35
   recoveryDelay: 1
   recoveryTorqueMultiplier: 2.5
-  turnTorque: 35
   turnDamping: 6
   maxAngularVelocity: 25
   interactionDistance: 2.2
@@ -121,13 +120,13 @@ MonoBehaviour:
   groundedRadius: 0.25
   groundLayers:
     serializedVersion: 2
-    m_Bits: 192
+    m_Bits: 200
   playerCollisionImpact: 5
   rigidbodyImpactSpeedThreshold: 5
   heavyObjectMassThreshold: 20
   heavyObjectDownwardSpeedThreshold: 6
   landingImpactThreshold: 10
-  landingTorqueMultiplier: 0.2
+  landingTorqueMultiplier: 0.1
   externalImpactForceMultiplier: 1
   externalImpactTorqueMultiplier: 0.35
   slideSlopeAngle: 32
@@ -374,7 +373,7 @@ Transform:
   m_GameObject: {fileID: 5395466305566391069}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.2, z: 0}
+  m_LocalPosition: {x: 0, y: 1.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

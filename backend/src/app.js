@@ -40,8 +40,8 @@ app.get('/health', async (req, res) => {
 app.get('/rooms', async (req, res, next) => {
   try {
     const [rows] = await pool.query(
-      'SELECT * FROM rooms WHERE is_public = TRUE AND status IN (?, ?) ORDER BY created_at DESC, id DESC',
-      ['open', 'in_game']
+      'SELECT * FROM rooms WHERE is_public = TRUE AND status = ? ORDER BY created_at DESC, id DESC',
+      ['open']
     );
     res.json(rows.map(toRoom));
   } catch (error) {

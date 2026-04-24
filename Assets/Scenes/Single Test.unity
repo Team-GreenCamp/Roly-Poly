@@ -301,10 +301,6 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 3712661095
       objectReference: {fileID: 0}
-    - target: {fileID: 2081467351840265412, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 1.3
-      objectReference: {fileID: 0}
     - target: {fileID: 2383615707599059421, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
       propertyPath: m_Name
       value: Player
@@ -348,18 +344,6 @@ PrefabInstance:
     - target: {fileID: 8740561361255514374, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8952032033408616040, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
-      propertyPath: walkSpeed
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 8952032033408616040, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
-      propertyPath: jumpHeight
-      value: 1.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 8952032033408616040, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
-      propertyPath: landingTorqueMultiplier
-      value: 0.1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
