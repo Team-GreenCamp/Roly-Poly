@@ -13,7 +13,6 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private CapsuleCollider physicsCollider;
     [SerializeField] private PlayerInput playerInput;
     [SerializeField] private NetworkObject networkObject;
-    [SerializeField] private Transform holdPoint;
 
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 3.5f;
@@ -37,12 +36,6 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float turnDamping = 6f;
     [SerializeField] private float maxAngularVelocity = 25f;
 
-    [Header("Interaction")]
-    [SerializeField] private float interactionDistance = 2.2f;
-    [SerializeField] private float interactionRadius = 0.25f;
-    [SerializeField] private LayerMask interactionLayers = ~0;
-    [SerializeField] private float maxCarryMass = 20f;
-    [SerializeField] private Vector3 holdPointLocalOffset = new Vector3(0.35f, 1.2f, 1.5f);
 
     [Header("Ground Check")]
     [SerializeField] private float groundedOffset = 0.1f;
@@ -66,9 +59,24 @@ public class PlayerController : NetworkBehaviour
     private InputAction moveAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
-    private InputAction interactAction;
 
+    public Vector2 MoveInput => moveInput;
     private Vector2 moveInput;
+
+    private float currentCarrySpeedMultiplier = 1f;
+
+    public void SetCarrySpeedMultiplier(float multiplier)
+    {
+        currentCarrySpeedMultiplier = multiplier;
+    }
+
+    public void ResetCarrySpeedMultiplier()
+    {
+        currentCarrySpeedMultiplier = 1f;
+    }
+    
+    public Vector3? OverrideFacingDirection { get; set; } = null;
+
     private Vector3 currentHorizontalVelocity;
     private Vector3 groundNormal = Vector3.up;
     private bool isGrounded;
@@ -77,13 +85,9 @@ public class PlayerController : NetworkBehaviour
     private float lastVerticalVelocity;
     private float timeSinceLargeTilt;
 
-    private Rigidbody heldRigidbody;
-    private Transform heldOriginalParent;
-    private Collider[] heldColliders = Array.Empty<Collider>();
-    private bool heldUseGravity;
-    private bool heldIsKinematic;
-    private RigidbodyInterpolation heldInterpolation;
-    private CollisionDetectionMode heldCollisionMode;
+    private Transform currentCheckpoint;
+    private Vector3 initialSpawnPosition;
+    private Quaternion initialSpawnRotation;
 
     private void Reset()
     {
@@ -105,6 +109,9 @@ public class PlayerController : NetworkBehaviour
         EnsureLayerMasksConfigured();
         EnsureRuntimePhysicsComponents();
         UpdatePhysicsOwnershipState(force: true);
+
+        initialSpawnPosition = transform.position;
+        initialSpawnRotation = transform.rotation;
     }
 
     private void OnEnable()
@@ -115,7 +122,6 @@ public class PlayerController : NetworkBehaviour
 
     private void OnDisable()
     {
-        ForceDropHeldObject();
     }
 
     private void Update()
@@ -133,8 +139,6 @@ public class PlayerController : NetworkBehaviour
         }
 
         ReadInput();
-        HandleInteractionInput();
-        UpdateHeldObjectPose();
     }
 
     private void FixedUpdate()
@@ -153,10 +157,6 @@ public class PlayerController : NetworkBehaviour
         ClampVerticalVelocity();
     }
 
-    public bool IsInteractPressedThisFrame()
-    {
-        return CanProcessInput() && interactAction != null && interactAction.WasPressedThisFrame();
-    }
 
     public void ApplyWobbleImpulse(Vector3 worldDirection, float strength)
     {
@@ -205,15 +205,6 @@ public class PlayerController : NetworkBehaviour
         {
             networkObject = GetComponent<NetworkObject>();
         }
-
-        if (holdPoint == null)
-        {
-            Transform candidate = transform.Find("HoldPoint");
-            if (candidate != null)
-            {
-                holdPoint = candidate;
-            }
-        }
     }
 
     private void ApplySafeRanges()
@@ -235,9 +226,6 @@ public class PlayerController : NetworkBehaviour
         turnTorque = Mathf.Max(0f, turnTorque);
         turnDamping = Mathf.Max(0f, turnDamping);
         maxAngularVelocity = Mathf.Max(1f, maxAngularVelocity);
-        interactionDistance = Mathf.Max(0.25f, interactionDistance);
-        interactionRadius = Mathf.Max(0f, interactionRadius);
-        maxCarryMass = Mathf.Max(0.1f, maxCarryMass);
         groundedOffset = Mathf.Max(0.01f, groundedOffset);
         groundedRadius = Mathf.Max(0.01f, groundedRadius);
         playerCollisionImpact = Mathf.Max(0f, playerCollisionImpact);
@@ -259,14 +247,8 @@ public class PlayerController : NetworkBehaviour
             groundLayers = ~0;
         }
 
-        if (interactionLayers.value == 0)
-        {
-            interactionLayers = ~0;
-        }
-
         int selfLayerMask = 1 << gameObject.layer;
         groundLayers &= ~selfLayerMask;
-        interactionLayers &= ~selfLayerMask;
     }
 
     private void EnsureRuntimePhysicsComponents()
@@ -302,7 +284,6 @@ public class PlayerController : NetworkBehaviour
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         sprintAction = playerInput.actions["Sprint"];
-        interactAction = playerInput.actions["Interact"];
     }
 
     private bool CanProcessInput()
@@ -484,7 +465,7 @@ public class PlayerController : NetworkBehaviour
     {
         Vector3 moveDirection = GetMoveDirection(moveInput);
         float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);
-        float targetSpeed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude;
+        float targetSpeed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude * currentCarrySpeedMultiplier;
         float acceleration = isGrounded ? movementAcceleration : airAcceleration;
 
         Vector3 velocity = physicsBody.linearVelocity;
@@ -495,7 +476,12 @@ public class PlayerController : NetworkBehaviour
         physicsBody.linearVelocity = nextPlanarVelocity + (Vector3.up * velocity.y);
         currentHorizontalVelocity = nextPlanarVelocity;
 
-        if (moveDirection.sqrMagnitude > 0.0001f)
+        if (OverrideFacingDirection.HasValue && OverrideFacingDirection.Value.sqrMagnitude > 0.001f)
+        {
+            // 상호작용(예: 무거운 물체 끌기) 시에는 이동 방향 대신 지정된 방향을 바라본다.
+            ApplyTurnTorque(OverrideFacingDirection.Value);
+        }
+        else if (moveDirection.sqrMagnitude > 0.0001f)
         {
             // 이동 입력이 있을 때만 이동 방향을 향해 돈다.
             ApplyTurnTorque(moveDirection);
@@ -603,64 +589,6 @@ public class PlayerController : NetworkBehaviour
         return moveInput.sqrMagnitude > 0.01f;
     }
 
-    private void HandleInteractionInput()
-    {
-        if (!IsInteractPressedThisFrame())
-        {
-            return;
-        }
-
-        if (heldRigidbody != null)
-        {
-            DropHeldObject();
-            return;
-        }
-
-        if (!TryGetInteractionHit(out RaycastHit hit))
-        {
-            return;
-        }
-
-        if (TryGetInteractable(hit.collider, out IPlayerInteractable interactable)
-            && interactable.CanInteract(this))
-        {
-            interactable.Interact(this);
-            return;
-        }
-
-        if (hit.rigidbody != null)
-        {
-            // [수정됨] PlayerInteractor 스크립트와 충돌을 막기 위해 
-            // 기본 컨트롤러에서 무조건 Rigidbody를 주워버리는 코드를 주석 처리합니다!
-            // TryPickUp(hit.rigidbody);
-        }
-    }
-
-    private bool TryGetInteractionHit(out RaycastHit hit)
-    {
-        Vector3 rayOrigin = transform.position + (transform.forward * 0.1f);
-        Vector3 rayDirection = transform.forward;
-
-        if (interactionRadius > 0f)
-        {
-            return Physics.SphereCast(
-                rayOrigin,
-                interactionRadius,
-                rayDirection,
-                out hit,
-                interactionDistance,
-                interactionLayers,
-                QueryTriggerInteraction.Ignore);
-        }
-
-        return Physics.Raycast(
-            rayOrigin,
-            rayDirection,
-            out hit,
-            interactionDistance,
-            interactionLayers,
-            QueryTriggerInteraction.Ignore);
-    }
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -706,159 +634,43 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private bool TryPickUp(Rigidbody target)
+
+    public void SetCheckpoint(Transform checkpointPoint)
     {
-        if (target == null || target == heldRigidbody)
+        if (checkpointPoint != null)
         {
-            return false;
-        }
-
-        if (target.isKinematic || target.mass > maxCarryMass)
-        {
-            return false;
-        }
-
-        EnsureHoldPointExists();
-        if (holdPoint == null)
-        {
-            return false;
-        }
-
-        heldRigidbody = target;
-        heldOriginalParent = target.transform.parent;
-        heldUseGravity = target.useGravity;
-        heldIsKinematic = target.isKinematic;
-        heldInterpolation = target.interpolation;
-        heldCollisionMode = target.collisionDetectionMode;
-        heldColliders = target.GetComponentsInChildren<Collider>(true);
-
-        target.linearVelocity = Vector3.zero;
-        target.angularVelocity = Vector3.zero;
-        target.useGravity = false;
-        target.isKinematic = true;
-        target.interpolation = RigidbodyInterpolation.None;
-        target.collisionDetectionMode = CollisionDetectionMode.Discrete;
-        target.transform.SetParent(holdPoint, true);
-
-        UpdateHeldObjectPose();
-        SetHeldObjectCollisionIgnored(true);
-        return true;
-    }
-
-    private void DropHeldObject()
-    {
-        if (heldRigidbody == null)
-        {
-            return;
-        }
-
-        SetHeldObjectCollisionIgnored(false);
-
-        Rigidbody body = heldRigidbody;
-        Transform originalParent = heldOriginalParent;
-
-        body.transform.SetParent(originalParent, true);
-        body.useGravity = heldUseGravity;
-        body.isKinematic = heldIsKinematic;
-        body.interpolation = heldInterpolation;
-        body.collisionDetectionMode = heldCollisionMode;
-        body.linearVelocity = currentHorizontalVelocity;
-
-        ClearHeldObjectState();
-    }
-
-    private void ForceDropHeldObject()
-    {
-        if (heldRigidbody == null)
-        {
-            return;
-        }
-
-        SetHeldObjectCollisionIgnored(false);
-
-        Rigidbody body = heldRigidbody;
-        Transform originalParent = heldOriginalParent;
-
-        body.transform.SetParent(originalParent, true);
-        body.useGravity = heldUseGravity;
-        body.isKinematic = heldIsKinematic;
-        body.interpolation = heldInterpolation;
-        body.collisionDetectionMode = heldCollisionMode;
-
-        ClearHeldObjectState();
-    }
-
-    private void ClearHeldObjectState()
-    {
-        heldRigidbody = null;
-        heldOriginalParent = null;
-        heldColliders = Array.Empty<Collider>();
-    }
-
-    private void UpdateHeldObjectPose()
-    {
-        if (heldRigidbody == null || holdPoint == null)
-        {
-            return;
-        }
-
-        heldRigidbody.transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
-    }
-
-    private void EnsureHoldPointExists()
-    {
-        if (holdPoint != null)
-        {
-            return;
-        }
-
-        Transform existing = transform.Find("HoldPoint");
-        if (existing != null)
-        {
-            holdPoint = existing;
-        }
-        else
-        {
-            GameObject holdPointObject = new GameObject("HoldPoint");
-            holdPoint = holdPointObject.transform;
-            holdPoint.SetParent(transform, false);
-        }
-
-        holdPoint.localPosition = holdPointLocalOffset;
-        holdPoint.localRotation = Quaternion.identity;
-    }
-
-    private void SetHeldObjectCollisionIgnored(bool shouldIgnore)
-    {
-        if (heldColliders == null || physicsCollider == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < heldColliders.Length; i++)
-        {
-            Collider heldCollider = heldColliders[i];
-            if (heldCollider != null)
-            {
-                Physics.IgnoreCollision(physicsCollider, heldCollider, shouldIgnore);
-            }
+            currentCheckpoint = checkpointPoint;
         }
     }
 
-    private static bool TryGetInteractable(Collider source, out IPlayerInteractable interactable)
+    public void RespawnAtCheckpoint()
     {
-        MonoBehaviour[] behaviours = source.GetComponentsInParent<MonoBehaviour>(true);
-        for (int i = 0; i < behaviours.Length; i++)
-        {
-            if (behaviours[i] is IPlayerInteractable candidate)
-            {
-                interactable = candidate;
-                return true;
-            }
-        }
+        Vector3 spawnPosition = currentCheckpoint != null ? currentCheckpoint.position : initialSpawnPosition;
+        Quaternion spawnRotation = currentCheckpoint != null ? currentCheckpoint.rotation : initialSpawnRotation;
 
-        interactable = null;
-        return false;
+        // 물리 연산 초기화 및 위치 즉시 이동
+        if (physicsBody != null)
+        {
+            physicsBody.position = spawnPosition;
+            physicsBody.rotation = spawnRotation;
+            physicsBody.linearVelocity = Vector3.zero;
+            physicsBody.angularVelocity = Vector3.zero;
+        }
+        
+        transform.position = spawnPosition;
+        transform.rotation = spawnRotation;
+
+        currentHorizontalVelocity = Vector3.zero;
+        lastVerticalVelocity = 0f;
+
+        // 낙사 시 들고 있던 물건을 놓도록 PlayerInteractor가 있다면 비활성화 후 활성화하거나 내부 상태를 초기화할 수 있음
+        PlayerInteractor interactor = GetComponent<PlayerInteractor>();
+        if (interactor != null)
+        {
+            // PlayerInteractor의 OnDisable에서 놓기가 호출되므로 껐다 켜서 들고 있던 걸 초기화
+            interactor.enabled = false;
+            interactor.enabled = true;
+        }
     }
 
     private void OnDrawGizmosSelected()
@@ -868,22 +680,10 @@ public class PlayerController : NetworkBehaviour
         Gizmos.DrawWireSphere(spherePosition, groundedRadius);
 
         Gizmos.color = Color.cyan;
-        Gizmos.DrawLine(transform.position, transform.position + (transform.forward * interactionDistance));
-
-        if (holdPoint != null)
-        {
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(holdPoint.position, 0.1f);
-        }
+        Gizmos.DrawLine(transform.position, transform.position + (transform.forward * 2.2f));
 
         Gizmos.color = Color.blue;
         Vector3 normalOrigin = transform.position + Vector3.up * groundedOffset;
         Gizmos.DrawLine(normalOrigin, normalOrigin + (groundNormal.normalized * 1.2f));
     }
-}
-
-public interface IPlayerInteractable
-{
-    bool CanInteract(PlayerController controller);
-    void Interact(PlayerController controller);
 }

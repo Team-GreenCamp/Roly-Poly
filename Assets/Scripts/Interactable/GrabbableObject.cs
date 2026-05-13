@@ -1,49 +1,93 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class GrabbableObject : MonoBehaviour, IInteractable
+public class GrabbableObject : MonoBehaviour
 {
     [Header("오브젝트 설정")]
     [Tooltip("체크하면 무거운 물체(끌기용), 체크 해제하면 가벼운 물체(들기용)")]
     public bool isHeavy = false;
 
+    [Header("다중 상호작용 속도 설정")]
+    [Tooltip("1명일 때의 기본 속도 배율 (1 = 정상 속도, 0.5 = 절반 속도)")]
+    public float baseSpeedMultiplier = 0.6f;
+    [Tooltip("1명이 추가될 때마다 증가하는 속도 배율 보너스")]
+    public float multiPlayerSpeedBonus = 0.4f;
+
     private Rigidbody rb;
-    private Collider col;
-    private SpringJoint dragJoint;
-    private Collider playerCollider; // 플레이어 충돌 무시용
+    private Collider[] colliders;
+
+    private List<PlayerInteractor> interactors = new List<PlayerInteractor>();
+    private Dictionary<PlayerInteractor, SpringJoint> dragJoints = new Dictionary<PlayerInteractor, SpringJoint>();
+
+    // 원본 물리 상태 저장
+    private bool originalUseGravity;
+    private bool originalIsKinematic;
+    private RigidbodyInterpolation originalInterpolation;
+    private CollisionDetectionMode originalCollisionMode;
+    
+    private Vector3 localMeshOffset = Vector3.zero;
+    private float meshExtentsY = 0f;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-        col = GetComponent<Collider>();
+        colliders = GetComponentsInChildren<Collider>(true);
     }
 
-    public void RequestInteract(GameObject interactor)
+    private void Start()
     {
-        PlayerInteractor player = interactor.GetComponent<PlayerInteractor>();
-        if (player != null)
+        // 유저의 프리팹 구조(부모 피벗과 자식 모델의 위치가 어긋난 경우)를 보정하기 위해
+        // 실제 모델(모든 Collider의 결합된 중심점)을 찾아 로컬 좌표로 저장합니다.
+        if (colliders != null && colliders.Length > 0)
         {
-            player.Grab(this);
+            Bounds combinedBounds = new Bounds(transform.position, Vector3.zero);
+            bool boundsInitialized = false;
+
+            foreach (var col in colliders)
+            {
+                if (col != null && !col.isTrigger)
+                {
+                    if (!boundsInitialized)
+                    {
+                        combinedBounds = col.bounds;
+                        boundsInitialized = true;
+                    }
+                    else
+                    {
+                        combinedBounds.Encapsulate(col.bounds);
+                    }
+                }
+            }
+
+            if (boundsInitialized)
+            {
+                localMeshOffset = transform.InverseTransformPoint(combinedBounds.center);
+                meshExtentsY = combinedBounds.extents.y; // 모델의 절반 높이 저장 (머리 겹침 방지용)
+            }
         }
     }
 
-    public void PickUp(Transform holdPoint, Transform dragPoint)
+    public void AddInteractor(PlayerInteractor interactor)
     {
+        if (interactors.Contains(interactor)) return;
+
+        if (interactors.Count == 0)
+        {
+            StoreOriginalState();
+        }
+
+        interactors.Add(interactor);
+
         if (isHeavy)
         {
-            // 무거운 상자: 물리 연산 유지
-            rb.isKinematic = false; 
-            col.enabled = true;   
+            // 무거운 상자: 같이 끌기 (스프링 조인트 다중 연결)
+            rb.isKinematic = false;
+            rb.useGravity = true;
 
+            Transform dragPoint = interactor.dragPoint;
             if (dragPoint != null)
             {
-                // 플레이어와의 충돌을 무시하여 덜덜거리거나 튕겨나가는 현상 완벽 차단
-                playerCollider = dragPoint.GetComponentInParent<Collider>();
-                if (playerCollider != null)
-                {
-                    Physics.IgnoreCollision(col, playerCollider, true);
-                }
-
                 Rigidbody dragRb = dragPoint.GetComponent<Rigidbody>();
                 if (dragRb == null)
                 {
@@ -51,90 +95,183 @@ public class GrabbableObject : MonoBehaviour, IInteractable
                     dragRb.isKinematic = true;
                 }
 
-                // 다시 스프링 조인트 사용 (바닥에 닿아서 끌고 다니는 느낌 복구)
-                dragJoint = gameObject.AddComponent<SpringJoint>();
-                dragJoint.connectedBody = dragRb;
+                SpringJoint joint = gameObject.AddComponent<SpringJoint>();
+                joint.connectedBody = dragRb;
                 
-                dragJoint.autoConfigureConnectedAnchor = false;
-                dragJoint.connectedAnchor = Vector3.zero;
+                // 다시 false로 변경하여 플레이어의 dragPoint(머리/몸) 쪽으로 착 달라붙게 합니다.
+                joint.autoConfigureConnectedAnchor = false; 
+                joint.connectedAnchor = Vector3.zero; 
                 
-                dragJoint.spring = 200f; // 끌어당기는 힘
-                dragJoint.damper = 20f;  // 덜렁거림 방지
-                dragJoint.maxDistance = 0.5f; 
+                // 부모 피벗이 아닌 실제 자식 모델(Collider)의 중심을 스프링의 끝단으로 설정하여 오프셋 버그 완벽 해결
+                joint.anchor = localMeshOffset;
+                
+                // 물체가 플레이어 몸을 파고들거나 겹치는 현상을 방지하기 위해 최소 유지 거리 설정
+                joint.minDistance = 0.2f; // 플레이어 몸에서 최소 0.2m 거리를 유지하도록 스프링이 밀어냄
+                joint.maxDistance = 0.25f; // 최대 0.25m까지만 멀어짐
+                
+                // 스프링 탄성을 조절하여 너무 팍! 하고 순간이동하듯 날아오는 현상을 부드럽게 완화
+                joint.spring = 150f;
+                joint.damper = 15f;
+
+                dragJoints[interactor] = joint;
             }
 
-            // 들림 방지를 위해 속도 강제 초기화
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-
-            Debug.Log("📦 무거운 상자를 완벽히 고정하여 끕니다!");
+            Debug.Log($"📦 무거운 상자를 플레이어가 잡았습니다. (현재 {interactors.Count}명)");
         }
         else
         {
-            // 가벼운 상자: 물리 연산 중지 (캐릭터와 충돌 방지)
-            rb.isKinematic = true; 
-            col.enabled = false;   
+            // 가벼운 상자: 같이 들기 (머리 위)
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            rb.interpolation = RigidbodyInterpolation.None;
+            rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+            Debug.Log($"📦 가벼운 상자를 플레이어가 들었습니다. (현재 {interactors.Count}명)");
+        }
 
-            // HoldPoint 위치로 이동 및 고정
-            if (holdPoint != null)
+        IgnoreCollisionWith(interactor, true);
+        UpdateInteractorsSpeed();
+    }
+
+    public void RemoveInteractor(PlayerInteractor interactor, bool isSnapping = false)
+    {
+        if (!interactors.Contains(interactor)) return;
+
+        interactors.Remove(interactor);
+
+        if (isHeavy && dragJoints.TryGetValue(interactor, out SpringJoint joint))
+        {
+            if (joint != null) Destroy(joint);
+            dragJoints.Remove(interactor);
+        }
+
+        IgnoreCollisionWith(interactor, false);
+
+        if (interactors.Count == 0)
+        {
+            if (!isSnapping)
             {
-                transform.SetParent(holdPoint);
-                transform.localPosition = Vector3.zero;
-                transform.localRotation = Quaternion.identity; 
+                RestoreOriginalState();
+                if (!isHeavy)
+                {
+                    // 물리 엔진 버그 방지 (살짝 위로)
+                    transform.position += Vector3.up * 0.5f;
+                }
+                
+                try
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+                catch { }
             }
-            Debug.Log("📦 가벼운 상자를 들었습니다!");
+            Debug.Log("📦 상자를 완전히 내려놓았습니다.");
+        }
+        else
+        {
+            UpdateInteractorsSpeed();
+        }
+        
+        // 놓은 사람의 속도 정상화
+        PlayerController pc = interactor.GetComponent<PlayerController>();
+        if (pc != null) pc.ResetCarrySpeedMultiplier();
+    }
+
+    private void LateUpdate()
+    {
+        // 1. 플레이어가 너무 멀어지면 강제로 놓도록 거리 제한 추가 (버그 방지)
+        for (int i = interactors.Count - 1; i >= 0; i--)
+        {
+            PlayerInteractor interactor = interactors[i];
+            if (interactor != null)
+            {
+                float dist = Vector3.Distance(transform.position, interactor.transform.position);
+                if (dist > 4.5f) // 물체와 플레이어가 4.5m 이상 멀어지면 끈이 끊어지며 놓음
+                {
+                    interactor.SendMessage("ForceDropHeldObject", SendMessageOptions.DontRequireReceiver);
+                    continue;
+                }
+            }
+        }
+
+        // 가벼운 물체: 스케일 버그를 피하기 위해 부모자식 관계를 맺지 않고 매 프레임 강제로 위치 동기화
+        if (isHeavy || interactors.Count == 0) return;
+
+        Vector3 center = Vector3.zero;
+        Vector3 forward = Vector3.zero;
+
+        foreach (var interactor in interactors)
+        {
+            center += interactor.holdPoint.position;
+            forward += interactor.holdPoint.forward;
+        }
+
+        center /= interactors.Count;
+        if (forward.sqrMagnitude > 0.001f) forward.Normalize();
+        else forward = transform.forward;
+
+        // 1. 회전을 먼저 적용
+        transform.rotation = Quaternion.LookRotation(forward);
+        
+        // 2. 부모 피벗이 아니라 실제 모델(자식 콜라이더)이 플레이어의 머리(center)에 오도록 역산하여 위치 적용
+        Vector3 worldMeshOffset = transform.TransformPoint(localMeshOffset) - transform.position;
+        
+        // 3. 상자가 플레이어 머리를 파고들지 않도록, 콜라이더의 절반 높이(meshExtentsY)만큼 강제로 위로 띄워줍니다.
+        Vector3 verticalCorrection = Vector3.up * meshExtentsY;
+        
+        transform.position = center - worldMeshOffset + verticalCorrection;
+    }
+
+    private void StoreOriginalState()
+    {
+        originalUseGravity = rb.useGravity;
+        originalIsKinematic = rb.isKinematic;
+        originalInterpolation = rb.interpolation;
+        originalCollisionMode = rb.collisionDetectionMode;
+    }
+
+    private void RestoreOriginalState()
+    {
+        rb.useGravity = originalUseGravity;
+        rb.isKinematic = originalIsKinematic;
+        rb.interpolation = originalInterpolation;
+        rb.collisionDetectionMode = originalCollisionMode;
+    }
+
+    private void IgnoreCollisionWith(PlayerInteractor interactor, bool ignore)
+    {
+        // PlayerInteractor의 Awake 순서 문제로 Collider를 캐싱하지 못한 경우를 대비하여 실시간으로 확실하게 검색
+        Collider[] playerCols = interactor.GetComponentsInChildren<Collider>(true);
+        if (playerCols != null && colliders != null)
+        {
+            foreach (var pCol in playerCols)
+            {
+                if (pCol.isTrigger) continue; // 트리거는 물리 밀어냄이 없으므로 제외
+                
+                foreach (var col in colliders)
+                {
+                    if (col != null && pCol != null) 
+                    {
+                        Physics.IgnoreCollision(pCol, col, ignore);
+                    }
+                }
+            }
         }
     }
 
-    public void Drop()
+    private void UpdateInteractorsSpeed()
     {
-        if (isHeavy)
+        float multiplier = baseSpeedMultiplier + (interactors.Count - 1) * multiPlayerSpeedBonus;
+        multiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
+
+        foreach (var interactor in interactors)
         {
-            if (dragJoint != null)
+            PlayerController pc = interactor.GetComponent<PlayerController>();
+            if (pc != null)
             {
-                Destroy(dragJoint);
+                pc.SetCarrySpeedMultiplier(multiplier);
             }
-            
-            // 플레이어 충돌 무시 원상복구
-            if (playerCollider != null)
-            {
-                Physics.IgnoreCollision(col, playerCollider, false);
-                playerCollider = null;
-            }
-
-            rb.isKinematic = false;
-            try 
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            } catch { }
-            
-            Debug.Log("📦 무거운 상자를 내려놓았습니다.");
-        }
-        else
-        {
-            transform.SetParent(null);
-            
-            // 물리 엔진 버그(콜라이더 겹침으로 인한 굳음) 방지를 위해, 놓을 때 머리 위쪽으로 살짝 빼줍니다.
-            transform.position += Vector3.up * 0.5f;
-
-            // 플레이어 충돌 무시 원상복구 (혹시 모를 상황 대비)
-            if (playerCollider != null)
-            {
-                Physics.IgnoreCollision(col, playerCollider, false);
-                playerCollider = null;
-            }
-            
-            col.enabled = true;   
-            rb.isKinematic = false; 
-
-            try 
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            } catch { }
-            
-            Debug.Log("📦 가벼운 상자를 내려놓았습니다.");
         }
     }
 }

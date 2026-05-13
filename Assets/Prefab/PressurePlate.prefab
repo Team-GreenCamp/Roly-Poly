@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5307198607032192729}
   - component: {fileID: 8779132376350942466}
   - component: {fileID: 4995610430529101981}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PressurePlate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -133,6 +133,36 @@ MonoBehaviour:
   pressDistance: 0.085
   moveSpeed: 5
   isActivated: 0
+  onActivate:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onDeactivate:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!65 &4995610430529101981
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -165,7 +195,7 @@ GameObject:
   - component: {fileID: 8128030400799330383}
   - component: {fileID: 8118491958273224275}
   - component: {fileID: 8110944983971672341}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Plate
   m_TagString: Untagged
   m_Icon: {fileID: 0}

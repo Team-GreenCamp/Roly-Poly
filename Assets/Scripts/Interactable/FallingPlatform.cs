@@ -30,25 +30,6 @@ public class FallingPlatform : MonoBehaviour
         rb.isKinematic = true;
         rb.useGravity = false;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
-        
-        // 마찰을 낮게 설정합니다.
-        // 플레이어의 캡슐 콜라이더가 매우 작아(스케일 0.5) 커스텀 중력에 의한
-        // 과도한 마찰이 발생하여 수평 이동이 차단되는 문제를 방지합니다.
-        ApplyLowFriction();
-    }
-    
-    private void ApplyLowFriction()
-    {
-        PhysicsMaterial mat = new PhysicsMaterial("FallingPlatformMat");
-        mat.dynamicFriction = 0.1f;
-        mat.staticFriction = 0.1f;
-        mat.frictionCombine = PhysicsMaterialCombine.Minimum;
-        
-        Collider col = GetComponent<Collider>();
-        if (col != null)
-        {
-            col.material = mat;
-        }
     }
 
     private void OnCollisionEnter(Collision collision)
