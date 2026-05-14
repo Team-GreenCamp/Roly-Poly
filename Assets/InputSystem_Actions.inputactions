@@ -28,7 +28,7 @@
                     "name": "Attack",
                     "type": "Button",
                     "id": "6c2ab1b8-8984-453a-af3d-a3c78ae1679a",
-                    "expectedControlType": "",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -88,9 +88,9 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Throw",
+                    "name": "Grab",
                     "type": "Button",
-                    "id": "87db5bf9-7ee1-47c3-98b4-3b7a3074d54d",
+                    "id": "19be80fe-3fee-4545-9c73-6b627d4bbbcd",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -485,12 +485,34 @@
                 },
                 {
                     "name": "",
-                    "id": "d926a656-96e5-4849-a29d-7e69be448959",
-                    "path": "<Mouse>/leftButton",
+                    "id": "b278cbcb-4fb0-4681-9401-fe8f2a049d29",
+                    "path": "",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Throw",
+                    "action": "Grab",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5bb70aa6-e635-49d9-b35f-129a2fc48254",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Grab",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "417a3602-5580-47ed-b28d-975173ea7da4",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Grab",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
