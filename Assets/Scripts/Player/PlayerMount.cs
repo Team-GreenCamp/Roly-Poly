@@ -85,6 +85,29 @@ public class PlayerMount : MonoBehaviour
         // E키(상호작용)로 탑승할 때, 내리기 키가 같은 키라면 같은 프레임에 바로 내려지는 현상 방지
         if (Time.time - mountTime < 0.2f) return;
 
+        // 차량 밖으로 안전하게 이동
+        if (currentSeat != null && currentVehicle != null)
+        {
+            Vector3 carRight = currentVehicle.transform.right;
+            Vector3 toSeat = currentSeat.position - currentVehicle.transform.position;
+            float sideSign = Vector3.Dot(carRight, toSeat) >= 0 ? 1f : -1f;
+            
+            // 월드 스페이스 기준으로 확실하게 차량 중심에서 1.5m 옆으로 밀어냅니다. (스케일 무시)
+            Vector3 exitPos = currentVehicle.transform.position + (carRight * sideSign * 1.5f);
+            exitPos.y = currentSeat.position.y + 0.5f; 
+            
+            transform.position = exitPos;
+            
+            // [핵심 버그 수정] 물리 엔진(PhysX) 싱크 문제 해결
+            // transform.position만 바꾸고 콜라이더를 켜면, 물리 엔진이 위치 변경을 1프레임 늦게 알아채서 
+            // 원래 있던 좌석 위치에서 충돌 처리를 해버립니다. 이 때문에 차 지붕으로 튕겨 올라갔던 것입니다.
+            if (rb != null) 
+            {
+                rb.position = exitPos;
+            }
+            Physics.SyncTransforms(); // 유니티 물리 엔진에 즉시 위치 변경을 강제 적용
+        }
+
         isMounted = false;
         currentVehicle = null;
         currentSeat = null;
