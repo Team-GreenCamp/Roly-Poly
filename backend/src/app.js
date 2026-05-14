@@ -5,6 +5,8 @@ const app = express();
 
 app.use(express.json());
 
+const staleOpenRoomSeconds = 30;
+
 // DB 행을 API 응답 형태로 맞춘다.
 function toRoom(row) {
   return {
@@ -39,6 +41,12 @@ app.get('/health', async (req, res) => {
 
 app.get('/rooms', async (req, res, next) => {
   try {
+    // 호스트 heartbeat가 끊긴 공개 방은 실제 세션이 끝난 방으로 보고 목록에서 제거한다.
+    await pool.query(
+      'DELETE FROM rooms WHERE status = ? AND updated_at < DATE_SUB(NOW(), INTERVAL ? SECOND)',
+      ['open', staleOpenRoomSeconds]
+    );
+
     const [rows] = await pool.query(
       'SELECT * FROM rooms WHERE is_public = TRUE AND status = ? ORDER BY created_at DESC, id DESC',
       ['open']
@@ -164,9 +172,18 @@ app.post('/rooms/:id/leave', async (req, res, next) => {
       return res.status(409).json({ message: 'room is already empty' });
     }
 
+    const nextPlayerCount = room.current_players - 1;
+
+    if (nextPlayerCount <= 0) {
+      // 마지막 플레이어가 나가면 방 목록에 남지 않도록 방을 삭제한다.
+      await connection.query('DELETE FROM rooms WHERE id = ?', [roomId]);
+      await connection.commit();
+      return res.status(204).send();
+    }
+
     await connection.query(
-      'UPDATE rooms SET current_players = current_players - 1 WHERE id = ?',
-      [roomId]
+      'UPDATE rooms SET current_players = ? WHERE id = ?',
+      [nextPlayerCount, roomId]
     );
 
     const updated = await fetchRoomById(connection, roomId);
@@ -254,6 +271,34 @@ app.patch('/rooms/:id', async (req, res, next) => {
 
       updates.push('max_players = ?');
       values.push(maxPlayers);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'currentPlayers')) {
+      const currentPlayers = Number(req.body.currentPlayers);
+
+      if (!Number.isInteger(currentPlayers) || currentPlayers < 0) {
+        return res.status(400).json({ message: 'currentPlayers must be a non-negative integer' });
+      }
+
+      const [roomRows] = await pool.query('SELECT max_players FROM rooms WHERE id = ?', [roomId]);
+
+      if (roomRows.length === 0) {
+        return res.status(404).json({ message: 'room not found' });
+      }
+
+      if (currentPlayers === 0) {
+        // 호스트 세션이 종료되면 실제 접속자가 없으므로 방 목록에서 제거한다.
+        await pool.query('DELETE FROM rooms WHERE id = ?', [roomId]);
+        return res.status(204).send();
+      }
+
+      if (currentPlayers > roomRows[0].max_players) {
+        return res.status(400).json({ message: 'currentPlayers cannot be greater than maxPlayers' });
+      }
+
+      updates.push('current_players = ?');
+      values.push(currentPlayers);
+      updates.push('updated_at = CURRENT_TIMESTAMP');
     }
 
     if (Object.prototype.hasOwnProperty.call(req.body, 'status')) {

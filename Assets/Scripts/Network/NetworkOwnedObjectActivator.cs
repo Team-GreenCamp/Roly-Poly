@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -16,6 +17,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private GameObject[] ownerOnlyObjects;
     [SerializeField] private NetworkTransform networkTransform;
     [SerializeField] private Transform cameraRoot;
+    [SerializeField] private PlayerCharacterView characterView;
     [SerializeField] private bool lockCursorForOwner = true;
     [SerializeField] private string[] cursorLockSceneNames;
 
@@ -23,6 +25,14 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private bool separatePlayerSpawnPositions = true;
     [SerializeField] private float spawnRadius = 3f;
     [SerializeField] private Vector3 spawnCenterOffset;
+    [SerializeField] private string lobbySceneName = "Lobby Scene";
+    [SerializeField] private bool useLobbySpawnPoints = true;
+
+    [Header("Lobby Spawn Presentation")]
+    [SerializeField] private bool playLobbySpawnScaleIn = true;
+    [SerializeField] private Transform spawnVisualRoot;
+    [SerializeField] private float spawnScaleInDuration = 0.35f;
+    [SerializeField] private float spawnStartScale = 0.1f;
 
     [Header("Transform Sync")]
     [SerializeField] private bool syncTransformState = true;
@@ -43,9 +53,12 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         new NetworkVariable<Vector3>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<Quaternion> syncedRotation =
         new NetworkVariable<Quaternion>(Quaternion.identity, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private readonly NetworkVariable<int> syncedCharacterIndex =
+        new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private CinemachineCamera boundCamera;
     private TextMeshPro nameLabel;
+    private Coroutine spawnPresentationCoroutine;
 
     private void Reset()
     {
@@ -65,7 +78,9 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        CacheReferences();
         ConfigureOwnershipAuthority();
+        syncedCharacterIndex.OnValueChanged += HandleCharacterIndexChanged;
         SceneManager.sceneLoaded += HandleSceneLoaded;
 
         EnsureNameLabel();
@@ -73,8 +88,12 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         if (IsServer)
         {
+            AssignCharacterIndexFromSession();
             ApplySpawnPosition();
         }
+
+        ApplyCharacterIndex(syncedCharacterIndex.Value);
+        PlayLobbySpawnPresentation();
 
         ApplyOwnershipState(IsOwner);
 
@@ -99,6 +118,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        syncedCharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         ClearLocalCameraBinding();
 
@@ -171,6 +191,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             ApplySpawnPosition();
         }
 
+        PlayLobbySpawnPresentation();
+
         if (IsOwner)
         {
             UpdateNameLabel();
@@ -194,6 +216,73 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             }
         }
 
+        if (characterView == null)
+        {
+            characterView = GetComponent<PlayerCharacterView>();
+            if (characterView == null)
+            {
+                characterView = gameObject.AddComponent<PlayerCharacterView>();
+            }
+        }
+
+        if (spawnVisualRoot == null)
+        {
+            spawnVisualRoot = FindDefaultSpawnVisualRoot();
+        }
+    }
+
+    private void AssignCharacterIndexFromSession()
+    {
+        NetworkSessionManager sessionManager = FindFirstObjectByType<NetworkSessionManager>();
+        if (sessionManager != null)
+        {
+            syncedCharacterIndex.Value = sessionManager.GetOrAssignCharacterIndex(OwnerClientId);
+        }
+    }
+
+    private void HandleCharacterIndexChanged(int previousValue, int newValue)
+    {
+        ApplyCharacterIndex(newValue);
+    }
+
+    private void ApplyCharacterIndex(int characterIndex)
+    {
+        if (characterView != null)
+        {
+            characterView.ApplyCharacter(characterIndex);
+        }
+    }
+
+    public void SubmitReadyState(bool isReady)
+    {
+        if (!IsSpawned)
+        {
+            return;
+        }
+
+        if (IsServer)
+        {
+            ApplyReadyStateOnServer(OwnerClientId, isReady);
+            return;
+        }
+
+        SubmitReadyStateServerRpc(isReady);
+    }
+
+    [ServerRpc]
+    private void SubmitReadyStateServerRpc(bool isReady, ServerRpcParams rpcParams = default)
+    {
+        // 클라이언트가 소유한 Player 오브젝트를 통해 서버에 준비 상태를 전달합니다.
+        ApplyReadyStateOnServer(rpcParams.Receive.SenderClientId, isReady);
+    }
+
+    private void ApplyReadyStateOnServer(ulong clientId, bool isReady)
+    {
+        NetworkSessionManager sessionManager = FindFirstObjectByType<NetworkSessionManager>();
+        if (sessionManager != null)
+        {
+            sessionManager.SetClientReadyFromNetwork(clientId, isReady);
+        }
     }
 
     private void ConfigureOwnershipAuthority()
@@ -217,7 +306,30 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         Vector3 targetPosition = spawnCenterOffset + GetSpawnOffset(OwnerClientId);
+        Quaternion targetRotation = transform.rotation;
 
+        if (TryGetLobbySpawnPose(out Vector3 lobbyPosition, out Quaternion lobbyRotation))
+        {
+            targetPosition = lobbyPosition;
+            targetRotation = lobbyRotation;
+        }
+
+        ApplySpawnPose(targetPosition, targetRotation);
+
+        if (IsSpawned)
+        {
+            ApplySpawnPoseClientRpc(targetPosition, targetRotation);
+        }
+    }
+
+    [ClientRpc]
+    private void ApplySpawnPoseClientRpc(Vector3 targetPosition, Quaternion targetRotation)
+    {
+        ApplySpawnPose(targetPosition, targetRotation);
+    }
+
+    private void ApplySpawnPose(Vector3 targetPosition, Quaternion targetRotation)
+    {
         if (TryGetComponent(out Rigidbody body))
         {
             Vector3 previousVelocity = body.linearVelocity;
@@ -226,7 +338,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
             body.isKinematic = true;
             body.position = targetPosition;
-            body.rotation = transform.rotation;
+            body.rotation = targetRotation;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
             body.isKinematic = wasKinematic;
@@ -239,8 +351,111 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
         else
         {
-            transform.position = targetPosition;
+            transform.SetPositionAndRotation(targetPosition, targetRotation);
         }
+    }
+
+    private bool TryGetLobbySpawnPose(out Vector3 position, out Quaternion rotation)
+    {
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+
+        if (!useLobbySpawnPoints || !IsInLobbyScene())
+        {
+            return false;
+        }
+
+        LobbySpawnPointGroup spawnPointGroup = FindLobbySpawnPointGroup(SceneManager.GetActiveScene());
+        return spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(OwnerClientId, out position, out rotation);
+    }
+
+    private bool IsInLobbyScene()
+    {
+        string activeSceneName = SceneManager.GetActiveScene().name;
+        return !string.IsNullOrWhiteSpace(lobbySceneName) && activeSceneName == lobbySceneName;
+    }
+
+    private void PlayLobbySpawnPresentation()
+    {
+        if (!playLobbySpawnScaleIn || !IsInLobbyScene())
+        {
+            return;
+        }
+
+        Transform visualRoot = characterView != null ? characterView.GetActiveCharacterRoot() : null;
+        if (visualRoot == null)
+        {
+            visualRoot = spawnVisualRoot != null ? spawnVisualRoot : FindDefaultSpawnVisualRoot();
+        }
+
+        if (visualRoot == null)
+        {
+            return;
+        }
+
+        if (spawnPresentationCoroutine != null)
+        {
+            StopCoroutine(spawnPresentationCoroutine);
+        }
+
+        spawnPresentationCoroutine = StartCoroutine(PlayScaleInRoutine(visualRoot));
+    }
+
+    private IEnumerator PlayScaleInRoutine(Transform visualRoot)
+    {
+        Vector3 targetScale = visualRoot.localScale;
+        Vector3 startScale = targetScale * Mathf.Clamp(spawnStartScale, 0.01f, 1f);
+        float duration = Mathf.Max(0.01f, spawnScaleInDuration);
+        float elapsed = 0f;
+
+        // Collider 대신 캐릭터 모델만 키워서 대기 화면 등장 연출을 보여줍니다.
+        visualRoot.localScale = startScale;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+            visualRoot.localScale = Vector3.LerpUnclamped(startScale, targetScale, t);
+            yield return null;
+        }
+
+        visualRoot.localScale = targetScale;
+        spawnPresentationCoroutine = null;
+    }
+
+    private Transform FindDefaultSpawnVisualRoot()
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            Transform child = transform.GetChild(i);
+            if (child == cameraRoot || child == null || child.name == "HoldPoint" || child.name == "PlayerNameLabel")
+            {
+                continue;
+            }
+
+            return child;
+        }
+
+        return null;
+    }
+
+    private static LobbySpawnPointGroup FindLobbySpawnPointGroup(Scene scene)
+    {
+        if (!scene.IsValid() || !scene.isLoaded)
+        {
+            return null;
+        }
+
+        GameObject[] rootObjects = scene.GetRootGameObjects();
+        for (int i = 0; i < rootObjects.Length; i++)
+        {
+            LobbySpawnPointGroup spawnPointGroup = rootObjects[i].GetComponentInChildren<LobbySpawnPointGroup>(true);
+            if (spawnPointGroup != null)
+            {
+                return spawnPointGroup;
+            }
+        }
+
+        return null;
     }
 
     private Vector3 GetSpawnOffset(ulong ownerClientId)

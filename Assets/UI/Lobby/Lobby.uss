@@ -1,59 +1,58 @@
 .lobby-root {
     flex-grow: 1;
-    justify-content: center;
-    align-items: center;
-    padding: 48px;
-    background-color: rgba(15, 18, 24, 0.82);
+    flex-direction: row;
+    padding: 56px 38px 32px 38px;
+    background-color: rgba(185, 198, 216, 0.82);
 }
 
-.lobby-panel {
-    width: 520px;
-    max-width: 100%;
-    padding: 32px;
-    border-radius: 8px;
-    background-color: rgb(34, 39, 49);
-    border-left-width: 1px;
-    border-right-width: 1px;
-    border-top-width: 1px;
-    border-bottom-width: 1px;
-    border-left-color: rgba(255, 255, 255, 0.16);
-    border-right-color: rgba(255, 255, 255, 0.16);
-    border-top-color: rgba(255, 255, 255, 0.16);
-    border-bottom-color: rgba(255, 255, 255, 0.16);
+.hidden {
+    display: none;
+}
+
+.side-panel {
+    width: 222px;
+    margin-right: 38px;
+}
+
+.room-panel {
+    flex-grow: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 6px 6px 0 6px;
+    background-color: rgba(221, 228, 236, 0.72);
 }
 
 .lobby-header {
-    margin-bottom: 24px;
+    margin-bottom: 46px;
 }
 
 .game-title {
-    -unity-font-style: bold;
-    font-size: 34px;
-    color: rgb(245, 247, 250);
+    -unity-font-style: normal;
+    font-size: 40px;
+    color: rgb(0, 0, 0);
 }
 
 .scene-title {
-    margin-top: 4px;
-    font-size: 18px;
-    color: rgb(163, 174, 190);
+    margin-top: 8px;
+    font-size: 15px;
+    color: rgba(0, 0, 0, 0.42);
 }
 
 .status-box {
-    min-height: 76px;
-    padding: 16px;
-    margin-bottom: 24px;
-    border-radius: 6px;
-    background-color: rgb(24, 28, 36);
+    min-height: 50px;
+    padding: 10px;
+    margin-bottom: 14px;
+    background-color: rgba(238, 238, 238, 0.75);
 }
 
 .status-label {
     white-space: normal;
-    font-size: 16px;
-    color: rgb(232, 237, 244);
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.58);
 }
 
-.section {
-    margin-top: 4px;
+.menu-section {
+    margin-top: 0;
 }
 
 .online-section {
@@ -62,132 +61,135 @@
 
 .field-label {
     margin-bottom: 8px;
-    color: rgb(189, 199, 214);
-    font-size: 14px;
+    color: rgb(0, 0, 0);
+    font-size: 17px;
 }
 
 .join-code-field,
 .room-name-field {
     height: 44px;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     font-size: 18px;
+    background-color: rgba(238, 238, 238, 0.76);
 }
 
-.button-row {
-    flex-direction: row;
+.button-column {
+    margin-top: 12px;
 }
 
 .primary-button,
 .secondary-button,
 .danger-button {
-    flex-grow: 1;
-    height: 46px;
-    border-radius: 6px;
-    -unity-font-style: bold;
-    font-size: 16px;
-    color: rgb(255, 255, 255);
+    width: 182px;
+    height: 48px;
+    margin-bottom: 14px;
+    border-radius: 2px;
+    -unity-font-style: normal;
+    font-size: 23px;
+    color: rgba(0, 0, 0, 0.58);
+    background-color: rgba(245, 245, 245, 0.9);
 }
 
 .primary-button {
-    background-color: rgb(53, 115, 230);
+    background-color: rgba(245, 245, 245, 0.9);
 }
 
 .secondary-button {
-    background-color: rgb(73, 83, 100);
+    background-color: rgba(245, 245, 245, 0.9);
 }
 
 .danger-button {
-    background-color: rgb(190, 68, 70);
+    background-color: rgba(245, 245, 245, 0.9);
 }
 
 .secondary-button,
 .danger-button {
-    margin-left: 12px;
+    margin-left: 0;
 }
 
 .primary-button:disabled,
 .secondary-button:disabled,
 .danger-button:disabled {
-    background-color: rgb(70, 76, 88);
-    color: rgb(145, 152, 164);
+    background-color: rgba(210, 210, 210, 0.75);
+    color: rgba(0, 0, 0, 0.28);
 }
 
 .info-row {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    min-height: 36px;
-    margin-bottom: 10px;
+    min-height: 30px;
+    margin-bottom: 8px;
 }
 
 .info-label {
-    color: rgb(169, 180, 195);
+    color: rgba(0, 0, 0, 0.58);
     font-size: 15px;
 }
 
 .info-value {
-    color: rgb(248, 250, 252);
-    -unity-font-style: bold;
-    font-size: 18px;
+    color: rgb(0, 0, 0);
+    -unity-font-style: normal;
+    font-size: 16px;
 }
 
 .join-code-value {
-    color: rgb(102, 212, 164);
+    color: rgb(0, 0, 0);
 }
 
-.room-list-header {
+.room-panel-header {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-top: 24px;
-    margin-bottom: 8px;
+    height: 48px;
+    padding-left: 28px;
+    padding-right: 18px;
+    margin-bottom: 0;
 }
 
 .room-list-title {
-    color: rgb(232, 237, 244);
-    -unity-font-style: bold;
-    font-size: 17px;
+    color: rgb(0, 0, 0);
+    -unity-font-style: normal;
+    font-size: 22px;
 }
 
 .small-button {
-    width: 104px;
-    height: 34px;
-    border-radius: 6px;
-    background-color: rgb(73, 83, 100);
-    color: rgb(255, 255, 255);
-    -unity-font-style: bold;
-    font-size: 13px;
+    width: 182px;
+    height: 48px;
+    margin-bottom: 14px;
+    border-radius: 2px;
+    background-color: rgba(245, 245, 245, 0.9);
+    color: rgba(0, 0, 0, 0.58);
+    -unity-font-style: normal;
+    font-size: 20px;
 }
 
 .small-button:disabled {
-    background-color: rgb(70, 76, 88);
-    color: rgb(145, 152, 164);
+    background-color: rgba(210, 210, 210, 0.75);
+    color: rgba(0, 0, 0, 0.28);
 }
 
 .room-list-status {
     min-height: 24px;
-    margin-bottom: 8px;
-    color: rgb(163, 174, 190);
+    color: rgba(0, 0, 0, 0.48);
     font-size: 13px;
     white-space: normal;
 }
 
 .room-list-view {
-    height: 190px;
-    padding: 8px;
-    border-radius: 6px;
-    background-color: rgb(24, 28, 36);
+    flex-grow: 1;
+    padding: 0 8px 8px 0;
+    background-color: rgba(221, 228, 236, 0.25);
 }
 
 .room-row {
-    min-height: 58px;
+    min-height: 152px;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    background-color: rgb(40, 46, 58);
+    align-items: flex-start;
+    padding: 22px 30px 18px 30px;
+    margin-bottom: 12px;
+    background-color: rgba(238, 238, 238, 0.48);
 }
 
 .room-info {
@@ -196,28 +198,78 @@
 }
 
 .room-name {
-    color: rgb(248, 250, 252);
-    -unity-font-style: bold;
-    font-size: 15px;
+    color: rgb(0, 0, 0);
+    -unity-font-style: normal;
+    font-size: 24px;
 }
 
 .room-detail {
-    margin-top: 4px;
-    color: rgb(169, 180, 195);
-    font-size: 12px;
+    margin-top: 16px;
+    color: rgba(0, 0, 0, 0.55);
+    font-size: 16px;
 }
 
 .room-join-button {
-    width: 72px;
-    height: 34px;
-    border-radius: 6px;
-    background-color: rgb(53, 115, 230);
-    color: rgb(255, 255, 255);
-    -unity-font-style: bold;
-    font-size: 13px;
+    width: 116px;
+    height: 44px;
+    border-radius: 2px;
+    background-color: rgba(245, 245, 245, 0.9);
+    color: rgba(0, 0, 0, 0.58);
+    -unity-font-style: normal;
+    font-size: 18px;
 }
 
 .room-join-button:disabled {
-    background-color: rgb(70, 76, 88);
-    color: rgb(145, 152, 164);
+    background-color: rgba(210, 210, 210, 0.75);
+    color: rgba(0, 0, 0, 0.28);
+}
+
+.modal-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.28);
+}
+
+.create-room-dialog {
+    width: 420px;
+    padding: 30px;
+    background-color: rgba(238, 238, 238, 0.96);
+}
+
+.dialog-title {
+    margin-bottom: 24px;
+    color: rgb(0, 0, 0);
+    font-size: 30px;
+}
+
+.dialog-input {
+    width: 100%;
+}
+
+.dialog-button-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.dialog-confirm-button,
+.dialog-cancel-button {
+    width: 120px;
+    height: 46px;
+    margin-left: 12px;
+    border-radius: 2px;
+    background-color: rgba(245, 245, 245, 0.94);
+    color: rgba(0, 0, 0, 0.62);
+    font-size: 20px;
+}
+
+.dialog-confirm-button:disabled,
+.dialog-cancel-button:disabled {
+    background-color: rgba(210, 210, 210, 0.78);
+    color: rgba(0, 0, 0, 0.28);
 }

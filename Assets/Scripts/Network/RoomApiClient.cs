@@ -67,12 +67,20 @@ public class RoomApiClient
 
     public async Task<RoomDto> LeaveRoomAsync(long roomId)
     {
-        return JsonUtility.FromJson<RoomDto>(await SendAsync("POST", $"/rooms/{roomId}/leave", "{}"));
+        string json = await SendAsync("POST", $"/rooms/{roomId}/leave", "{}");
+        return string.IsNullOrWhiteSpace(json) ? null : JsonUtility.FromJson<RoomDto>(json);
     }
 
     public async Task<RoomDto> CloseRoomAsync(long roomId)
     {
         return await SetRoomStatusAsync(roomId, "closed");
+    }
+
+    public async Task<RoomDto> SetRoomPlayerCountAsync(long roomId, int currentPlayers)
+    {
+        // 호스트가 알고 있는 실제 접속자 수를 백엔드 방 목록에 반영합니다.
+        string json = await SendAsync("PATCH", $"/rooms/{roomId}", $"{{\"currentPlayers\":{currentPlayers}}}");
+        return string.IsNullOrWhiteSpace(json) ? null : JsonUtility.FromJson<RoomDto>(json);
     }
 
     public async Task<RoomDto> SetRoomStatusAsync(long roomId, string status)
