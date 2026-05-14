@@ -17,9 +17,12 @@ GameObject:
   - component: {fileID: -1357284326032947471}
   - component: {fileID: 5103745207573382375}
   - component: {fileID: 3482339306295923204}
-  m_Layer: 0
+  - component: {fileID: 659870819651269115}
+  - component: {fileID: 2089739580779564808}
+  - component: {fileID: 7078347345230186685}
+  m_Layer: 3
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -42,7 +45,8 @@ Transform:
   - {fileID: 4509590520588478079}
   - {fileID: 5855975498953133845}
   - {fileID: 114892334035800877}
-  - {fileID: 2081467351840265412}
+  - {fileID: 7836068453456539703}
+  - {fileID: 3339054894544356105}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &-752662279871191066
@@ -57,7 +61,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 498835207
+  GlobalObjectIdHash: 1374358220
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -87,7 +91,6 @@ MonoBehaviour:
   physicsCollider: {fileID: 3482339306295923204}
   playerInput: {fileID: 1693436149286584330}
   networkObject: {fileID: -752662279871191066}
-  holdPoint: {fileID: 2081467351840265412}
   walkSpeed: 4
   sprintSpeed: 6
   rotationSpeed: 720
@@ -103,27 +106,14 @@ MonoBehaviour:
   fallenTiltAngle: 35
   recoveryDelay: 1
   recoveryTorqueMultiplier: 2.5
+  turnTorque: 35
   turnDamping: 6
   maxAngularVelocity: 25
-  interactionDistance: 2.2
-  interactionRadius: 0.25
-  interactionLayers:
-    serializedVersion: 2
-    m_Bits: 128
-  maxCarryMass: 20
-  holdPointLocalOffset: {x: 0.35, y: 1.2, z: 1.5}
-  interactableOutlineColor: {r: 1, g: 1, b: 1, a: 1}
-  interactableOutlineWidth: 4
-  interactableOutlineMode: 1
-  throwForce: 8
-  throwUpwardRatio: 0.18
-  throwVelocityInheritance: 0.75
-  throwCollisionIgnoreTime: 0.25
   groundedOffset: 0.1
   groundedRadius: 0.25
   groundLayers:
     serializedVersion: 2
-    m_Bits: 200
+    m_Bits: 448
   playerCollisionImpact: 5
   rigidbodyImpactSpeedThreshold: 5
   heavyObjectMassThreshold: 20
@@ -134,8 +124,6 @@ MonoBehaviour:
   externalImpactTorqueMultiplier: 0.35
   slideSlopeAngle: 32
   slideForce: 18
-  currentCheckpoint: {fileID: 0}
-  respawnUpOffset: 0.25
 --- !u!95 &2331239718062049963
 Animator:
   serializedVersion: 7
@@ -253,6 +241,7 @@ MonoBehaviour:
   ownerOnlyObjects: []
   networkTransform: {fileID: -5105889794907920579}
   cameraRoot: {fileID: 114892334035800877}
+  characterView: {fileID: 0}
   lockCursorForOwner: 1
   cursorLockSceneNames:
   - Network Test
@@ -326,6 +315,63 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &659870819651269115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d024126ed8ba134a922a5f2b9010132, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
+  interactRange: 2
+  sphereCastRadius: 1
+  interactLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  raycastHeightOffset: 1
+  holdPoint: {fileID: 3339054894544356105}
+  dragPoint: {fileID: 7836068453456539703}
+  maxCarryMass: 20
+  characterVisual: {fileID: 0}
+  tiltAngle: 15
+  tiltSpeed: 10
+  interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  grabAction: {fileID: -8626289477208822049, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+--- !u!114 &2089739580779564808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d38e467973c204b4f8d3c4a7fa1e1b21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerClimber
+  interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  jumpAction: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  climbMoveSpeed: 2
+  ledgeTag: Ledge
+  monkeyBarTag: MonkeyBar
+--- !u!114 &7078347345230186685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dccc07b868861646b050c98e99f5690, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMount
+  isMounted: 0
 --- !u!1 &2790217993094878390
 GameObject:
   m_ObjectHideFlags: 0
@@ -335,7 +381,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 114892334035800877}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: CameraRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -357,7 +403,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8740561361255514374}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5395466305566391069
+--- !u!1 &5980089780582141878
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -365,24 +411,55 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2081467351840265412}
-  m_Layer: 0
+  - component: {fileID: 3339054894544356105}
+  m_Layer: 3
   m_Name: HoldPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2081467351840265412
+--- !u!4 &3339054894544356105
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5395466305566391069}
+  m_GameObject: {fileID: 5980089780582141878}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 0.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8740561361255514374}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8764598204538278738
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7836068453456539703}
+  m_Layer: 3
+  m_Name: GrabPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7836068453456539703
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8764598204538278738}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
