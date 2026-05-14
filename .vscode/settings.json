@@ -67,5 +67,8 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Battle-Royal.slnx"
+    "dotnet.defaultSolution": "Battle-Royal.slnx",
+    "dotrush.roslyn.projectOrSolutionFiles": [
+        "/Users/macbook/Desktop/workspace/unity/Battle-Royal/Battle-Royal.sln"
+    ]
 }

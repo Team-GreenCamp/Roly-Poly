@@ -1,0 +1,16 @@
+{
+  "name": "battle-royal-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal Node.js + MySQL backend scaffold for Battle-Royal",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mysql2": "^3.11.5",
+    "dotenv": "^16.4.5"
+  }
+}

@@ -1,0 +1,275 @@
+.lobby-root {
+    flex-grow: 1;
+    flex-direction: row;
+    padding: 56px 38px 32px 38px;
+    background-color: rgba(185, 198, 216, 0.82);
+}
+
+.hidden {
+    display: none;
+}
+
+.side-panel {
+    width: 222px;
+    margin-right: 38px;
+}
+
+.room-panel {
+    flex-grow: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 6px 6px 0 6px;
+    background-color: rgba(221, 228, 236, 0.72);
+}
+
+.lobby-header {
+    margin-bottom: 46px;
+}
+
+.game-title {
+    -unity-font-style: normal;
+    font-size: 40px;
+    color: rgb(0, 0, 0);
+}
+
+.scene-title {
+    margin-top: 8px;
+    font-size: 15px;
+    color: rgba(0, 0, 0, 0.42);
+}
+
+.status-box {
+    min-height: 50px;
+    padding: 10px;
+    margin-bottom: 14px;
+    background-color: rgba(238, 238, 238, 0.75);
+}
+
+.status-label {
+    white-space: normal;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.58);
+}
+
+.menu-section {
+    margin-top: 0;
+}
+
+.online-section {
+    display: none;
+}
+
+.field-label {
+    margin-bottom: 8px;
+    color: rgb(0, 0, 0);
+    font-size: 17px;
+}
+
+.join-code-field,
+.room-name-field {
+    height: 44px;
+    margin-bottom: 14px;
+    font-size: 18px;
+    background-color: rgba(238, 238, 238, 0.76);
+}
+
+.button-column {
+    margin-top: 12px;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+    width: 182px;
+    height: 48px;
+    margin-bottom: 14px;
+    border-radius: 2px;
+    -unity-font-style: normal;
+    font-size: 23px;
+    color: rgba(0, 0, 0, 0.58);
+    background-color: rgba(245, 245, 245, 0.9);
+}
+
+.primary-button {
+    background-color: rgba(245, 245, 245, 0.9);
+}
+
+.secondary-button {
+    background-color: rgba(245, 245, 245, 0.9);
+}
+
+.danger-button {
+    background-color: rgba(245, 245, 245, 0.9);
+}
+
+.secondary-button,
+.danger-button {
+    margin-left: 0;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.danger-button:disabled {
+    background-color: rgba(210, 210, 210, 0.75);
+    color: rgba(0, 0, 0, 0.28);
+}
+
+.info-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 30px;
+    margin-bottom: 8px;
+}
+
+.info-label {
+    color: rgba(0, 0, 0, 0.58);
+    font-size: 15px;
+}
+
+.info-value {
+    color: rgb(0, 0, 0);
+    -unity-font-style: normal;
+    font-size: 16px;
+}
+
+.join-code-value {
+    color: rgb(0, 0, 0);
+}
+
+.room-panel-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 48px;
+    padding-left: 28px;
+    padding-right: 18px;
+    margin-bottom: 0;
+}
+
+.room-list-title {
+    color: rgb(0, 0, 0);
+    -unity-font-style: normal;
+    font-size: 22px;
+}
+
+.small-button {
+    width: 182px;
+    height: 48px;
+    margin-bottom: 14px;
+    border-radius: 2px;
+    background-color: rgba(245, 245, 245, 0.9);
+    color: rgba(0, 0, 0, 0.58);
+    -unity-font-style: normal;
+    font-size: 20px;
+}
+
+.small-button:disabled {
+    background-color: rgba(210, 210, 210, 0.75);
+    color: rgba(0, 0, 0, 0.28);
+}
+
+.room-list-status {
+    min-height: 24px;
+    color: rgba(0, 0, 0, 0.48);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.room-list-view {
+    flex-grow: 1;
+    padding: 0 8px 8px 0;
+    background-color: rgba(221, 228, 236, 0.25);
+}
+
+.room-row {
+    min-height: 152px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 22px 30px 18px 30px;
+    margin-bottom: 12px;
+    background-color: rgba(238, 238, 238, 0.48);
+}
+
+.room-info {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.room-name {
+    color: rgb(0, 0, 0);
+    -unity-font-style: normal;
+    font-size: 24px;
+}
+
+.room-detail {
+    margin-top: 16px;
+    color: rgba(0, 0, 0, 0.55);
+    font-size: 16px;
+}
+
+.room-join-button {
+    width: 116px;
+    height: 44px;
+    border-radius: 2px;
+    background-color: rgba(245, 245, 245, 0.9);
+    color: rgba(0, 0, 0, 0.58);
+    -unity-font-style: normal;
+    font-size: 18px;
+}
+
+.room-join-button:disabled {
+    background-color: rgba(210, 210, 210, 0.75);
+    color: rgba(0, 0, 0, 0.28);
+}
+
+.modal-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.28);
+}
+
+.create-room-dialog {
+    width: 420px;
+    padding: 30px;
+    background-color: rgba(238, 238, 238, 0.96);
+}
+
+.dialog-title {
+    margin-bottom: 24px;
+    color: rgb(0, 0, 0);
+    font-size: 30px;
+}
+
+.dialog-input {
+    width: 100%;
+}
+
+.dialog-button-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.dialog-confirm-button,
+.dialog-cancel-button {
+    width: 120px;
+    height: 46px;
+    margin-left: 12px;
+    border-radius: 2px;
+    background-color: rgba(245, 245, 245, 0.94);
+    color: rgba(0, 0, 0, 0.62);
+    font-size: 20px;
+}
+
+.dialog-confirm-button:disabled,
+.dialog-cancel-button:disabled {
+    background-color: rgba(210, 210, 210, 0.78);
+    color: rgba(0, 0, 0, 0.28);
+}

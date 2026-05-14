@@ -1,0 +1,55 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Lobby/Lobby.uss?fileID=7433441132597879392&amp;guid=17aa04d2bb7824ef1ae864ed74852fc3&amp;type=3#Lobby"/>
+    <ui:VisualElement name="lobby-root" class="lobby-root">
+        <ui:VisualElement class="side-panel">
+            <ui:VisualElement class="lobby-header">
+                <ui:Label text="방 찾기" class="game-title"/>
+                <ui:Label text="Battle Royal" class="scene-title"/>
+            </ui:VisualElement>
+            <ui:VisualElement class="status-box">
+                <ui:Label text="오프라인" name="status-label" class="status-label"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="offline-root" class="menu-section">
+                <ui:Label text="Join Code" class="field-label"/>
+                <ui:TextField name="join-code-field" class="join-code-field"/>
+                <ui:VisualElement class="button-column">
+                    <ui:Button text="방 만들기" name="host-button" class="primary-button"/>
+                    <ui:Button text="참가" name="join-button" class="secondary-button"/>
+                    <ui:Button text="새로고침" name="refresh-rooms-button" class="small-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="online-root" class="menu-section online-section">
+                <ui:VisualElement class="info-row">
+                    <ui:Label text="현재 인원" class="info-label"/>
+                    <ui:Label text="0 / 0" name="player-count-label" class="info-value"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="info-row">
+                    <ui:Label text="코드" class="info-label"/>
+                    <ui:Label text="-" name="join-code-label" class="info-value join-code-value"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="button-column">
+                    <ui:Button text="게임 시작" name="start-game-button" class="primary-button"/>
+                    <ui:Button text="나가기" name="leave-button" class="danger-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="room-panel">
+            <ui:VisualElement class="room-panel-header">
+                <ui:Label text="방 목록" class="room-list-title"/>
+                <ui:Label text="방 목록을 불러오는 중입니다..." name="room-list-status-label" class="room-list-status" style="font-size: 20px;"/>
+            </ui:VisualElement>
+            <ui:ScrollView name="room-list-view" enabled="true" class="room-list-view" style="visibility: visible;"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="create-room-panel" class="modal-overlay hidden">
+            <ui:VisualElement class="create-room-dialog">
+                <ui:Label text="방 만들기" class="dialog-title"/>
+                <ui:Label text="방 이름" class="field-label"/>
+                <ui:TextField name="room-name-field" value="Puzzle Room" class="room-name-field dialog-input"/>
+                <ui:VisualElement class="dialog-button-row">
+                    <ui:Button text="확인" name="confirm-create-room-button" class="dialog-confirm-button"/>
+                    <ui:Button text="취소" name="cancel-create-room-button" class="dialog-cancel-button"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
