@@ -20,6 +20,9 @@ public class GrabbableObject : MonoBehaviour
     private List<PlayerInteractor> interactors = new List<PlayerInteractor>();
     private Dictionary<PlayerInteractor, SpringJoint> dragJoints = new Dictionary<PlayerInteractor, SpringJoint>();
 
+    public bool IsBeingHeld => interactors.Count > 0;
+    public int InteractorCount => interactors.Count;
+
     // 원본 물리 상태 저장
     private bool originalUseGravity;
     private bool originalIsKinematic;
