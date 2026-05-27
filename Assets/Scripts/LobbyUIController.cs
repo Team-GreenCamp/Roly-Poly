@@ -613,7 +613,7 @@ public class LobbyUIController : MonoBehaviour
         if (roomCodeDisplayText != null)
         {
             // Relay 접속 코드를 대기 패널에서 바로 확인할 수 있게 표시합니다.
-            roomCodeDisplayText.text = $"접속 코드: {GetDisplayedRoomCode()}";
+            roomCodeDisplayText.text = GetDisplayedRoomCode();
         }
 
         if (roomEntryPanel != null)

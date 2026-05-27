@@ -87,7 +87,6 @@ MonoBehaviour:
   physicsCollider: {fileID: 3482339306295923204}
   playerInput: {fileID: 1693436149286584330}
   networkObject: {fileID: -752662279871191066}
-  holdPoint: {fileID: 2081467351840265412}
   walkSpeed: 4
   sprintSpeed: 6
   rotationSpeed: 720
@@ -103,22 +102,9 @@ MonoBehaviour:
   fallenTiltAngle: 35
   recoveryDelay: 1
   recoveryTorqueMultiplier: 2.5
+  turnTorque: 35
   turnDamping: 6
   maxAngularVelocity: 25
-  interactionDistance: 2.2
-  interactionRadius: 0.25
-  interactionLayers:
-    serializedVersion: 2
-    m_Bits: 128
-  maxCarryMass: 20
-  holdPointLocalOffset: {x: 0.35, y: 1.2, z: 1.5}
-  interactableOutlineColor: {r: 1, g: 1, b: 1, a: 1}
-  interactableOutlineWidth: 4
-  interactableOutlineMode: 1
-  throwForce: 8
-  throwUpwardRatio: 0.18
-  throwVelocityInheritance: 0.75
-  throwCollisionIgnoreTime: 0.25
   groundedOffset: 0.1
   groundedRadius: 0.25
   groundLayers:
@@ -134,8 +120,6 @@ MonoBehaviour:
   externalImpactTorqueMultiplier: 0.35
   slideSlopeAngle: 32
   slideForce: 18
-  currentCheckpoint: {fileID: 0}
-  respawnUpOffset: 0.25
 --- !u!95 &2331239718062049963
 Animator:
   serializedVersion: 7
@@ -253,6 +237,7 @@ MonoBehaviour:
   ownerOnlyObjects: []
   networkTransform: {fileID: -5105889794907920579}
   cameraRoot: {fileID: 114892334035800877}
+  characterView: {fileID: 0}
   lockCursorForOwner: 1
   cursorLockSceneNames:
   - Network Test
@@ -274,8 +259,8 @@ MonoBehaviour:
   - GameScene
   - Network Test
   showNameLabel: 1
-  nameLabelOffset: {x: 0, y: 2.2, z: 0}
-  nameLabelFontSize: 4
+  nameLabelOffset: {x: 0, y: 1.3, z: 0}
+  nameLabelFontSize: 2.5
 --- !u!54 &5103745207573382375
 Rigidbody:
   m_ObjectHideFlags: 0
