@@ -4,9 +4,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using CanvasButton = UnityEngine.UI.Button;
 using CanvasImage = UnityEngine.UI.Image;
-using HorizontalLayoutGroup = UnityEngine.UI.HorizontalLayoutGroup;
-using LayoutElement = UnityEngine.UI.LayoutElement;
-using VerticalLayoutGroup = UnityEngine.UI.VerticalLayoutGroup;
 
 [DisallowMultipleComponent]
 public class LobbyUIController : MonoBehaviour
@@ -14,30 +11,19 @@ public class LobbyUIController : MonoBehaviour
     [Header("References")]
     [SerializeField] private NetworkSessionManager sessionManager;
 
-    [Header("Canvas Connection UI")]
+    [Header("External UI Controls")]
     [SerializeField] private TMP_InputField addressInputField;
-    [SerializeField] private TMP_InputField portInputField;
-    [SerializeField] private CanvasButton hostButton;
-    [SerializeField] private CanvasButton joinButton;
     [SerializeField] private CanvasButton leaveButton;
-    [SerializeField] private CanvasButton startGameButton;
     [SerializeField] private CanvasButton readyButton;
-
-    [Header("Canvas Status UI")]
-    [SerializeField] private TMP_Text statusText;
-    [SerializeField] private TMP_Text playerCountText;
-    [SerializeField] private GameObject offlineRoot;
-    [SerializeField] private GameObject onlineRoot;
-    [SerializeField] private GameObject roomSearchPanel;
-    [SerializeField] private GameObject waitingRoot;
-    [SerializeField] private GameObject createRoomPanel;
     [SerializeField] private GameObject roomEntryPanel;
     [SerializeField] private TMP_Text roomCodeDisplayText;
 
+    [Header("Loading UI")]
+    [SerializeField] private GameObject loadingRoot;
+    [SerializeField] private TMP_Text loadingMessageText;
+
     [Header("Canvas Room List UI")]
     [SerializeField] private TMP_InputField roomNameInputField;
-    [SerializeField] private CanvasButton refreshRoomsButton;
-    [SerializeField] private TMP_Text roomListStatusText;
     [SerializeField] private Transform roomListContentRoot;
     [SerializeField] private GameObject roomListItemTemplate;
 
@@ -56,6 +42,7 @@ public class LobbyUIController : MonoBehaviour
     private bool isReady;
     private bool wasOnline;
     private bool activeBackendRoomOwnedByHost;
+    private int loadingRequestCount;
     private float nextRoomHeartbeatTime;
     private long activeBackendRoomId;
     private int backendConnectedPlayerCount = -1;
@@ -76,7 +63,6 @@ public class LobbyUIController : MonoBehaviour
         }
 
         ApplyDefaultValues();
-        EnsureCanvasWaitingLayout();
         roomApiClient = new RoomApiClient(backendBaseUrl);
     }
 
@@ -130,34 +116,14 @@ public class LobbyUIController : MonoBehaviour
             return;
         }
 
-        if (hostButton != null)
-        {
-            hostButton.onClick.AddListener(HandleHostClicked);
-        }
-
-        if (joinButton != null)
-        {
-            joinButton.onClick.AddListener(HandleJoinClicked);
-        }
-
         if (leaveButton != null)
         {
             leaveButton.onClick.AddListener(HandleLeaveClicked);
         }
 
-        if (startGameButton != null)
-        {
-            startGameButton.onClick.AddListener(HandleStartGameClicked);
-        }
-
         if (readyButton != null)
         {
             readyButton.onClick.AddListener(HandleReadyClicked);
-        }
-
-        if (refreshRoomsButton != null)
-        {
-            refreshRoomsButton.onClick.AddListener(HandleRefreshRoomsClicked);
         }
 
         listenersRegistered = true;
@@ -170,34 +136,14 @@ public class LobbyUIController : MonoBehaviour
             return;
         }
 
-        if (hostButton != null)
-        {
-            hostButton.onClick.RemoveListener(HandleHostClicked);
-        }
-
-        if (joinButton != null)
-        {
-            joinButton.onClick.RemoveListener(HandleJoinClicked);
-        }
-
         if (leaveButton != null)
         {
             leaveButton.onClick.RemoveListener(HandleLeaveClicked);
         }
 
-        if (startGameButton != null)
-        {
-            startGameButton.onClick.RemoveListener(HandleStartGameClicked);
-        }
-
         if (readyButton != null)
         {
             readyButton.onClick.RemoveListener(HandleReadyClicked);
-        }
-
-        if (refreshRoomsButton != null)
-        {
-            refreshRoomsButton.onClick.RemoveListener(HandleRefreshRoomsClicked);
         }
 
         listenersRegistered = false;
@@ -210,11 +156,6 @@ public class LobbyUIController : MonoBehaviour
             addressInputField.text = string.Empty;
         }
 
-        if (portInputField != null)
-        {
-            portInputField.gameObject.SetActive(false);
-        }
-
         if (roomNameInputField != null && string.IsNullOrWhiteSpace(roomNameInputField.text))
         {
             roomNameInputField.text = GetRoomName();
@@ -225,41 +166,43 @@ public class LobbyUIController : MonoBehaviour
             roomListItemTemplate.SetActive(false);
         }
 
-        if (waitingRoot == null)
-        {
-            waitingRoot = onlineRoot;
-        }
-
-        if (roomSearchPanel == null)
-        {
-            roomSearchPanel = ResolveRoomSearchPanel();
-        }
+        HideLoadingImmediate();
     }
 
-    private async void HandleHostClicked()
+    // Heat UI 버튼의 OnClick 이벤트에서도 직접 연결할 수 있도록 public으로 둡니다.
+    public async void HandleHostClicked()
     {
         if (sessionManager == null)
         {
             return;
         }
 
-        if (useRelayForRoomList)
-        {
-            await RunAsync(sessionManager.StartHostAsync());
-        }
-        else
-        {
-            await RunAsync(sessionManager.StartLocalHostAsync());
-        }
+        ShowLoading("방을 만드는 중입니다...");
 
-        if (sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
+        try
         {
-            ShowWaitingRoomAfterHostStarted();
-            await RegisterHostedRoomAsync();
+            if (useRelayForRoomList)
+            {
+                await RunAsync(sessionManager.StartHostAsync());
+            }
+            else
+            {
+                await RunAsync(sessionManager.StartLocalHostAsync());
+            }
+
+            if (sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
+            {
+                ShowWaitingRoomAfterHostStarted();
+                await RegisterHostedRoomAsync();
+            }
+        }
+        finally
+        {
+            HideLoading();
         }
     }
 
-    private async void HandleJoinClicked()
+    public async void HandleJoinClicked()
     {
         if (sessionManager == null)
         {
@@ -280,6 +223,7 @@ public class LobbyUIController : MonoBehaviour
 
         try
         {
+            ShowLoading("방 정보를 확인하는 중입니다...");
             RoomApiClient.RoomDto room = await FindOpenRoomByCodeAsync(joinCode);
             if (room != null)
             {
@@ -289,6 +233,7 @@ public class LobbyUIController : MonoBehaviour
 
             isJoiningRoom = true;
             RefreshUI();
+            ShowLoading("방에 접속하는 중입니다...");
             SetRoomListStatus("일치하는 공개 방이 없어 직접 접속을 시도합니다...");
 
             if (useRelayForRoomList)
@@ -312,13 +257,14 @@ public class LobbyUIController : MonoBehaviour
         finally
         {
             isJoiningRoom = false;
+            HideLoading();
             RefreshUI();
         }
     }
 
-    private async void HandleRefreshRoomsClicked()
+    public async void HandleRefreshRoomsClicked()
     {
-        await RefreshRoomsAsync();
+        await RefreshRoomsAsync(true);
     }
 
     private async void HandleRoomJoinClicked(RoomApiClient.RoomDto room)
@@ -347,6 +293,7 @@ public class LobbyUIController : MonoBehaviour
         {
             isJoiningRoom = true;
             RefreshUI();
+            ShowLoading(loadingMessage);
             SetRoomListStatus(loadingMessage);
 
             if (room.connectionType == "local")
@@ -394,11 +341,12 @@ public class LobbyUIController : MonoBehaviour
         finally
         {
             isJoiningRoom = false;
+            HideLoading();
             RefreshUI();
         }
     }
 
-    private async void HandleLeaveClicked()
+    public async void HandleLeaveClicked()
     {
         if (sessionManager == null)
         {
@@ -410,10 +358,10 @@ public class LobbyUIController : MonoBehaviour
         backendConnectedPlayerCount = -1;
         isReady = false;
         RefreshUI();
-        await RefreshRoomsAsync();
+        await RefreshRoomsAsync(true);
     }
 
-    private void HandleReadyClicked()
+    public void HandleReadyClicked()
     {
         isReady = !isReady;
         if (sessionManager != null)
@@ -424,7 +372,7 @@ public class LobbyUIController : MonoBehaviour
         RefreshUI();
     }
 
-    private async void HandleStartGameClicked()
+    public async void HandleStartGameClicked()
     {
         if (sessionManager == null)
         {
@@ -591,7 +539,7 @@ public class LobbyUIController : MonoBehaviour
         }
     }
 
-    private async Task RefreshRoomsAsync()
+    private async Task RefreshRoomsAsync(bool showLoading = false)
     {
         if (isRefreshingRooms)
         {
@@ -599,10 +547,13 @@ public class LobbyUIController : MonoBehaviour
         }
 
         isRefreshingRooms = true;
-        SetCanvasButtonInteractable(refreshRoomsButton, false);
-
         try
         {
+            if (showLoading)
+            {
+                ShowLoading("방 목록을 불러오는 중입니다...");
+            }
+
             SetRoomListStatus("방 목록을 불러오는 중입니다...");
             RoomApiClient.RoomDto[] rooms = await GetRoomApiClient().GetRoomsAsync();
             SyncBackendPlayerCount(rooms);
@@ -617,6 +568,11 @@ public class LobbyUIController : MonoBehaviour
         }
         finally
         {
+            if (showLoading)
+            {
+                HideLoading();
+            }
+
             isRefreshingRooms = false;
             RefreshUI();
         }
@@ -625,40 +581,17 @@ public class LobbyUIController : MonoBehaviour
     private void RefreshUI()
     {
         bool isOnline = sessionManager != null && sessionManager.IsOnline;
-        bool isServer = sessionManager != null && sessionManager.IsServer;
         bool isBusy = sessionManager != null && sessionManager.IsBusy;
-        int playerCount = GetDisplayedPlayerCount();
-        string statusMessage = GetStatusMessage();
-
-        if (hostButton != null)
-        {
-            hostButton.interactable = !isOnline && !isBusy;
-        }
-
-        if (joinButton != null)
-        {
-            joinButton.interactable = !isOnline && !isBusy && !isJoiningRoom;
-        }
 
         if (leaveButton != null)
         {
             leaveButton.interactable = isOnline && !isBusy;
         }
 
-        if (startGameButton != null)
-        {
-            startGameButton.interactable = isServer && playerCount > 0 && !isBusy;
-        }
-
         if (readyButton != null)
         {
             readyButton.interactable = isOnline && !isBusy;
             SetButtonLabel(readyButton, isReady ? "준비 완료" : "준비");
-        }
-
-        if (refreshRoomsButton != null)
-        {
-            refreshRoomsButton.interactable = !isOnline && !isBusy && !isRefreshingRooms && !isJoiningRoom;
         }
 
         if (roomNameInputField != null)
@@ -683,42 +616,6 @@ public class LobbyUIController : MonoBehaviour
             roomCodeDisplayText.text = $"접속 코드: {GetDisplayedRoomCode()}";
         }
 
-        if (portInputField != null)
-        {
-            portInputField.interactable = false;
-        }
-
-        if (statusText != null)
-        {
-            statusText.text = statusMessage;
-        }
-
-        if (playerCountText != null)
-        {
-            playerCountText.text = $"현재 인원: {playerCount}";
-        }
-
-        if (offlineRoot != null)
-        {
-            offlineRoot.SetActive(!isOnline);
-        }
-
-        if (onlineRoot != null)
-        {
-            onlineRoot.SetActive(isOnline);
-        }
-
-        if (roomSearchPanel != null)
-        {
-            // 방에 들어간 뒤에는 방 찾기 목록을 닫고 대기 화면만 보여줍니다.
-            roomSearchPanel.SetActive(!isOnline);
-        }
-
-        if (waitingRoot != null && waitingRoot != onlineRoot)
-        {
-            waitingRoot.SetActive(isOnline);
-        }
-
         if (roomEntryPanel != null)
         {
             // 방에 들어간 상태에서만 입장 패널을 표시합니다.
@@ -737,71 +634,75 @@ public class LobbyUIController : MonoBehaviour
 
     private void ShowWaitingRoomAfterHostStarted()
     {
-        // 호스트 시작이 확인된 뒤에만 방 만들기 패널을 닫고 대기 UI를 보여줍니다.
-        if (createRoomPanel != null)
-        {
-            createRoomPanel.SetActive(false);
-        }
-
-        if (roomSearchPanel != null)
-        {
-            roomSearchPanel.SetActive(false);
-        }
-
-        if (offlineRoot != null)
-        {
-            offlineRoot.SetActive(false);
-        }
-
-        if (onlineRoot != null)
-        {
-            onlineRoot.SetActive(true);
-        }
-
-        if (waitingRoot != null && waitingRoot != onlineRoot)
-        {
-            waitingRoot.SetActive(true);
-        }
-
         if (roomEntryPanel != null)
         {
+            // 외부 UI 에셋의 패널 전환은 Inspector 이벤트가 맡고, 입장 정보 영역만 동기화합니다.
             roomEntryPanel.SetActive(true);
         }
     }
 
-    private string GetStatusMessage()
+    private void ShowLoading(string message)
     {
-        if (sessionManager == null)
+        loadingRequestCount++;
+
+        if (loadingMessageText != null)
         {
-            return "NetworkSessionManager가 연결되지 않았습니다.";
+            loadingMessageText.text = message;
         }
 
-        if (sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
+        if (loadingRoot == null)
         {
-            return $"{sessionManager.StatusMessage}\nJoin Code: {sessionManager.CurrentJoinCode}";
+            return;
         }
 
-        return sessionManager.StatusMessage;
+        // Heat UI의 UIPopup이 붙어 있으면 PlayIn을 쓰고, 없으면 단순 활성화로 처리합니다.
+        loadingRoot.SetActive(true);
+        if (HasLoadingPopup())
+        {
+            loadingRoot.SendMessage("PlayIn", SendMessageOptions.DontRequireReceiver);
+        }
+    }
+
+    private void HideLoading()
+    {
+        if (loadingRequestCount > 0)
+        {
+            loadingRequestCount--;
+        }
+
+        if (loadingRequestCount > 0 || loadingRoot == null)
+        {
+            return;
+        }
+
+        if (HasLoadingPopup())
+        {
+            // Heat UI 팝업이면 닫힘 애니메이션을 우선 호출합니다.
+            loadingRoot.SendMessage("PlayOut", SendMessageOptions.DontRequireReceiver);
+            return;
+        }
+
+        loadingRoot.SetActive(false);
+    }
+
+    private void HideLoadingImmediate()
+    {
+        loadingRequestCount = 0;
+
+        if (loadingRoot != null)
+        {
+            loadingRoot.SetActive(false);
+        }
+    }
+
+    private bool HasLoadingPopup()
+    {
+        return loadingRoot != null && loadingRoot.GetComponent("UIPopup") != null;
     }
 
     private int GetMaxPlayers()
     {
         return sessionManager != null ? sessionManager.MaxPlayers : 0;
-    }
-
-    private int GetDisplayedPlayerCount()
-    {
-        if (sessionManager != null && sessionManager.IsServer)
-        {
-            return sessionManager.ConnectedPlayerCount;
-        }
-
-        if (backendConnectedPlayerCount > 0)
-        {
-            return backendConnectedPlayerCount;
-        }
-
-        return sessionManager != null ? sessionManager.ConnectedPlayerCount : 0;
     }
 
     private string GetRoomName()
@@ -836,16 +737,23 @@ public class LobbyUIController : MonoBehaviour
         for (int i = 0; i < rooms.Length; i++)
         {
             GameObject row = CreateRoomRow(rooms[i]);
-            generatedRoomRows.Add(row);
+            if (row != null)
+            {
+                generatedRoomRows.Add(row);
+            }
         }
     }
 
     private GameObject CreateRoomRow(RoomApiClient.RoomDto room)
     {
-        // Canvas 템플릿이 있으면 복제하고, 없으면 기본 행 UI를 런타임에 만든다.
-        GameObject row = roomListItemTemplate != null
-            ? Instantiate(roomListItemTemplate, roomListContentRoot)
-            : CreateDefaultRoomRow(roomListContentRoot);
+        if (roomListItemTemplate == null)
+        {
+            Debug.LogWarning("방 목록 템플릿이 연결되지 않았습니다.", this);
+            return null;
+        }
+
+        // Heat UI 템플릿을 복제해서 외부 UI 에셋의 레이아웃을 그대로 사용합니다.
+        GameObject row = Instantiate(roomListItemTemplate, roomListContentRoot);
 
         row.name = $"Room Row - {room.name}";
         row.SetActive(true);
@@ -884,123 +792,6 @@ public class LobbyUIController : MonoBehaviour
         return row;
     }
 
-    private GameObject CreateDefaultRoomRow(Transform parent)
-    {
-        GameObject row = new GameObject("Room Row", typeof(RectTransform), typeof(CanvasImage), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
-        row.transform.SetParent(parent, false);
-
-        RectTransform rectTransform = row.GetComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0f, 1f);
-        rectTransform.anchorMax = new Vector2(1f, 1f);
-        rectTransform.pivot = new Vector2(0.5f, 1f);
-        rectTransform.sizeDelta = new Vector2(0f, 64f);
-
-        CanvasImage image = row.GetComponent<CanvasImage>();
-        image.color = new Color(1f, 1f, 1f, 0.86f);
-
-        HorizontalLayoutGroup layout = row.GetComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(14, 14, 8, 8);
-        layout.spacing = 10f;
-        layout.childAlignment = TextAnchor.MiddleLeft;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = true;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-
-        LayoutElement rowLayout = row.GetComponent<LayoutElement>();
-        rowLayout.minHeight = 64f;
-        rowLayout.preferredHeight = 64f;
-
-        RoomListItemView itemView = row.AddComponent<RoomListItemView>();
-
-        GameObject textRoot = new GameObject("Room Text", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
-        textRoot.transform.SetParent(row.transform, false);
-
-        VerticalLayoutGroup textLayout = textRoot.GetComponent<VerticalLayoutGroup>();
-        textLayout.spacing = 2f;
-        textLayout.childAlignment = TextAnchor.MiddleLeft;
-        textLayout.childForceExpandHeight = false;
-        textLayout.childForceExpandWidth = true;
-
-        LayoutElement textRootLayout = textRoot.GetComponent<LayoutElement>();
-        textRootLayout.flexibleWidth = 1f;
-
-        TMP_Text roomNameText = CreateRoomRowText("Room Name", textRoot.transform, 17f, FontStyles.Bold);
-        TMP_Text roomDetailText = CreateRoomRowText("Room Detail", textRoot.transform, 13f, FontStyles.Normal);
-
-        GameObject buttonObject = new GameObject("Join Button", typeof(RectTransform), typeof(CanvasImage), typeof(CanvasButton), typeof(LayoutElement));
-        buttonObject.transform.SetParent(row.transform, false);
-
-        CanvasImage buttonImage = buttonObject.GetComponent<CanvasImage>();
-        buttonImage.color = new Color(0.35f, 0.58f, 0.96f, 1f);
-
-        CanvasButton button = buttonObject.GetComponent<CanvasButton>();
-        button.targetGraphic = buttonImage;
-
-        LayoutElement buttonLayout = buttonObject.GetComponent<LayoutElement>();
-        buttonLayout.minWidth = 76f;
-        buttonLayout.preferredWidth = 76f;
-        buttonLayout.minHeight = 38f;
-        buttonLayout.preferredHeight = 38f;
-
-        TMP_Text buttonText = CreateRoomRowText("입장", buttonObject.transform, 14f, FontStyles.Bold);
-        buttonText.alignment = TextAlignmentOptions.Center;
-        buttonText.color = Color.white;
-
-        itemView.BindReferences(roomNameText, roomDetailText, button);
-
-        return row;
-    }
-
-    private void EnsureCanvasWaitingLayout()
-    {
-        if (readyButton != null || waitingRoot == null)
-        {
-            return;
-        }
-
-        Transform parent = startGameButton != null && startGameButton.transform.parent != null
-            ? startGameButton.transform.parent
-            : waitingRoot.transform;
-
-        GameObject buttonObject = new GameObject("Ready Button", typeof(RectTransform), typeof(CanvasImage), typeof(CanvasButton), typeof(LayoutElement));
-        buttonObject.transform.SetParent(parent, false);
-
-        CanvasImage buttonImage = buttonObject.GetComponent<CanvasImage>();
-        buttonImage.color = new Color(0.35f, 0.58f, 0.96f, 1f);
-
-        readyButton = buttonObject.GetComponent<CanvasButton>();
-        readyButton.targetGraphic = buttonImage;
-
-        LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
-        layoutElement.minHeight = 44f;
-        layoutElement.preferredHeight = 44f;
-
-        TMP_Text label = CreateRoomRowText("준비", buttonObject.transform, 18f, FontStyles.Bold);
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = Color.white;
-
-        if (startGameButton != null)
-        {
-            buttonObject.transform.SetSiblingIndex(startGameButton.transform.GetSiblingIndex());
-        }
-    }
-
-    private GameObject ResolveRoomSearchPanel()
-    {
-        if (roomListContentRoot != null)
-        {
-            return roomListContentRoot.gameObject;
-        }
-
-        if (roomListStatusText != null)
-        {
-            return roomListStatusText.gameObject;
-        }
-
-        return refreshRoomsButton != null ? refreshRoomsButton.gameObject : null;
-    }
-
     private static void SetButtonLabel(CanvasButton button, string text)
     {
         TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
@@ -1008,27 +799,6 @@ public class LobbyUIController : MonoBehaviour
         {
             label.text = text;
         }
-    }
-
-    private TMP_Text CreateRoomRowText(string text, Transform parent, float fontSize, FontStyles fontStyle)
-    {
-        GameObject textObject = new GameObject(text, typeof(RectTransform), typeof(TextMeshProUGUI));
-        textObject.transform.SetParent(parent, false);
-
-        TMP_Text label = textObject.GetComponent<TMP_Text>();
-        label.text = text;
-        label.fontSize = fontSize;
-        label.fontStyle = fontStyle;
-        label.color = new Color(0.28f, 0.33f, 0.43f, 1f);
-        label.textWrappingMode = TextWrappingModes.NoWrap;
-        label.overflowMode = TextOverflowModes.Ellipsis;
-
-        RectTransform rectTransform = textObject.GetComponent<RectTransform>();
-        rectTransform.anchorMin = Vector2.zero;
-        rectTransform.anchorMax = Vector2.one;
-        rectTransform.sizeDelta = Vector2.zero;
-
-        return label;
     }
 
     private void ClearRoomRows()
@@ -1046,15 +816,15 @@ public class LobbyUIController : MonoBehaviour
 
     private void SetRoomListStatus(string message)
     {
-        if (roomListStatusText != null)
+        if (!string.IsNullOrWhiteSpace(message))
         {
-            roomListStatusText.text = message;
+            Debug.Log(message, this);
         }
     }
 
     private bool HasRoomListUI()
     {
-        return roomListContentRoot != null || roomListStatusText != null || refreshRoomsButton != null;
+        return roomListContentRoot != null;
     }
 
     private void SyncBackendPlayerCount(RoomApiClient.RoomDto[] rooms)
@@ -1135,11 +905,4 @@ public class LobbyUIController : MonoBehaviour
         };
     }
 
-    private static void SetCanvasButtonInteractable(CanvasButton button, bool interactable)
-    {
-        if (button != null)
-        {
-            button.interactable = interactable;
-        }
-    }
 }

@@ -310,11 +310,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4903173184963024, guid: af1ac26269830d347859c2c45ef72494, type: 3}
   m_PrefabInstance: {fileID: 331619322}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &94843123 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6016745152171355528, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
-  m_PrefabInstance: {fileID: 1508074761}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &95931752
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -687,7 +682,7 @@ Transform:
   m_GameObject: {fileID: 323698467}
   serializedVersion: 2
   m_LocalRotation: {x: 0.25340143, y: 0.000000025185255, z: -0.000000006597307, w: 0.9673612}
-  m_LocalPosition: {x: 0, y: 3.055, z: -4}
+  m_LocalPosition: {x: 0, y: 2.973, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1756,7 +1751,7 @@ MonoBehaviour:
   holdPoint: {fileID: 755330844}
   dragPoint: {fileID: 1144090584}
   maxCarryMass: 20
-  characterVisual: {fileID: 94843123}
+  characterVisual: {fileID: 0}
   tiltAngle: 15
   tiltSpeed: 10
   interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
@@ -2241,7 +2236,8 @@ PrefabInstance:
       value: 448
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 5395466305566391069, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 8740561361255514374, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
       insertIndex: -1
@@ -2534,7 +2530,7 @@ Transform:
   m_GameObject: {fileID: 1815927025}
   serializedVersion: 2
   m_LocalRotation: {x: 0.2534014, y: 0.000000029815656, z: -0.000000024273895, w: 0.9673613}
-  m_LocalPosition: {x: 0, y: 3.055, z: -4}
+  m_LocalPosition: {x: 0, y: 2.973, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
