@@ -114,8 +114,8 @@ MonoBehaviour:
   rigidbodyImpactSpeedThreshold: 5
   heavyObjectMassThreshold: 20
   heavyObjectDownwardSpeedThreshold: 6
-  landingImpactThreshold: 10
-  landingTorqueMultiplier: 0.1
+  landingImpactThreshold: 30
+  landingTorqueMultiplier: 0.05
   externalImpactForceMultiplier: 1
   externalImpactTorqueMultiplier: 0.35
   slideSlopeAngle: 32

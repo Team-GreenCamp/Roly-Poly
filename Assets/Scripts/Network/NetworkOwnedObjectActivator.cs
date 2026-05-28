@@ -18,6 +18,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private NetworkTransform networkTransform;
     [SerializeField] private Transform cameraRoot;
     [SerializeField] private PlayerCharacterView characterView;
+    [SerializeField] private PlayerController playerController;
     [SerializeField] private bool lockCursorForOwner = true;
     [SerializeField] private string[] cursorLockSceneNames;
 
@@ -33,6 +34,13 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private Transform spawnVisualRoot;
     [SerializeField] private float spawnScaleInDuration = 0.35f;
     [SerializeField] private float spawnStartScale = 0.1f;
+
+    [Header("Lobby Character Outline")]
+    [SerializeField] private bool enableLobbyCharacterOutline = true;
+    [SerializeField] private Color localLobbyOutlineColor = new Color(0.45f, 0.95f, 1f, 1f);
+    [SerializeField] private Color remoteLobbyOutlineColor = new Color(1f, 0.92f, 0.45f, 1f);
+    [SerializeField] private float lobbyOutlineWidth = 2.5f;
+    [SerializeField] private Outline.Mode lobbyOutlineMode = Outline.Mode.OutlineVisible;
 
     [Header("Transform Sync")]
     [SerializeField] private bool syncTransformState = true;
@@ -59,6 +67,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     private CinemachineCamera boundCamera;
     private TextMeshPro nameLabel;
     private Coroutine spawnPresentationCoroutine;
+    private Outline lobbyCharacterOutline;
+    private Transform lobbyCharacterOutlineRoot;
 
     private void Reset()
     {
@@ -94,6 +104,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         ApplyCharacterIndex(syncedCharacterIndex.Value);
         PlayLobbySpawnPresentation();
+        ApplyLobbyCharacterOutlineState();
 
         ApplyOwnershipState(IsOwner);
 
@@ -121,6 +132,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         syncedCharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         ClearLocalCameraBinding();
+        ClearLobbyCharacterOutline();
 
         if (lockCursorForOwner && IsOwner && ShouldLockCursorInCurrentScene())
         {
@@ -162,6 +174,21 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         {
             MouseController.SetCursorLock(isOwner);
         }
+
+        ApplyGameplayInputState(isOwner);
+        ApplyLobbyCharacterOutlineState();
+    }
+
+    private void ApplyGameplayInputState(bool isOwner)
+    {
+        if (playerController == null)
+        {
+            return;
+        }
+
+        // 로비에서는 대기용 캐릭터만 보여주고, 실제 이동/회전 입력은 게임 씬에서만 허용한다.
+        bool shouldEnableGameplayInput = isOwner && !IsInLobbyScene();
+        playerController.SetGameplayInputEnabled(shouldEnableGameplayInput);
     }
 
     private bool ShouldLockCursorInCurrentScene()
@@ -192,6 +219,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         PlayLobbySpawnPresentation();
+        ApplyOwnershipState(IsOwner);
+        ApplyLobbyCharacterOutlineState();
 
         if (IsOwner)
         {
@@ -205,6 +234,11 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         if (networkTransform == null)
         {
             networkTransform = GetComponent<NetworkTransform>();
+        }
+
+        if (playerController == null)
+        {
+            playerController = GetComponent<PlayerController>();
         }
 
         if (cameraRoot == null)
@@ -251,6 +285,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         {
             characterView.ApplyCharacter(characterIndex);
         }
+
+        ApplyLobbyCharacterOutlineState();
     }
 
     public void SubmitReadyState(bool isReady)
@@ -399,6 +435,56 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         spawnPresentationCoroutine = StartCoroutine(PlayScaleInRoutine(visualRoot));
+    }
+
+    private void ApplyLobbyCharacterOutlineState()
+    {
+        if (!enableLobbyCharacterOutline || !IsInLobbyScene())
+        {
+            ClearLobbyCharacterOutline();
+            return;
+        }
+
+        Transform visualRoot = characterView != null ? characterView.GetActiveCharacterRoot() : null;
+        if (visualRoot == null)
+        {
+            visualRoot = spawnVisualRoot != null ? spawnVisualRoot : FindDefaultSpawnVisualRoot();
+        }
+
+        if (visualRoot == null)
+        {
+            ClearLobbyCharacterOutline();
+            return;
+        }
+
+        if (lobbyCharacterOutlineRoot != null && lobbyCharacterOutlineRoot != visualRoot)
+        {
+            ClearLobbyCharacterOutline();
+        }
+
+        lobbyCharacterOutlineRoot = visualRoot;
+        lobbyCharacterOutline = visualRoot.GetComponent<Outline>();
+        if (lobbyCharacterOutline == null)
+        {
+            lobbyCharacterOutline = visualRoot.gameObject.AddComponent<Outline>();
+        }
+
+        // 로비에서는 배경과 캐릭터가 섞이지 않도록 현재 활성 모델에만 얇은 테두리를 준다.
+        lobbyCharacterOutline.OutlineMode = lobbyOutlineMode;
+        lobbyCharacterOutline.OutlineColor = IsOwner ? localLobbyOutlineColor : remoteLobbyOutlineColor;
+        lobbyCharacterOutline.OutlineWidth = Mathf.Max(0f, lobbyOutlineWidth);
+        lobbyCharacterOutline.enabled = true;
+    }
+
+    private void ClearLobbyCharacterOutline()
+    {
+        if (lobbyCharacterOutline != null)
+        {
+            lobbyCharacterOutline.enabled = false;
+        }
+
+        lobbyCharacterOutline = null;
+        lobbyCharacterOutlineRoot = null;
     }
 
     private IEnumerator PlayScaleInRoutine(Transform visualRoot)

@@ -25,6 +25,11 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float terminalVelocity = -50f;
     [SerializeField] private float fallGravityMultiplier = 2f;
 
+    [Header("Landing Stability")]
+    [SerializeField] private float landingSpeedPreserveDuration = 0.18f;
+    [SerializeField] private float landingSpeedPreserveRatio = 0.9f;
+    [SerializeField] private float landingTiltAngularDamping = 18f;
+
     [Header("Balance")]
     [SerializeField] private Vector3 centerOfMassOffset = new Vector3(0f, -0.35f, 0f);
     [SerializeField] private float uprightTorque = 90f;
@@ -82,8 +87,11 @@ public class PlayerController : NetworkBehaviour
     private bool isGrounded;
     private bool jumpQueued;
     private bool isPhysicsOwner;
+    private bool gameplayInputEnabled = true;
     private float lastVerticalVelocity;
     private float timeSinceLargeTilt;
+    private float landingSpeedPreserveTimer;
+    private Vector3 landingPreservedPlanarVelocity;
 
     private Transform currentCheckpoint;
     private Vector3 initialSpawnPosition;
@@ -133,6 +141,12 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
+        if (!gameplayInputEnabled)
+        {
+            ClearGameplayInputState();
+            return;
+        }
+
         if (playerInput == null || physicsBody == null)
         {
             return;
@@ -148,13 +162,21 @@ public class PlayerController : NetworkBehaviour
             return;
         }
 
+        if (!gameplayInputEnabled)
+        {
+            StopGameplayMotion();
+            return;
+        }
+
         UpdateGroundedState();
         ApplyCustomGravity();
         ApplyJump();
         UpdateMovement();
         ApplySlopeSlide();
+        ApplyLandingTiltDamping();
         ApplyBalanceTorques();
         ClampVerticalVelocity();
+        UpdateLandingStabilityTimers();
     }
 
 
@@ -182,6 +204,21 @@ public class PlayerController : NetworkBehaviour
         Vector3 lever = hitPoint - physicsBody.worldCenterOfMass;
         Vector3 torque = Vector3.Cross(lever, force) * externalImpactTorqueMultiplier;
         physicsBody.AddTorque(torque, ForceMode.Impulse);
+    }
+
+    public void SetGameplayInputEnabled(bool enabled)
+    {
+        if (gameplayInputEnabled == enabled)
+        {
+            return;
+        }
+
+        gameplayInputEnabled = enabled;
+        if (!gameplayInputEnabled)
+        {
+            ClearGameplayInputState();
+            StopGameplayMotion();
+        }
     }
 
     private void CacheReferences()
@@ -218,6 +255,9 @@ public class PlayerController : NetworkBehaviour
         gravity = Mathf.Min(-0.01f, gravity);
         terminalVelocity = Mathf.Min(-1f, terminalVelocity);
         fallGravityMultiplier = Mathf.Max(1f, fallGravityMultiplier);
+        landingSpeedPreserveDuration = Mathf.Max(0f, landingSpeedPreserveDuration);
+        landingSpeedPreserveRatio = Mathf.Clamp01(landingSpeedPreserveRatio);
+        landingTiltAngularDamping = Mathf.Max(0f, landingTiltAngularDamping);
         uprightTorque = Mathf.Max(0f, uprightTorque);
         uprightDamping = Mathf.Max(0f, uprightDamping);
         fallenTiltAngle = Mathf.Clamp(fallenTiltAngle, 1f, 89f);
@@ -337,6 +377,26 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    private void ClearGameplayInputState()
+    {
+        moveInput = Vector2.zero;
+        jumpQueued = false;
+        landingSpeedPreserveTimer = 0f;
+        currentHorizontalVelocity = Vector3.zero;
+    }
+
+    private void StopGameplayMotion()
+    {
+        if (physicsBody == null || physicsBody.isKinematic)
+        {
+            return;
+        }
+
+        // 로비 대기 중에는 남아있는 이동/회전 속도를 제거해서 키 입력으로 캐릭터가 돌아가지 않게 한다.
+        physicsBody.linearVelocity = Vector3.zero;
+        physicsBody.angularVelocity = Vector3.zero;
+    }
+
     private Vector3 GetMoveDirection(Vector2 input)
     {
         if (input.sqrMagnitude <= 0.0001f)
@@ -400,6 +460,11 @@ public class PlayerController : NetworkBehaviour
 
         groundNormal = hitGround ? hit.normal : Vector3.up;
         isGrounded = hitGround && physicsBody.linearVelocity.y <= 1f;
+
+        if (!wasGrounded && isGrounded)
+        {
+            StartLandingSpeedPreservation();
+        }
 
         if (!wasGrounded && isGrounded && previousVerticalVelocity <= -landingImpactThreshold)
         {
@@ -472,6 +537,7 @@ public class PlayerController : NetworkBehaviour
         Vector3 planarVelocity = Vector3.ProjectOnPlane(velocity, Vector3.up);
         Vector3 desiredVelocity = moveDirection * targetSpeed;
         Vector3 nextPlanarVelocity = Vector3.MoveTowards(planarVelocity, desiredVelocity, acceleration * Time.fixedDeltaTime);
+        nextPlanarVelocity = PreserveLandingPlanarSpeed(nextPlanarVelocity, moveDirection, targetSpeed);
 
         physicsBody.linearVelocity = nextPlanarVelocity + (Vector3.up * velocity.y);
         currentHorizontalVelocity = nextPlanarVelocity;
@@ -490,6 +556,73 @@ public class PlayerController : NetworkBehaviour
         {
             StabilizeIdleYaw();
         }
+    }
+
+    private void StartLandingSpeedPreservation()
+    {
+        landingPreservedPlanarVelocity = currentHorizontalVelocity;
+
+        if (landingPreservedPlanarVelocity.sqrMagnitude <= 0.01f || landingSpeedPreserveDuration <= 0f)
+        {
+            landingSpeedPreserveTimer = 0f;
+            return;
+        }
+
+        landingSpeedPreserveTimer = landingSpeedPreserveDuration;
+    }
+
+    private Vector3 PreserveLandingPlanarSpeed(Vector3 nextPlanarVelocity, Vector3 moveDirection, float targetSpeed)
+    {
+        if (landingSpeedPreserveTimer <= 0f || targetSpeed <= 0f || moveDirection.sqrMagnitude <= 0.0001f)
+        {
+            return nextPlanarVelocity;
+        }
+
+        Vector3 inputDirection = moveDirection.normalized;
+        Vector3 preservedDirection = landingPreservedPlanarVelocity.normalized;
+        if (Vector3.Dot(inputDirection, preservedDirection) < 0.25f)
+        {
+            return nextPlanarVelocity;
+        }
+
+        float preservedSpeed = Mathf.Min(targetSpeed, landingPreservedPlanarVelocity.magnitude);
+        float minimumInputSpeed = preservedSpeed * landingSpeedPreserveRatio;
+        float currentInputSpeed = Vector3.Dot(nextPlanarVelocity, inputDirection);
+        if (currentInputSpeed >= minimumInputSpeed)
+        {
+            return nextPlanarVelocity;
+        }
+
+        // 착지 접촉 마찰로 입력 방향 속도가 갑자기 깎이면 짧게 보존해서 턱에 걸린 듯한 멈춤을 줄인다.
+        Vector3 lateralVelocity = nextPlanarVelocity - (inputDirection * currentInputSpeed);
+        Vector3 preservedVelocity = lateralVelocity + (inputDirection * minimumInputSpeed);
+        return preservedVelocity.magnitude > targetSpeed ? preservedVelocity.normalized * targetSpeed : preservedVelocity;
+    }
+
+    private void ApplyLandingTiltDamping()
+    {
+        if (landingSpeedPreserveTimer <= 0f || landingTiltAngularDamping <= 0f || physicsBody == null)
+        {
+            return;
+        }
+
+        Vector3 angularVelocity = physicsBody.angularVelocity;
+        Vector3 yawAngularVelocity = Vector3.Project(angularVelocity, Vector3.up);
+        Vector3 tiltAngularVelocity = angularVelocity - yawAngularVelocity;
+        float damping = Mathf.Clamp01(landingTiltAngularDamping * Time.fixedDeltaTime);
+
+        // 착지 직후 비스듬한 캡슐이 바닥에 박히지 않도록 pitch/roll 회전만 빠르게 줄인다.
+        physicsBody.angularVelocity = yawAngularVelocity + Vector3.Lerp(tiltAngularVelocity, Vector3.zero, damping);
+    }
+
+    private void UpdateLandingStabilityTimers()
+    {
+        if (landingSpeedPreserveTimer <= 0f)
+        {
+            return;
+        }
+
+        landingSpeedPreserveTimer = Mathf.Max(0f, landingSpeedPreserveTimer - Time.fixedDeltaTime);
     }
 
     private void ApplyTurnTorque(Vector3 facingDirection)
