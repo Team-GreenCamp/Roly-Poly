@@ -54,6 +54,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     [Header("Name Label")]
     [SerializeField] private bool showNameLabel = true;
+    [SerializeField] private bool showNameLabelOnlyInLobby = true;
     [SerializeField] private Vector3 nameLabelOffset = new Vector3(0f, 2.2f, 0f);
     [SerializeField] private float nameLabelFontSize = 4f;
 
@@ -93,7 +94,6 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         syncedCharacterIndex.OnValueChanged += HandleCharacterIndexChanged;
         SceneManager.sceneLoaded += HandleSceneLoaded;
 
-        EnsureNameLabel();
         UpdateNameLabel();
 
         if (IsServer)
@@ -221,10 +221,10 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         PlayLobbySpawnPresentation();
         ApplyOwnershipState(IsOwner);
         ApplyLobbyCharacterOutlineState();
+        UpdateNameLabel();
 
         if (IsOwner)
         {
-            UpdateNameLabel();
             BindLocalCamera();
         }
     }
@@ -737,6 +737,14 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     {
         if (!showNameLabel)
         {
+            SetNameLabelVisible(false);
+            return;
+        }
+
+        if (showNameLabelOnlyInLobby && !IsInLobbyScene())
+        {
+            // 게임 씬에서는 화면을 가리지 않도록 플레이어 닉네임 라벨을 숨긴다.
+            SetNameLabelVisible(false);
             return;
         }
 
@@ -748,11 +756,12 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         nameLabel.transform.localPosition = nameLabelOffset;
         nameLabel.text = $"Player {OwnerClientId + 1}";
+        SetNameLabelVisible(true);
     }
 
     private void UpdateNameLabelFacing()
     {
-        if (nameLabel == null)
+        if (nameLabel == null || !nameLabel.gameObject.activeSelf)
         {
             return;
         }
@@ -764,6 +773,14 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         nameLabel.transform.rotation = sceneCamera.transform.rotation;
+    }
+
+    private void SetNameLabelVisible(bool visible)
+    {
+        if (nameLabel != null)
+        {
+            nameLabel.gameObject.SetActive(visible);
+        }
     }
 
     private void UpdateTransformSync()
