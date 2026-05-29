@@ -83,6 +83,13 @@ public class RoomApiClient
         return string.IsNullOrWhiteSpace(json) ? null : JsonUtility.FromJson<RoomDto>(json);
     }
 
+    public async Task<RoomDto> SetRoomMapIdAsync(long roomId, string mapId)
+    {
+        // 로비에서 확정한 맵 ID를 방 목록에도 즉시 반영합니다.
+        string json = await SendAsync("PATCH", $"/rooms/{roomId}", $"{{\"mapId\":\"{EscapeJson(mapId)}\"}}");
+        return string.IsNullOrWhiteSpace(json) ? null : JsonUtility.FromJson<RoomDto>(json);
+    }
+
     public async Task<RoomDto> SetRoomStatusAsync(long roomId, string status)
     {
         // 호스트 상태 변경만 가볍게 보낼 수 있도록 작은 PATCH 본문을 만듭니다.

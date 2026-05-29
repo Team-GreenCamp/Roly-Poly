@@ -1,4 +1,3 @@
-using System;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -6,7 +5,7 @@ using UnityEngine.InputSystem;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(NetworkObject))]
-public class PlayerController : NetworkBehaviour
+public partial class PlayerController : NetworkBehaviour
 {
     [Header("References")]
     [SerializeField] private Rigidbody physicsBody;
@@ -45,7 +44,14 @@ public class PlayerController : NetworkBehaviour
     [Header("Ground Check")]
     [SerializeField] private float groundedOffset = 0.1f;
     [SerializeField] private float groundedRadius = 0.25f;
+    [SerializeField] private float groundedContactGraceTime = 0.08f;
+    [SerializeField] private float minGroundContactNormalY = 0.5f;
     [SerializeField] private LayerMask groundLayers = ~0;
+
+    [Header("Surface Control")]
+    [SerializeField] private bool useLowFrictionColliderMaterial = true;
+    [SerializeField] private float idleGroundFriction = 1f;
+    [SerializeField] private float idleFrictionInputThreshold = 0.05f;
 
     [Header("Impact")]
     [SerializeField] private float playerCollisionImpact = 5f;
@@ -70,16 +76,6 @@ public class PlayerController : NetworkBehaviour
 
     private float currentCarrySpeedMultiplier = 1f;
 
-    public void SetCarrySpeedMultiplier(float multiplier)
-    {
-        currentCarrySpeedMultiplier = multiplier;
-    }
-
-    public void ResetCarrySpeedMultiplier()
-    {
-        currentCarrySpeedMultiplier = 1f;
-    }
-    
     public Vector3? OverrideFacingDirection { get; set; } = null;
 
     private Vector3 currentHorizontalVelocity;
@@ -88,10 +84,13 @@ public class PlayerController : NetworkBehaviour
     private bool jumpQueued;
     private bool isPhysicsOwner;
     private bool gameplayInputEnabled = true;
+    private float groundedContactTimer;
     private float lastVerticalVelocity;
     private float timeSinceLargeTilt;
     private float landingSpeedPreserveTimer;
     private Vector3 landingPreservedPlanarVelocity;
+    private PhysicsMaterial lowFrictionColliderMaterial;
+    private PhysicsMaterial groundGripColliderMaterial;
 
     private Transform currentCheckpoint;
     private Vector3 initialSpawnPosition;
@@ -114,6 +113,7 @@ public class PlayerController : NetworkBehaviour
         CacheReferences();
         ApplySafeRanges();
         ResolveInputActions();
+        EnsurePlayerLayerConfigured();
         EnsureLayerMasksConfigured();
         EnsureRuntimePhysicsComponents();
         UpdatePhysicsOwnershipState(force: true);
@@ -125,11 +125,8 @@ public class PlayerController : NetworkBehaviour
     private void OnEnable()
     {
         ResolveInputActions();
+        EnsurePlayerLayerConfigured();
         EnsureLayerMasksConfigured();
-    }
-
-    private void OnDisable()
-    {
     }
 
     private void Update()
@@ -169,6 +166,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         UpdateGroundedState();
+        UpdateColliderSurfaceMaterial();
         ApplyCustomGravity();
         ApplyJump();
         UpdateMovement();
@@ -179,47 +177,6 @@ public class PlayerController : NetworkBehaviour
         UpdateLandingStabilityTimers();
     }
 
-
-    public void ApplyWobbleImpulse(Vector3 worldDirection, float strength)
-    {
-        Vector3 direction = worldDirection.sqrMagnitude > 0.0001f
-            ? worldDirection.normalized
-            : transform.forward;
-        Vector3 hitPoint = physicsBody != null
-            ? physicsBody.worldCenterOfMass + Vector3.up * 0.5f
-            : transform.position + Vector3.up * 0.5f;
-
-        ApplyExternalImpulse(direction * strength, hitPoint);
-    }
-
-    public void ApplyExternalImpulse(Vector3 force, Vector3 hitPoint)
-    {
-        if (!CanProcessInput() || physicsBody == null || physicsBody.isKinematic)
-        {
-            return;
-        }
-
-        physicsBody.AddForce(force * externalImpactForceMultiplier, ForceMode.Impulse);
-
-        Vector3 lever = hitPoint - physicsBody.worldCenterOfMass;
-        Vector3 torque = Vector3.Cross(lever, force) * externalImpactTorqueMultiplier;
-        physicsBody.AddTorque(torque, ForceMode.Impulse);
-    }
-
-    public void SetGameplayInputEnabled(bool enabled)
-    {
-        if (gameplayInputEnabled == enabled)
-        {
-            return;
-        }
-
-        gameplayInputEnabled = enabled;
-        if (!gameplayInputEnabled)
-        {
-            ClearGameplayInputState();
-            StopGameplayMotion();
-        }
-    }
 
     private void CacheReferences()
     {
@@ -268,6 +225,10 @@ public class PlayerController : NetworkBehaviour
         maxAngularVelocity = Mathf.Max(1f, maxAngularVelocity);
         groundedOffset = Mathf.Max(0.01f, groundedOffset);
         groundedRadius = Mathf.Max(0.01f, groundedRadius);
+        groundedContactGraceTime = Mathf.Max(0f, groundedContactGraceTime);
+        minGroundContactNormalY = Mathf.Clamp01(minGroundContactNormalY);
+        idleGroundFriction = Mathf.Max(0f, idleGroundFriction);
+        idleFrictionInputThreshold = Mathf.Max(0f, idleFrictionInputThreshold);
         playerCollisionImpact = Mathf.Max(0f, playerCollisionImpact);
         rigidbodyImpactSpeedThreshold = Mathf.Max(0f, rigidbodyImpactSpeedThreshold);
         heavyObjectMassThreshold = Mathf.Max(0f, heavyObjectMassThreshold);
@@ -291,6 +252,18 @@ public class PlayerController : NetworkBehaviour
         groundLayers &= ~selfLayerMask;
     }
 
+    private void EnsurePlayerLayerConfigured()
+    {
+        int playerLayer = LayerMask.NameToLayer("Player");
+        if (playerLayer < 0 || gameObject.layer == playerLayer)
+        {
+            return;
+        }
+
+        // 플레이어가 Default로 생성되면 Ground Mask에서 Default 바닥까지 빠지므로 루트만 Player 레이어로 보정한다.
+        gameObject.layer = playerLayer;
+    }
+
     private void EnsureRuntimePhysicsComponents()
     {
         if (physicsBody == null)
@@ -312,6 +285,7 @@ public class PlayerController : NetworkBehaviour
         physicsBody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         physicsBody.maxAngularVelocity = maxAngularVelocity;
         physicsBody.centerOfMass = centerOfMassOffset;
+        EnsureLowFrictionColliderMaterial();
     }
 
     private void ResolveInputActions()
@@ -367,456 +341,4 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private void ReadInput()
-    {
-        moveInput = moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
-
-        if (jumpAction != null && jumpAction.WasPressedThisFrame())
-        {
-            jumpQueued = true;
-        }
-    }
-
-    private void ClearGameplayInputState()
-    {
-        moveInput = Vector2.zero;
-        jumpQueued = false;
-        landingSpeedPreserveTimer = 0f;
-        currentHorizontalVelocity = Vector3.zero;
-    }
-
-    private void StopGameplayMotion()
-    {
-        if (physicsBody == null || physicsBody.isKinematic)
-        {
-            return;
-        }
-
-        // 로비 대기 중에는 남아있는 이동/회전 속도를 제거해서 키 입력으로 캐릭터가 돌아가지 않게 한다.
-        physicsBody.linearVelocity = Vector3.zero;
-        physicsBody.angularVelocity = Vector3.zero;
-    }
-
-    private Vector3 GetMoveDirection(Vector2 input)
-    {
-        if (input.sqrMagnitude <= 0.0001f)
-        {
-            return Vector3.zero;
-        }
-
-        Transform movementReference = GetMovementReference();
-        Vector3 forward = Vector3.ProjectOnPlane(movementReference.forward, Vector3.up).normalized;
-        Vector3 right = Vector3.ProjectOnPlane(movementReference.right, Vector3.up).normalized;
-        Vector3 direction = (forward * input.y) + (right * input.x);
-        return direction.sqrMagnitude > 1f ? direction.normalized : direction;
-    }
-
-    private Transform GetMovementReference()
-    {
-        // 카메라가 실제로 바라보는 방향 기준으로 이동한다.
-        Camera currentCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
-        if (currentCamera != null)
-        {
-            return currentCamera.transform;
-        }
-
-        Transform cameraRoot = transform.Find("CameraRoot");
-        return cameraRoot != null ? cameraRoot : transform;
-    }
-
-    private Vector3 GetFacingDirection()
-    {
-        Transform movementReference = GetMovementReference();
-        Vector3 facingDirection = Vector3.ProjectOnPlane(movementReference.forward, Vector3.up);
-        return facingDirection.sqrMagnitude > 0.0001f ? facingDirection.normalized : transform.forward;
-    }
-
-    private void UpdateGroundedState()
-    {
-        if (physicsCollider == null || physicsBody == null)
-        {
-            isGrounded = false;
-            groundNormal = Vector3.up;
-            return;
-        }
-
-        bool wasGrounded = isGrounded;
-        float previousVerticalVelocity = lastVerticalVelocity;
-
-        Vector3 center = transform.TransformPoint(physicsCollider.center);
-        float worldRadius = GetWorldRadius();
-        float halfHeight = GetWorldHalfHeight();
-        float castDistance = Mathf.Max(groundedOffset, groundedRadius) + 0.05f;
-        Vector3 castOrigin = center + (Vector3.up * Mathf.Max(0f, halfHeight - worldRadius + 0.02f));
-
-        bool hitGround = Physics.SphereCast(
-            castOrigin,
-            Mathf.Max(groundedRadius, worldRadius * 0.95f),
-            Vector3.down,
-            out RaycastHit hit,
-            (halfHeight - worldRadius) + castDistance,
-            groundLayers,
-            QueryTriggerInteraction.Ignore);
-
-        groundNormal = hitGround ? hit.normal : Vector3.up;
-        isGrounded = hitGround && physicsBody.linearVelocity.y <= 1f;
-
-        if (!wasGrounded && isGrounded)
-        {
-            StartLandingSpeedPreservation();
-        }
-
-        if (!wasGrounded && isGrounded && previousVerticalVelocity <= -landingImpactThreshold)
-        {
-            Vector3 landingDirection = currentHorizontalVelocity.sqrMagnitude > 0.01f
-                ? currentHorizontalVelocity.normalized
-                : transform.forward;
-            Vector3 landingForce = landingDirection * (Mathf.Abs(previousVerticalVelocity) * landingTorqueMultiplier);
-            ApplyExternalImpulse(landingForce, center + (Vector3.up * 0.5f));
-        }
-
-        lastVerticalVelocity = physicsBody.linearVelocity.y;
-    }
-
-    private float GetWorldRadius()
-    {
-        if (physicsCollider == null)
-        {
-            return groundedRadius;
-        }
-
-        Vector3 scale = transform.lossyScale;
-        float horizontalScale = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
-        return physicsCollider.radius * horizontalScale;
-    }
-
-    private float GetWorldHalfHeight()
-    {
-        if (physicsCollider == null)
-        {
-            return 0.5f;
-        }
-
-        return (physicsCollider.height * Mathf.Abs(transform.lossyScale.y)) * 0.5f;
-    }
-
-    private void ApplyCustomGravity()
-    {
-        float verticalVelocity = physicsBody.linearVelocity.y;
-        float appliedGravity = verticalVelocity < 0f
-            ? gravity * fallGravityMultiplier
-            : gravity;
-
-        physicsBody.AddForce(Vector3.up * appliedGravity, ForceMode.Acceleration);
-    }
-
-    private void ApplyJump()
-    {
-        bool shouldJump = jumpQueued;
-        jumpQueued = false;
-
-        if (!shouldJump || !isGrounded)
-        {
-            return;
-        }
-
-        Vector3 velocity = physicsBody.linearVelocity;
-        velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        physicsBody.linearVelocity = velocity;
-        isGrounded = false;
-    }
-
-    private void UpdateMovement()
-    {
-        Vector3 moveDirection = GetMoveDirection(moveInput);
-        float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);
-        float targetSpeed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude * currentCarrySpeedMultiplier;
-        float acceleration = isGrounded ? movementAcceleration : airAcceleration;
-
-        Vector3 velocity = physicsBody.linearVelocity;
-        Vector3 planarVelocity = Vector3.ProjectOnPlane(velocity, Vector3.up);
-        Vector3 desiredVelocity = moveDirection * targetSpeed;
-        Vector3 nextPlanarVelocity = Vector3.MoveTowards(planarVelocity, desiredVelocity, acceleration * Time.fixedDeltaTime);
-        nextPlanarVelocity = PreserveLandingPlanarSpeed(nextPlanarVelocity, moveDirection, targetSpeed);
-
-        physicsBody.linearVelocity = nextPlanarVelocity + (Vector3.up * velocity.y);
-        currentHorizontalVelocity = nextPlanarVelocity;
-
-        if (OverrideFacingDirection.HasValue && OverrideFacingDirection.Value.sqrMagnitude > 0.001f)
-        {
-            // 상호작용(예: 무거운 물체 끌기) 시에는 이동 방향 대신 지정된 방향을 바라본다.
-            ApplyTurnTorque(OverrideFacingDirection.Value);
-        }
-        else if (moveDirection.sqrMagnitude > 0.0001f)
-        {
-            // 이동 입력이 있을 때만 이동 방향을 향해 돈다.
-            ApplyTurnTorque(moveDirection);
-        }
-        else
-        {
-            StabilizeIdleYaw();
-        }
-    }
-
-    private void StartLandingSpeedPreservation()
-    {
-        landingPreservedPlanarVelocity = currentHorizontalVelocity;
-
-        if (landingPreservedPlanarVelocity.sqrMagnitude <= 0.01f || landingSpeedPreserveDuration <= 0f)
-        {
-            landingSpeedPreserveTimer = 0f;
-            return;
-        }
-
-        landingSpeedPreserveTimer = landingSpeedPreserveDuration;
-    }
-
-    private Vector3 PreserveLandingPlanarSpeed(Vector3 nextPlanarVelocity, Vector3 moveDirection, float targetSpeed)
-    {
-        if (landingSpeedPreserveTimer <= 0f || targetSpeed <= 0f || moveDirection.sqrMagnitude <= 0.0001f)
-        {
-            return nextPlanarVelocity;
-        }
-
-        Vector3 inputDirection = moveDirection.normalized;
-        Vector3 preservedDirection = landingPreservedPlanarVelocity.normalized;
-        if (Vector3.Dot(inputDirection, preservedDirection) < 0.25f)
-        {
-            return nextPlanarVelocity;
-        }
-
-        float preservedSpeed = Mathf.Min(targetSpeed, landingPreservedPlanarVelocity.magnitude);
-        float minimumInputSpeed = preservedSpeed * landingSpeedPreserveRatio;
-        float currentInputSpeed = Vector3.Dot(nextPlanarVelocity, inputDirection);
-        if (currentInputSpeed >= minimumInputSpeed)
-        {
-            return nextPlanarVelocity;
-        }
-
-        // 착지 접촉 마찰로 입력 방향 속도가 갑자기 깎이면 짧게 보존해서 턱에 걸린 듯한 멈춤을 줄인다.
-        Vector3 lateralVelocity = nextPlanarVelocity - (inputDirection * currentInputSpeed);
-        Vector3 preservedVelocity = lateralVelocity + (inputDirection * minimumInputSpeed);
-        return preservedVelocity.magnitude > targetSpeed ? preservedVelocity.normalized * targetSpeed : preservedVelocity;
-    }
-
-    private void ApplyLandingTiltDamping()
-    {
-        if (landingSpeedPreserveTimer <= 0f || landingTiltAngularDamping <= 0f || physicsBody == null)
-        {
-            return;
-        }
-
-        Vector3 angularVelocity = physicsBody.angularVelocity;
-        Vector3 yawAngularVelocity = Vector3.Project(angularVelocity, Vector3.up);
-        Vector3 tiltAngularVelocity = angularVelocity - yawAngularVelocity;
-        float damping = Mathf.Clamp01(landingTiltAngularDamping * Time.fixedDeltaTime);
-
-        // 착지 직후 비스듬한 캡슐이 바닥에 박히지 않도록 pitch/roll 회전만 빠르게 줄인다.
-        physicsBody.angularVelocity = yawAngularVelocity + Vector3.Lerp(tiltAngularVelocity, Vector3.zero, damping);
-    }
-
-    private void UpdateLandingStabilityTimers()
-    {
-        if (landingSpeedPreserveTimer <= 0f)
-        {
-            return;
-        }
-
-        landingSpeedPreserveTimer = Mathf.Max(0f, landingSpeedPreserveTimer - Time.fixedDeltaTime);
-    }
-
-    private void ApplyTurnTorque(Vector3 facingDirection)
-    {
-        Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-        if (flatForward.sqrMagnitude <= 0.0001f)
-        {
-            flatForward = Vector3.forward;
-        }
-
-        float currentYaw = Mathf.Atan2(flatForward.x, flatForward.z) * Mathf.Rad2Deg;
-        // 좌우 이동에도 몸이 옆으로 꺾이지 않게 카메라 전방 기준으로 회전한다.
-        float targetYaw = Mathf.Atan2(facingDirection.x, facingDirection.z) * Mathf.Rad2Deg;
-        float maxStep = rotationSpeed * Time.fixedDeltaTime;
-        float desiredYaw = Mathf.MoveTowardsAngle(currentYaw, targetYaw, maxStep);
-        float yawDelta = Mathf.DeltaAngle(currentYaw, desiredYaw);
-        float desiredYawVelocity = yawDelta * Mathf.Deg2Rad / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
-        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
-        float torque = (desiredYawVelocity - currentYawVelocity) * turnTorque - (currentYawVelocity * turnDamping);
-
-        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
-    }
-
-    private void StabilizeIdleYaw()
-    {
-        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
-        float torque = (-currentYawVelocity * turnDamping);
-        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
-    }
-
-    private void ApplySlopeSlide()
-    {
-        if (!isGrounded)
-        {
-            return;
-        }
-
-        float slopeAngle = Vector3.Angle(groundNormal, Vector3.up);
-        if (slopeAngle < slideSlopeAngle)
-        {
-            return;
-        }
-
-        Vector3 slideDirection = Vector3.ProjectOnPlane(Vector3.down, groundNormal);
-        if (slideDirection.sqrMagnitude <= 0.0001f)
-        {
-            return;
-        }
-
-        slideDirection.Normalize();
-        float slopeFactor = Mathf.InverseLerp(slideSlopeAngle, 89f, slopeAngle);
-        physicsBody.AddForce(slideDirection * (slideForce * slopeFactor), ForceMode.Acceleration);
-    }
-
-    private void ApplyBalanceTorques()
-    {
-        float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
-        if (tiltAngle >= fallenTiltAngle)
-        {
-            timeSinceLargeTilt += Time.fixedDeltaTime;
-        }
-        else
-        {
-            timeSinceLargeTilt = 0f;
-        }
-
-        float recoveryMultiplier = timeSinceLargeTilt >= recoveryDelay ? recoveryTorqueMultiplier : 1f;
-        Vector3 uprightAxis = Vector3.Cross(transform.up, Vector3.up);
-        Vector3 tiltAngularVelocity = Vector3.ProjectOnPlane(physicsBody.angularVelocity, Vector3.up);
-
-        Vector3 correctiveTorque =
-            (uprightAxis * (uprightTorque * recoveryMultiplier)) -
-            (tiltAngularVelocity * (uprightDamping * recoveryMultiplier));
-
-        physicsBody.AddTorque(correctiveTorque, ForceMode.Acceleration);
-    }
-
-    private void ClampVerticalVelocity()
-    {
-        Vector3 velocity = physicsBody.linearVelocity;
-        if (velocity.y < terminalVelocity)
-        {
-            velocity.y = terminalVelocity;
-            physicsBody.linearVelocity = velocity;
-        }
-
-        lastVerticalVelocity = physicsBody.linearVelocity.y;
-    }
-
-    private bool CanSprint()
-    {
-        if (sprintAction == null || !sprintAction.IsPressed())
-        {
-            return false;
-        }
-
-        return moveInput.sqrMagnitude > 0.01f;
-    }
-
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        EvaluateImpactCollision(collision);
-    }
-
-    private void EvaluateImpactCollision(Collision collision)
-    {
-        if (!CanProcessInput() || physicsBody == null || physicsBody.isKinematic || collision.contactCount == 0)
-        {
-            return;
-        }
-
-        ContactPoint contact = collision.GetContact(0);
-        Vector3 impactDirection = -contact.normal;
-        float relativeSpeed = collision.relativeVelocity.magnitude;
-
-        PlayerController otherPlayer = collision.collider.GetComponentInParent<PlayerController>();
-        if (otherPlayer != null && otherPlayer != this && relativeSpeed > 0.5f)
-        {
-            ApplyExternalImpulse(impactDirection.normalized * playerCollisionImpact, contact.point);
-        }
-
-        Rigidbody otherBody = collision.rigidbody;
-        if (otherBody == null)
-        {
-            return;
-        }
-
-        if (relativeSpeed >= rigidbodyImpactSpeedThreshold)
-        {
-            ApplyExternalImpulse(collision.relativeVelocity * 0.08f, contact.point);
-        }
-
-        bool isHeavyDownwardImpact =
-            contact.normal.y < -0.2f &&
-            otherBody.mass >= heavyObjectMassThreshold &&
-            otherBody.linearVelocity.y <= -heavyObjectDownwardSpeedThreshold;
-
-        if (isHeavyDownwardImpact)
-        {
-            ApplyExternalImpulse(Vector3.down * (otherBody.mass * 0.1f), contact.point);
-        }
-    }
-
-
-    public void SetCheckpoint(Transform checkpointPoint)
-    {
-        if (checkpointPoint != null)
-        {
-            currentCheckpoint = checkpointPoint;
-        }
-    }
-
-    public void RespawnAtCheckpoint()
-    {
-        Vector3 spawnPosition = currentCheckpoint != null ? currentCheckpoint.position : initialSpawnPosition;
-        Quaternion spawnRotation = currentCheckpoint != null ? currentCheckpoint.rotation : initialSpawnRotation;
-
-        // 물리 연산 초기화 및 위치 즉시 이동
-        if (physicsBody != null)
-        {
-            physicsBody.position = spawnPosition;
-            physicsBody.rotation = spawnRotation;
-            physicsBody.linearVelocity = Vector3.zero;
-            physicsBody.angularVelocity = Vector3.zero;
-        }
-        
-        transform.position = spawnPosition;
-        transform.rotation = spawnRotation;
-
-        currentHorizontalVelocity = Vector3.zero;
-        lastVerticalVelocity = 0f;
-
-        // 낙사 시 들고 있던 물건을 놓도록 PlayerInteractor가 있다면 비활성화 후 활성화하거나 내부 상태를 초기화할 수 있음
-        PlayerInteractor interactor = GetComponent<PlayerInteractor>();
-        if (interactor != null)
-        {
-            // PlayerInteractor의 OnDisable에서 놓기가 호출되므로 껐다 켜서 들고 있던 걸 초기화
-            interactor.enabled = false;
-            interactor.enabled = true;
-        }
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = isGrounded ? Color.green : Color.red;
-        Vector3 spherePosition = transform.position + Vector3.up * groundedOffset;
-        Gizmos.DrawWireSphere(spherePosition, groundedRadius);
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawLine(transform.position, transform.position + (transform.forward * 2.2f));
-
-        Gizmos.color = Color.blue;
-        Vector3 normalOrigin = transform.position + Vector3.up * groundedOffset;
-        Gizmos.DrawLine(normalOrigin, normalOrigin + (groundNormal.normalized * 1.2f));
-    }
 }

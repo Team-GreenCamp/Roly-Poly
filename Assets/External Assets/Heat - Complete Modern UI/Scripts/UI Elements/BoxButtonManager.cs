@@ -196,9 +196,18 @@ namespace Michsky.UI.Heat
         {
             isInteractable = value;
 
+            if (buttonCG == null)
+            {
+                // Inspector 참조가 비어 있어도 로비 흐름이 예외로 끊기지 않도록 런타임에 보정합니다.
+                buttonCG = GetComponent<CanvasGroup>();
+                if (buttonCG == null) { buttonCG = gameObject.AddComponent<CanvasGroup>(); }
+            }
+
             if (!isInteractable) { buttonCG.alpha = disabledOpacity; }
             else if (isInteractable) { buttonCG.alpha = 1; }
-            if (!animator.GetCurrentAnimatorStateInfo(0).IsName("Normal")) { TriggerAnimation("Normal"); }
+
+            if (animator == null) { animator = GetComponent<Animator>(); }
+            if (animator != null && !animator.GetCurrentAnimatorStateInfo(0).IsName("Normal")) { TriggerAnimation("Normal"); }
         }
 
         public void AddUINavigation()

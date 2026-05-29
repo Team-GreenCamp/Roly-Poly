@@ -135,7 +135,7 @@ namespace Michsky.UI.Heat
 
                     GUILayout.EndVertical();
 
-                    if (loTarget.localizationSettings.tables.Count != 0 && loTarget.tableIndex != -1)
+                    if (HasValidTableSelection())
                     {
                         HeatUIEditorHandler.DrawHeader(customSkin, "Tables Header", 10);
 
@@ -146,7 +146,8 @@ namespace Michsky.UI.Heat
                         tableIndex.intValue = EditorGUILayout.Popup(loTarget.tableIndex, tableList.ToArray());
                         GUILayout.EndHorizontal();
 
-                        if (GUILayout.Button(new GUIContent("Edit Table"), customSkin.button))
+                        if (loTarget.localizationSettings.tables[loTarget.tableIndex].localizationTable != null
+                            && GUILayout.Button(new GUIContent("Edit Table"), customSkin.button))
                         {
                             LocalizationTableWindow.ShowWindow(loTarget.localizationSettings, loTarget.localizationSettings.tables[loTarget.tableIndex].localizationTable, loTarget.tableIndex);
                         }
@@ -173,16 +174,19 @@ namespace Michsky.UI.Heat
                                 scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, true, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(132));
                                 GUILayout.BeginVertical();
 
-                                for (int i = 0; i < loTarget.localizationSettings.languages[0].localizationLanguage.tableList[loTarget.tableIndex].tableContent.Count; i++)
+                                if (TryGetLanguageTableContent(0, out List<LocalizationLanguage.TableContent> searchTableContent))
                                 {
-                                    if (loTarget.localizationSettings.languages[0].localizationLanguage.tableList[loTarget.tableIndex].tableContent[i].key.ToLower().Contains(searchString.ToLower()))
+                                    for (int i = 0; i < searchTableContent.Count; i++)
                                     {
-                                        if (GUILayout.Button(new GUIContent(loTarget.localizationSettings.languages[0].localizationLanguage.tableList[loTarget.tableIndex].tableContent[i].key), customSkin.button))
+                                        if (!string.IsNullOrEmpty(searchTableContent[i].key) && searchTableContent[i].key.ToLower().Contains(searchString.ToLower()))
                                         {
-                                            loTarget.localizationKey = loTarget.localizationSettings.languages[0].localizationLanguage.tableList[loTarget.tableIndex].tableContent[i].key;
-                                            searchString = "";
-                                            GUI.FocusControl(null);
-                                            EditorUtility.SetDirty(loTarget);
+                                            if (GUILayout.Button(new GUIContent(searchTableContent[i].key), customSkin.button))
+                                            {
+                                                loTarget.localizationKey = searchTableContent[i].key;
+                                                searchString = "";
+                                                GUI.FocusControl(null);
+                                                EditorUtility.SetDirty(loTarget);
+                                            }
                                         }
                                     }
                                 }
@@ -195,30 +199,41 @@ namespace Michsky.UI.Heat
 
                             if (loTarget.showOutputOnEditor == true)
                             {
+                                bool previousGUIState = GUI.enabled;
                                 GUI.enabled = false;
-                                for (int i = 0; i < loTarget.localizationSettings.languages.Count; i++)
+
+                                for (int i = 0; i < GetLanguageCount(); i++)
                                 {
-                                    for (int x = 0; x < loTarget.localizationSettings.languages[i].localizationLanguage.tableList[loTarget.tableIndex].tableContent.Count; x++)
+                                    if (!TryGetLanguageTableContent(i, out List<LocalizationLanguage.TableContent> tableContent))
                                     {
-                                        if (loTarget.localizationSettings.languages[i].localizationLanguage.tableList[loTarget.tableIndex].tableContent[x].key == loTarget.localizationKey)
+                                        continue;
+                                    }
+
+                                    for (int x = 0; x < tableContent.Count; x++)
+                                    {
+                                        if (tableContent[x].key == loTarget.localizationKey)
                                         {
                                             GUILayout.BeginHorizontal();
                                             EditorGUILayout.LabelField(new GUIContent("[" + loTarget.localizationSettings.languages[i].languageID + "] " +
-                                                loTarget.localizationSettings.languages[i].localizationLanguage.tableList[loTarget.tableIndex].tableContent[x].value), customSkin.FindStyle("Text"));
+                                                tableContent[x].value), customSkin.FindStyle("Text"));
                                             GUILayout.EndHorizontal();
 
                                             // Used for Update Text button
-                                            tempValue = loTarget.localizationSettings.languages[loTarget.localizationSettings.defaultLanguageIndex].localizationLanguage.tableList[loTarget.tableIndex].tableContent[x].value;
+                                            if (i == loTarget.localizationSettings.defaultLanguageIndex)
+                                            {
+                                                tempValue = tableContent[x].value;
+                                            }
                                         }
                                     }
                                 }
-                                GUI.enabled = true;
+
+                                GUI.enabled = previousGUIState;
                             }
                         }
 
                         GUILayout.EndVertical();
                     }
-                    else if (loTarget.localizationSettings.tables.Count != 0 && loTarget.tableIndex == -1) { RefreshTableDropdown(); }
+                    else if (GetTableCount() != 0 && loTarget.tableIndex == -1) { RefreshTableDropdown(); }
 
                     HeatUIEditorHandler.DrawHeader(customSkin, "Events Header", 10);
                     EditorGUILayout.PropertyField(onLanguageChanged, new GUIContent("On Language Changed"), true);
@@ -240,9 +255,17 @@ namespace Michsky.UI.Heat
             if (loTarget.localizationSettings == null)
                 return;
 
+            tableList.Clear();
+
+            if (loTarget.localizationSettings.tables == null)
+            {
+                loTarget.tableIndex = -1;
+                return;
+            }
+
             for (int i = 0; i < loTarget.localizationSettings.tables.Count; i++)
             {
-                if (loTarget.localizationSettings.tables[i].localizationTable != null)
+                if (loTarget.localizationSettings.tables[i] != null && loTarget.localizationSettings.tables[i].localizationTable != null)
                 {
                     tableList.Add(loTarget.localizationSettings.tables[i].tableID);
                 }
@@ -251,6 +274,57 @@ namespace Michsky.UI.Heat
             if (loTarget.localizationSettings.tables.Count == 0) { loTarget.tableIndex = -1; }
             else if (loTarget.tableIndex > loTarget.localizationSettings.tables.Count - 1) { loTarget.tableIndex = 0; }
             else if (loTarget.tableIndex == -1 && loTarget.localizationSettings.tables.Count != 0) { loTarget.tableIndex = 0; }
+        }
+
+        private bool HasValidTableSelection()
+        {
+            return loTarget.localizationSettings != null
+                && loTarget.localizationSettings.tables != null
+                && loTarget.tableIndex >= 0
+                && loTarget.tableIndex < loTarget.localizationSettings.tables.Count
+                && loTarget.localizationSettings.tables[loTarget.tableIndex] != null;
+        }
+
+        private int GetTableCount()
+        {
+            return loTarget.localizationSettings != null && loTarget.localizationSettings.tables != null
+                ? loTarget.localizationSettings.tables.Count
+                : 0;
+        }
+
+        private int GetLanguageCount()
+        {
+            return loTarget.localizationSettings != null && loTarget.localizationSettings.languages != null
+                ? loTarget.localizationSettings.languages.Count
+                : 0;
+        }
+
+        private bool TryGetLanguageTableContent(int languageIndex, out List<LocalizationLanguage.TableContent> tableContent)
+        {
+            tableContent = null;
+
+            if (loTarget.localizationSettings == null
+                || loTarget.localizationSettings.languages == null
+                || languageIndex < 0
+                || languageIndex >= loTarget.localizationSettings.languages.Count)
+            {
+                return false;
+            }
+
+            LocalizationSettings.Language language = loTarget.localizationSettings.languages[languageIndex];
+            if (language == null
+                || language.localizationLanguage == null
+                || language.localizationLanguage.tableList == null
+                || loTarget.tableIndex < 0
+                || loTarget.tableIndex >= language.localizationLanguage.tableList.Count
+                || language.localizationLanguage.tableList[loTarget.tableIndex] == null)
+            {
+                return false;
+            }
+
+            // 일부 Localization Settings에서 언어 에셋이나 테이블이 비어 있어도 Inspector가 멈추지 않게 방어합니다.
+            tableContent = language.localizationLanguage.tableList[loTarget.tableIndex].tableContent;
+            return tableContent != null;
         }
     }
 }

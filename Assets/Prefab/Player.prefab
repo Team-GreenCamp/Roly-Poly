@@ -17,7 +17,9 @@ GameObject:
   - component: {fileID: -1357284326032947471}
   - component: {fileID: 5103745207573382375}
   - component: {fileID: 3482339306295923204}
-  m_Layer: 0
+  - component: {fileID: 4253722849973858222}
+  - component: {fileID: 7363093746037789180}
+  m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -96,20 +98,28 @@ MonoBehaviour:
   gravity: -25
   terminalVelocity: -50
   fallGravityMultiplier: 2
+  landingSpeedPreserveDuration: 0.18
+  landingSpeedPreserveRatio: 0.9
+  landingTiltAngularDamping: 18
   centerOfMassOffset: {x: 0, y: -0.35, z: 0}
   uprightTorque: 90
   uprightDamping: 10
   fallenTiltAngle: 35
-  recoveryDelay: 1
-  recoveryTorqueMultiplier: 2.5
-  turnTorque: 35
+  recoveryDelay: 0.5
+  recoveryTorqueMultiplier: 2
+  turnTorque: 30
   turnDamping: 6
-  maxAngularVelocity: 25
+  maxAngularVelocity: 30
   groundedOffset: 0.1
   groundedRadius: 0.25
+  groundedContactGraceTime: 0.08
+  minGroundContactNormalY: 0.5
   groundLayers:
     serializedVersion: 2
     m_Bits: 200
+  useLowFrictionColliderMaterial: 1
+  idleGroundFriction: 1
+  idleFrictionInputThreshold: 0.05
   playerCollisionImpact: 5
   rigidbodyImpactSpeedThreshold: 5
   heavyObjectMassThreshold: 20
@@ -237,10 +247,13 @@ MonoBehaviour:
   ownerOnlyObjects: []
   networkTransform: {fileID: -5105889794907920579}
   cameraRoot: {fileID: 114892334035800877}
-  characterView: {fileID: 0}
+  characterView: {fileID: 4253722849973858222}
+  playerController: {fileID: 8952032033408616040}
   lockCursorForOwner: 1
   cursorLockSceneNames:
   - Network Test
+  - Single Test
+  - City Stage
   separatePlayerSpawnPositions: 1
   spawnRadius: 3
   spawnCenterOffset: {x: 0, y: 0, z: 0}
@@ -250,6 +263,11 @@ MonoBehaviour:
   spawnVisualRoot: {fileID: 6350199535797151265}
   spawnScaleInDuration: 0.35
   spawnStartScale: 0.1
+  enableLobbyCharacterOutline: 1
+  localLobbyOutlineColor: {r: 0.45, g: 0.95, b: 1, a: 1}
+  remoteLobbyOutlineColor: {r: 1, g: 0.92, b: 0.45, a: 1}
+  lobbyOutlineWidth: 2.5
+  lobbyOutlineMode: 1
   syncTransformState: 1
   remotePositionLerpSpeed: 20
   remoteRotationLerpSpeed: 20
@@ -259,6 +277,7 @@ MonoBehaviour:
   - GameScene
   - Network Test
   showNameLabel: 1
+  showNameLabelOnlyInLobby: 1
   nameLabelOffset: {x: 0, y: 1.3, z: 0}
   nameLabelFontSize: 2.5
 --- !u!54 &5103745207573382375
@@ -311,6 +330,36 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &4253722849973858222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7a6f4e3214354be0a253add9d9f2561, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCharacterView
+  characterModels:
+  - {fileID: 6353054826319683737}
+  - {fileID: 7552929008613241175}
+  - {fileID: 4504222955305426385}
+  - {fileID: 5859070759342303703}
+--- !u!114 &7363093746037789180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b96555f423eea074087e4eb2a6848857, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MouseController
+  lockCursorOnStart: 0
 --- !u!1 &2790217993094878390
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,7 +369,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 114892334035800877}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: CameraRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -351,7 +400,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2081467351840265412}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: HoldPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -384,6 +433,10 @@ PrefabInstance:
     - target: {fileID: 1965410809269166, guid: bc89cff11dc72544faaaa69b501fd596, type: 3}
       propertyPath: m_Name
       value: SM_Bean_Female_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1965410809269166, guid: bc89cff11dc72544faaaa69b501fd596, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1965410809269166, guid: bc89cff11dc72544faaaa69b501fd596, type: 3}
       propertyPath: m_IsActive
@@ -450,6 +503,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bc89cff11dc72544faaaa69b501fd596, type: 3}
+--- !u!1 &4504222955305426385 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1965410809269166, guid: bc89cff11dc72544faaaa69b501fd596, type: 3}
+  m_PrefabInstance: {fileID: 4504951399695259263}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4509590520588478079 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4932140778729472, guid: bc89cff11dc72544faaaa69b501fd596, type: 3}
@@ -466,6 +524,10 @@ PrefabInstance:
     - target: {fileID: 1645872946987862, guid: 9b88eb630e9e15a4f950eae741685374, type: 3}
       propertyPath: m_Name
       value: SM_Bean_Town_Female_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1645872946987862, guid: 9b88eb630e9e15a4f950eae741685374, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1645872946987862, guid: 9b88eb630e9e15a4f950eae741685374, type: 3}
       propertyPath: m_IsActive
@@ -537,6 +599,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4182031405557140, guid: 9b88eb630e9e15a4f950eae741685374, type: 3}
   m_PrefabInstance: {fileID: 5857565981439699585}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5859070759342303703 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1645872946987862, guid: 9b88eb630e9e15a4f950eae741685374, type: 3}
+  m_PrefabInstance: {fileID: 5857565981439699585}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6354046162590155445
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -548,6 +615,10 @@ PrefabInstance:
     - target: {fileID: 1283017171755564, guid: f10c394033f254647873f3d28a75a062, type: 3}
       propertyPath: m_Name
       value: SM_Bean_Cop_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1283017171755564, guid: f10c394033f254647873f3d28a75a062, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4058866896921748, guid: f10c394033f254647873f3d28a75a062, type: 3}
       propertyPath: m_LocalScale.x
@@ -615,6 +686,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4058866896921748, guid: f10c394033f254647873f3d28a75a062, type: 3}
   m_PrefabInstance: {fileID: 6354046162590155445}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6353054826319683737 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1283017171755564, guid: f10c394033f254647873f3d28a75a062, type: 3}
+  m_PrefabInstance: {fileID: 6354046162590155445}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7554778177742899917
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -626,6 +702,10 @@ PrefabInstance:
     - target: {fileID: 1849736199912346, guid: e332982425ee2ec48b168979bb7b43f5, type: 3}
       propertyPath: m_Name
       value: SM_Bean_Cowboy_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1849736199912346, guid: e332982425ee2ec48b168979bb7b43f5, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1849736199912346, guid: e332982425ee2ec48b168979bb7b43f5, type: 3}
       propertyPath: m_IsActive
@@ -692,6 +772,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e332982425ee2ec48b168979bb7b43f5, type: 3}
+--- !u!1 &7552929008613241175 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1849736199912346, guid: e332982425ee2ec48b168979bb7b43f5, type: 3}
+  m_PrefabInstance: {fileID: 7554778177742899917}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7555001000473773681 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4283527512771772, guid: e332982425ee2ec48b168979bb7b43f5, type: 3}

@@ -345,6 +345,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8952032033408616040, guid: 19034e1426d2e0a4b9f672645be551b5, type: 3}
+      propertyPath: groundLayers.m_Bits
+      value: 4294967295
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -675,13 +679,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae53800f546c04f0b945ea634217fbd5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CarryableObject
-  carryMode: 0
-  maxSingleCarryMass: 20
-  maxCooperativeCarryMass: 80
-  moveSpeedMultiplier: 0.65
-  blockJumpWhileCarrying: 1
-  cooperativeHeightOffset: 1.1
-  cooperativeReleaseDistance: 3.5
 --- !u!54 &719467336
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1111,51 +1108,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1504527790
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1504527792}
-  - component: {fileID: 1504527791}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1504527791
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1504527790}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b96555f423eea074087e4eb2a6848857, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MouseController
-  lockCursorOnStart: 1
---- !u!4 &1504527792
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1504527790}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.95577, y: -0, z: 3.1087}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1815927025
 GameObject:
   m_ObjectHideFlags: 0
@@ -1531,7 +1483,6 @@ SceneRoots:
   - {fileID: 323698470}
   - {fileID: 769896595}
   - {fileID: 1289484390}
-  - {fileID: 1504527792}
   - {fileID: 516635858}
   - {fileID: 576224081}
   - {fileID: 1815927031}

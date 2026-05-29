@@ -28,6 +28,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private Vector3 spawnCenterOffset;
     [SerializeField] private string lobbySceneName = "Lobby Scene";
     [SerializeField] private bool useLobbySpawnPoints = true;
+    [SerializeField] private bool useSceneSpawnPoints = true;
+    [SerializeField] private string[] sceneSpawnPointNames = { "Spawn Point", "SpawnPoint", "Player Spawn", "PlayerSpawn" };
 
     [Header("Lobby Spawn Presentation")]
     [SerializeField] private bool playLobbySpawnScaleIn = true;
@@ -349,6 +351,11 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             targetPosition = lobbyPosition;
             targetRotation = lobbyRotation;
         }
+        else if (TryGetSceneSpawnPose(out Vector3 scenePosition, out Quaternion sceneRotation))
+        {
+            targetPosition = scenePosition;
+            targetRotation = sceneRotation;
+        }
 
         ApplySpawnPose(targetPosition, targetRotation);
 
@@ -403,6 +410,35 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         LobbySpawnPointGroup spawnPointGroup = FindLobbySpawnPointGroup(SceneManager.GetActiveScene());
         return spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(OwnerClientId, out position, out rotation);
+    }
+
+    private bool TryGetSceneSpawnPose(out Vector3 position, out Quaternion rotation)
+    {
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+
+        if (!useSceneSpawnPoints || IsInLobbyScene())
+        {
+            return false;
+        }
+
+        Scene activeScene = SceneManager.GetActiveScene();
+        LobbySpawnPointGroup spawnPointGroup = FindLobbySpawnPointGroup(activeScene);
+        if (spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(OwnerClientId, out position, out rotation))
+        {
+            return true;
+        }
+
+        Transform spawnPoint = FindNamedSceneSpawnPoint(activeScene, OwnerClientId);
+        if (spawnPoint == null)
+        {
+            return false;
+        }
+
+        // 맵 씬에 별도 Spawn Point 오브젝트만 둔 경우에도 해당 위치로 배치합니다.
+        position = spawnPoint.position;
+        rotation = spawnPoint.rotation;
+        return true;
     }
 
     private bool IsInLobbyScene()
@@ -542,6 +578,66 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         return null;
+    }
+
+    private Transform FindNamedSceneSpawnPoint(Scene scene, ulong ownerClientId)
+    {
+        if (!scene.IsValid() || !scene.isLoaded || sceneSpawnPointNames == null || sceneSpawnPointNames.Length == 0)
+        {
+            return null;
+        }
+
+        List<Transform> spawnPoints = new List<Transform>();
+        GameObject[] rootObjects = scene.GetRootGameObjects();
+        for (int i = 0; i < rootObjects.Length; i++)
+        {
+            CollectNamedSpawnPoints(rootObjects[i].transform, spawnPoints);
+        }
+
+        if (spawnPoints.Count == 0)
+        {
+            return null;
+        }
+
+        int index = (int)(ownerClientId % (ulong)spawnPoints.Count);
+        return spawnPoints[index];
+    }
+
+    private void CollectNamedSpawnPoints(Transform root, ICollection<Transform> spawnPoints)
+    {
+        if (root == null)
+        {
+            return;
+        }
+
+        if (IsSceneSpawnPointName(root.name))
+        {
+            spawnPoints.Add(root);
+        }
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            CollectNamedSpawnPoints(root.GetChild(i), spawnPoints);
+        }
+    }
+
+    private bool IsSceneSpawnPointName(string objectName)
+    {
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < sceneSpawnPointNames.Length; i++)
+        {
+            string spawnPointName = sceneSpawnPointNames[i];
+            if (!string.IsNullOrWhiteSpace(spawnPointName) && objectName.StartsWith(spawnPointName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private Vector3 GetSpawnOffset(ulong ownerClientId)

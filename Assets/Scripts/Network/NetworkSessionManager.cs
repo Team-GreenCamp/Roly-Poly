@@ -39,6 +39,7 @@ public class NetworkSessionManager : MonoBehaviour
     [SerializeField] private bool logReadyDebug = true;
 
     public event Action StateChanged;
+    public event Action<string, string, string> MapSelectionChanged;
 
     public string StatusMessage { get; private set; } = "오프라인";
     public string CurrentJoinCode { get; private set; } = string.Empty;
@@ -52,8 +53,16 @@ public class NetworkSessionManager : MonoBehaviour
     public bool IsClient => networkManager != null && networkManager.IsClient;
     public bool IsConnectedClient => networkManager != null && networkManager.IsConnectedClient;
     public bool LocalReady { get; private set; }
+    public string CurrentGameSceneName => gameSceneName;
+    public string CurrentMapChapterId { get; private set; } = string.Empty;
+    public string CurrentMapId { get; private set; } = string.Empty;
+    public bool CanHostStartGame => networkManager != null
+        && networkManager.IsServer
+        && !gameStartRequested
+        && AreRequiredClientsReady();
 
     private const string ReadyStateMessageName = "ReadyState";
+    private const string MapSelectionMessageName = "MapSelection";
     private bool callbacksRegistered;
     private bool isShuttingDown;
     private bool gameStartRequested;
@@ -376,6 +385,13 @@ public class NetworkSessionManager : MonoBehaviour
             return false;
         }
 
+        if (!AreRequiredClientsReady())
+        {
+            SetStatus("아직 준비하지 않은 플레이어가 있습니다.");
+            LogReadyDebug("StartGame failed. Required clients are not ready.");
+            return false;
+        }
+
         if (string.IsNullOrWhiteSpace(gameSceneName))
         {
             SetStatus("전환할 게임 씬 이름이 비어 있습니다.");
@@ -395,9 +411,43 @@ public class NetworkSessionManager : MonoBehaviour
             return false;
         }
 
+        gameStartRequested = true;
         SetStatus($"게임 씬으로 전환 중입니다: {gameSceneName}");
         LogReadyDebug($"StartGame succeeded. Scene loading started: {gameSceneName}");
         return true;
+    }
+
+    public void SetGameSceneName(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName))
+        {
+            return;
+        }
+
+        // 로비에서 선택한 맵이 실제 네트워크 씬 로드 대상이 되도록 저장합니다.
+        gameSceneName = sceneName.Trim();
+        NotifyStateChanged();
+    }
+
+    public void SetSelectedMap(string chapterId, string mapId, string sceneName)
+    {
+        if (networkManager == null || !networkManager.IsServer)
+        {
+            return;
+        }
+
+        CurrentMapChapterId = NormalizeMessageString(chapterId);
+        CurrentMapId = NormalizeMessageString(mapId);
+
+        if (!string.IsNullOrWhiteSpace(sceneName))
+        {
+            gameSceneName = sceneName.Trim();
+        }
+
+        // 호스트가 확정한 맵 정보를 로비에 있는 모든 클라이언트의 UI와 맞춥니다.
+        NotifyMapSelectionChanged(CurrentMapChapterId, CurrentMapId, gameSceneName);
+        SendMapSelectionToClients(CurrentMapChapterId, CurrentMapId, gameSceneName);
+        NotifyStateChanged();
     }
 
     private bool CanStartSession()
@@ -470,6 +520,7 @@ public class NetworkSessionManager : MonoBehaviour
         networkManager.OnClientDisconnectCallback += HandleClientDisconnected;
         networkManager.ConnectionApprovalCallback = HandleConnectionApproval;
         networkManager.CustomMessagingManager.RegisterNamedMessageHandler(ReadyStateMessageName, HandleReadyStateMessage);
+        networkManager.CustomMessagingManager.RegisterNamedMessageHandler(MapSelectionMessageName, HandleMapSelectionMessage);
         callbacksRegistered = true;
     }
 
@@ -485,6 +536,7 @@ public class NetworkSessionManager : MonoBehaviour
         networkManager.OnClientDisconnectCallback -= HandleClientDisconnected;
         networkManager.ConnectionApprovalCallback = null;
         networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(ReadyStateMessageName);
+        networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(MapSelectionMessageName);
         callbacksRegistered = false;
     }
 
@@ -597,6 +649,7 @@ public class NetworkSessionManager : MonoBehaviour
         {
             GetOrAssignCharacterIndex(clientId);
             SetClientReady(clientId, false);
+            SendMapSelectionToClient(clientId, CurrentMapChapterId, CurrentMapId, gameSceneName);
             SetStatus($"플레이어가 로비에 입장했습니다. 현재 인원: {ConnectedPlayerCount}");
         }
     }
@@ -627,7 +680,7 @@ public class NetworkSessionManager : MonoBehaviour
             readyClientIds.Remove(clientId);
             ReleaseCharacterIndex(clientId);
             SetStatus($"플레이어가 로비에서 나갔습니다. 현재 인원: {ConnectedPlayerCount}");
-            TryStartGameWhenAllReady();
+            NotifyStateChanged();
         }
     }
 
@@ -641,6 +694,28 @@ public class NetworkSessionManager : MonoBehaviour
         reader.ReadValueSafe(out bool isReady);
         LogReadyDebug($"Ready message received. clientId={clientId}, ready={isReady}");
         SetClientReady(clientId, isReady);
+    }
+
+    private void HandleMapSelectionMessage(ulong clientId, FastBufferReader reader)
+    {
+        reader.ReadValueSafe(out FixedString128Bytes chapterId);
+        reader.ReadValueSafe(out FixedString128Bytes mapId);
+        reader.ReadValueSafe(out FixedString128Bytes sceneName);
+
+        if (networkManager != null && networkManager.IsServer)
+        {
+            return;
+        }
+
+        CurrentMapChapterId = chapterId.ToString();
+        CurrentMapId = mapId.ToString();
+        if (!string.IsNullOrWhiteSpace(sceneName.ToString()))
+        {
+            gameSceneName = sceneName.ToString();
+        }
+
+        NotifyMapSelectionChanged(CurrentMapChapterId, CurrentMapId, gameSceneName);
+        NotifyStateChanged();
     }
 
     private bool TrySubmitReadyThroughPlayerObject(bool isReady)
@@ -680,44 +755,100 @@ public class NetworkSessionManager : MonoBehaviour
 
         LogReadyDebug($"Ready state updated. clientId={clientId}, ready={isReady}, readyCount={readyClientIds.Count}, connectedCount={GetConnectedClientCountForDebug()}");
 
-        // 서버가 접속 중인 모든 플레이어의 준비 상태를 기준으로 자동 시작을 판단합니다.
-        TryStartGameWhenAllReady();
+        // 서버의 준비 상태가 바뀌면 호스트 Start 버튼 활성화 여부를 다시 계산합니다.
         NotifyStateChanged();
     }
 
-    private void TryStartGameWhenAllReady()
+    private bool AreRequiredClientsReady()
     {
-        if (networkManager == null || !networkManager.IsServer || gameStartRequested)
+        if (networkManager == null || !networkManager.IsServer)
         {
-            return;
+            return false;
         }
 
-        if (networkManager.ConnectedClientsIds.Count == 0)
-        {
-            return;
-        }
-
-        List<ulong> notReadyClientIds = new List<ulong>();
         foreach (ulong clientId in networkManager.ConnectedClientsIds)
         {
+            if (clientId == networkManager.LocalClientId)
+            {
+                continue;
+            }
+
+            if (!readyClientIds.Contains(clientId))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public List<ulong> GetNotReadyRequiredClientIds()
+    {
+        List<ulong> notReadyClientIds = new List<ulong>();
+        if (networkManager == null || !networkManager.IsServer)
+        {
+            return notReadyClientIds;
+        }
+
+        foreach (ulong clientId in networkManager.ConnectedClientsIds)
+        {
+            if (clientId == networkManager.LocalClientId)
+            {
+                continue;
+            }
+
             if (!readyClientIds.Contains(clientId))
             {
                 notReadyClientIds.Add(clientId);
             }
         }
 
-        if (notReadyClientIds.Count > 0)
+        return notReadyClientIds;
+    }
+
+    private void SendMapSelectionToClients(string chapterId, string mapId, string sceneName)
+    {
+        if (networkManager == null || networkManager.CustomMessagingManager == null || !networkManager.IsServer)
         {
-            LogReadyDebug($"Waiting for ready clients. notReady=[{string.Join(", ", notReadyClientIds)}]");
             return;
         }
 
-        LogReadyDebug($"All players ready. Starting scene: {gameSceneName}");
-        gameStartRequested = true;
-        if (!StartGame())
+        foreach (ulong clientId in networkManager.ConnectedClientsIds)
         {
-            gameStartRequested = false;
+            if (clientId == networkManager.LocalClientId)
+            {
+                continue;
+            }
+
+            SendMapSelectionToClient(clientId, chapterId, mapId, sceneName);
         }
+    }
+
+    private void SendMapSelectionToClient(ulong clientId, string chapterId, string mapId, string sceneName)
+    {
+        if (networkManager == null
+            || networkManager.CustomMessagingManager == null
+            || !networkManager.IsServer
+            || string.IsNullOrWhiteSpace(mapId))
+        {
+            return;
+        }
+
+        using FastBufferWriter writer = new FastBufferWriter(512, Allocator.Temp);
+        writer.WriteValueSafe(new FixedString128Bytes(NormalizeMessageString(chapterId)));
+        writer.WriteValueSafe(new FixedString128Bytes(NormalizeMessageString(mapId)));
+        writer.WriteValueSafe(new FixedString128Bytes(NormalizeMessageString(sceneName)));
+        networkManager.CustomMessagingManager.SendNamedMessage(MapSelectionMessageName, clientId, writer);
+    }
+
+    private void NotifyMapSelectionChanged(string chapterId, string mapId, string sceneName)
+    {
+        MapSelectionChanged?.Invoke(chapterId, mapId, sceneName);
+    }
+
+    private static string NormalizeMessageString(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
     }
 
     private void ResetReadyState()

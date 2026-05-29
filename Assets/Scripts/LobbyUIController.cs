@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using CanvasButton = UnityEngine.UI.Button;
 using CanvasImage = UnityEngine.UI.Image;
+using HeatBoxButtonManager = Michsky.UI.Heat.BoxButtonManager;
+using HeatButtonManager = Michsky.UI.Heat.ButtonManager;
+using HeatChapterManager = Michsky.UI.Heat.ChapterManager;
+using HeatPanelManager = Michsky.UI.Heat.PanelManager;
 
 [DisallowMultipleComponent]
 public class LobbyUIController : MonoBehaviour
@@ -17,6 +21,15 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private CanvasButton readyButton;
     [SerializeField] private GameObject roomEntryPanel;
     [SerializeField] private TMP_Text roomCodeDisplayText;
+    [SerializeField] private string readyButtonObjectName = "Ready Button";
+    [SerializeField] private string startButtonObjectName = "Start Button";
+
+    [Header("Map UI")]
+    [SerializeField] private string mapButtonObjectName = "Map Button";
+    [SerializeField] private string chaptersPanelObjectName = "Chapters Panel";
+    [SerializeField] private bool hideChaptersPanelOnStart = true;
+    [SerializeField] private bool hideChaptersPanelAfterConfirm = true;
+    [SerializeField] private List<MapSelection> mapSelections = new List<MapSelection>();
 
     [Header("Loading UI")]
     [SerializeField] private GameObject loadingRoot;
@@ -26,6 +39,8 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private TMP_InputField roomNameInputField;
     [SerializeField] private Transform roomListContentRoot;
     [SerializeField] private GameObject roomListItemTemplate;
+    [SerializeField] private List<GameObject> roomListPanelsToCloseOnRoomClick = new List<GameObject>();
+    [SerializeField, HideInInspector] private GameObject roomListPanelToCloseOnRoomClick;
 
     [Header("Room List API")]
     [SerializeField] private string backendBaseUrl = "http://localhost:3000";
@@ -46,9 +61,33 @@ public class LobbyUIController : MonoBehaviour
     private float nextRoomHeartbeatTime;
     private long activeBackendRoomId;
     private int backendConnectedPlayerCount = -1;
+    private bool mapPanelListenersRegistered;
+    private bool readyButtonRuntimeListenerRegistered;
+    private string selectedMapChapterId = string.Empty;
+    private string selectedMapSceneName = string.Empty;
 
     private readonly List<GameObject> generatedRoomRows = new List<GameObject>();
     private RoomApiClient roomApiClient;
+    private GameObject mapPanelRoot;
+    private GameObject chaptersPanelRoot;
+    private GameObject readyButtonRoot;
+    private GameObject startButtonRoot;
+    private HeatButtonManager readyHeatButton;
+    private HeatButtonManager startHeatButton;
+    private CanvasButton startButton;
+    private HeatBoxButtonManager mapBoxButton;
+    private HeatButtonManager mapHeatButton;
+    private CanvasButton mapCanvasButton;
+    private HeatChapterManager chapterManager;
+
+    [System.Serializable]
+    public class MapSelection
+    {
+        public string chapterId;
+        public string mapId;
+        public string sceneName;
+        public Sprite buttonBackground;
+    }
 
     private void Reset()
     {
@@ -63,6 +102,9 @@ public class LobbyUIController : MonoBehaviour
         }
 
         ApplyDefaultValues();
+        ResolveLobbyActionButtons();
+        ResolveMapPanelReferences();
+        HideChaptersPanelForLobbyStart();
         roomApiClient = new RoomApiClient(backendBaseUrl);
     }
 
@@ -73,6 +115,7 @@ public class LobbyUIController : MonoBehaviour
         if (sessionManager != null)
         {
             sessionManager.StateChanged += HandleSessionStateChanged;
+            sessionManager.MapSelectionChanged += HandleMapSelectionChanged;
         }
 
         RefreshUI();
@@ -90,6 +133,7 @@ public class LobbyUIController : MonoBehaviour
         if (sessionManager != null)
         {
             sessionManager.StateChanged -= HandleSessionStateChanged;
+            sessionManager.MapSelectionChanged -= HandleMapSelectionChanged;
         }
     }
 
@@ -121,11 +165,13 @@ public class LobbyUIController : MonoBehaviour
             leaveButton.onClick.AddListener(HandleLeaveClicked);
         }
 
-        if (readyButton != null)
+        if (ShouldRegisterReadyButtonRuntimeListener())
         {
             readyButton.onClick.AddListener(HandleReadyClicked);
+            readyButtonRuntimeListenerRegistered = true;
         }
 
+        RegisterMapPanelListeners();
         listenersRegistered = true;
     }
 
@@ -141,12 +187,455 @@ public class LobbyUIController : MonoBehaviour
             leaveButton.onClick.RemoveListener(HandleLeaveClicked);
         }
 
-        if (readyButton != null)
+        if (readyButton != null && readyButtonRuntimeListenerRegistered)
         {
             readyButton.onClick.RemoveListener(HandleReadyClicked);
+            readyButtonRuntimeListenerRegistered = false;
         }
 
+        UnregisterMapPanelListeners();
         listenersRegistered = false;
+    }
+
+    private bool ShouldRegisterReadyButtonRuntimeListener()
+    {
+        ResolveLobbyActionButtons();
+
+        if (readyButton == null)
+        {
+            return false;
+        }
+
+        if (readyHeatButton != null && readyHeatButton.onClick.GetPersistentEventCount() > 0)
+        {
+            return false;
+        }
+
+        return readyButton.onClick.GetPersistentEventCount() == 0;
+    }
+
+    private void ResolveMapPanelReferences()
+    {
+        if (chaptersPanelRoot == null)
+        {
+            chaptersPanelRoot = FindSceneGameObjectByName(chaptersPanelObjectName);
+        }
+
+        if (mapPanelRoot == null && chaptersPanelRoot != null)
+        {
+            mapPanelRoot = ResolveMapPanelRoot(chaptersPanelRoot);
+        }
+
+        if (chapterManager == null && chaptersPanelRoot != null)
+        {
+            chapterManager = chaptersPanelRoot.GetComponent<HeatChapterManager>();
+        }
+
+        GameObject mapButtonObject = FindSceneGameObjectByName(mapButtonObjectName);
+        if (mapButtonObject == null)
+        {
+            return;
+        }
+
+        if (mapHeatButton == null)
+        {
+            mapHeatButton = mapButtonObject.GetComponent<HeatButtonManager>();
+        }
+
+        if (mapBoxButton == null)
+        {
+            mapBoxButton = mapButtonObject.GetComponent<HeatBoxButtonManager>();
+        }
+
+        if (mapCanvasButton == null && mapHeatButton == null && mapBoxButton == null)
+        {
+            mapCanvasButton = mapButtonObject.GetComponent<CanvasButton>();
+        }
+    }
+
+    private void ResolveLobbyActionButtons()
+    {
+        if (readyButtonRoot == null)
+        {
+            readyButtonRoot = FindSceneGameObjectByName(readyButtonObjectName);
+        }
+
+        if (startButtonRoot == null)
+        {
+            startButtonRoot = FindSceneGameObjectByName(startButtonObjectName);
+        }
+
+        if (readyHeatButton == null && readyButtonRoot != null)
+        {
+            readyHeatButton = readyButtonRoot.GetComponent<HeatButtonManager>();
+        }
+
+        if (readyButton == null && readyButtonRoot != null)
+        {
+            readyButton = readyButtonRoot.GetComponent<CanvasButton>();
+        }
+
+        if (readyButtonRoot == null && readyButton != null)
+        {
+            readyButtonRoot = readyButton.gameObject;
+        }
+
+        if (startHeatButton == null && startButtonRoot != null)
+        {
+            startHeatButton = startButtonRoot.GetComponent<HeatButtonManager>();
+        }
+
+        if (startButton == null && startButtonRoot != null)
+        {
+            startButton = startButtonRoot.GetComponent<CanvasButton>();
+        }
+
+        if (startButtonRoot == null && startButton != null)
+        {
+            startButtonRoot = startButton.gameObject;
+        }
+    }
+
+    private void RegisterMapPanelListeners()
+    {
+        if (mapPanelListenersRegistered)
+        {
+            return;
+        }
+
+        ResolveMapPanelReferences();
+
+        if (mapHeatButton != null)
+        {
+            mapHeatButton.onClick.AddListener(HandleMapButtonClicked);
+        }
+
+        if (mapBoxButton != null)
+        {
+            mapBoxButton.onClick.AddListener(HandleMapButtonClicked);
+        }
+
+        if (mapCanvasButton != null)
+        {
+            mapCanvasButton.onClick.AddListener(HandleMapButtonClicked);
+        }
+
+        mapPanelListenersRegistered = mapHeatButton != null || mapBoxButton != null || mapCanvasButton != null;
+        UpdateMapButtonInteractable();
+    }
+
+    private void UnregisterMapPanelListeners()
+    {
+        if (!mapPanelListenersRegistered)
+        {
+            return;
+        }
+
+        if (mapHeatButton != null)
+        {
+            mapHeatButton.onClick.RemoveListener(HandleMapButtonClicked);
+        }
+
+        if (mapBoxButton != null)
+        {
+            mapBoxButton.onClick.RemoveListener(HandleMapButtonClicked);
+        }
+
+        if (mapCanvasButton != null)
+        {
+            mapCanvasButton.onClick.RemoveListener(HandleMapButtonClicked);
+        }
+
+        mapPanelListenersRegistered = false;
+    }
+
+    private void HideChaptersPanelForLobbyStart()
+    {
+        if (!hideChaptersPanelOnStart)
+        {
+            return;
+        }
+
+        SetMapPanelVisible(false);
+    }
+
+    private void HandleMapButtonClicked()
+    {
+        if (!CanInteractWithMapButton())
+        {
+            return;
+        }
+
+        ResolveMapPanelReferences();
+
+        if (chaptersPanelRoot == null)
+        {
+            Debug.LogWarning("Chapters Panel을 찾을 수 없어 Map Button 클릭을 처리하지 못했습니다.", this);
+            return;
+        }
+
+        SetMapPanelVisible(true);
+
+        if (chapterManager != null)
+        {
+            chapterManager.InitializeChapters();
+        }
+    }
+
+    private void UpdateMapButtonInteractable()
+    {
+        ResolveMapPanelReferences();
+
+        bool canInteract = CanInteractWithMapButton();
+        if (mapHeatButton != null)
+        {
+            mapHeatButton.Interactable(canInteract);
+        }
+
+        if (mapBoxButton != null)
+        {
+            mapBoxButton.Interactable(canInteract);
+        }
+
+        if (mapCanvasButton != null)
+        {
+            mapCanvasButton.interactable = canInteract;
+        }
+
+        if (!canInteract)
+        {
+            // 클라이언트는 맵 선택 UI를 열거나 유지할 수 없도록 닫아둔다.
+            SetMapPanelVisible(false);
+        }
+    }
+
+    private bool CanInteractWithMapButton()
+    {
+        if (sessionManager == null)
+        {
+            return true;
+        }
+
+        return !sessionManager.IsOnline || sessionManager.IsHost;
+    }
+
+    // ChapterManager의 Confirm 버튼 OnClick에서 연결해서 현재 챕터를 선택 맵으로 확정합니다.
+    public void ConfirmSelectedMap()
+    {
+        ResolveMapPanelReferences();
+
+        if (chapterManager == null || chapterManager.chapters == null || chapterManager.chapters.Count == 0)
+        {
+            Debug.LogWarning("선택할 ChapterManager가 없어 맵을 확정하지 못했습니다.", this);
+            return;
+        }
+
+        int chapterIndex = Mathf.Clamp(chapterManager.currentChapterIndex, 0, chapterManager.chapters.Count - 1);
+        string chapterId = chapterManager.chapters[chapterIndex].chapterID;
+        ApplyMapSelection(chapterId);
+    }
+
+    public void SelectMap(string mapId)
+    {
+        ApplyMapSelection(mapId, mapId, null);
+    }
+
+    public void SelectMapByChapterId(string chapterId)
+    {
+        ApplyMapSelection(chapterId);
+    }
+
+    private void ApplyMapSelection(string chapterId)
+    {
+        MapSelection selection = FindMapSelection(chapterId);
+        string fallbackMapId = NormalizeMapId(chapterId);
+        string selectedMapId = selection != null && !string.IsNullOrWhiteSpace(selection.mapId)
+            ? selection.mapId.Trim()
+            : fallbackMapId;
+        string selectedSceneName = selection != null ? selection.sceneName : null;
+
+        ApplyMapSelection(chapterId, selectedMapId, selectedSceneName);
+        ApplyMapButtonBackground(selection, chapterId);
+    }
+
+    private void ApplyMapSelection(string chapterId, string mapId, string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(mapId))
+        {
+            Debug.LogWarning("맵 ID가 비어 있어 맵 선택을 적용하지 않았습니다.", this);
+            return;
+        }
+
+        defaultMapId = mapId.Trim();
+        selectedMapChapterId = string.IsNullOrWhiteSpace(chapterId) ? string.Empty : chapterId.Trim();
+        if (!string.IsNullOrWhiteSpace(sceneName))
+        {
+            selectedMapSceneName = sceneName.Trim();
+        }
+
+        if (sessionManager != null && sessionManager.IsServer)
+        {
+            sessionManager.SetSelectedMap(selectedMapChapterId, defaultMapId, selectedMapSceneName);
+        }
+        else if (sessionManager != null && !sessionManager.IsOnline && !string.IsNullOrWhiteSpace(sceneName))
+        {
+            sessionManager.SetGameSceneName(selectedMapSceneName);
+        }
+
+        if (hideChaptersPanelAfterConfirm)
+        {
+            SetMapPanelVisible(false);
+        }
+
+        if (activeBackendRoomOwnedByHost && activeBackendRoomId > 0)
+        {
+            _ = UpdateHostedRoomMapAsync(defaultMapId);
+        }
+
+        Debug.Log($"맵 선택 완료: chapter={chapterId}, mapId={defaultMapId}, scene={(sessionManager != null ? sessionManager.CurrentGameSceneName : "-")}");
+    }
+
+    private MapSelection FindMapSelection(string chapterId)
+    {
+        return FindMapSelection(chapterId, null);
+    }
+
+    private MapSelection FindMapSelection(string chapterId, string mapId)
+    {
+        if (mapSelections == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < mapSelections.Count; i++)
+        {
+            MapSelection selection = mapSelections[i];
+            if (selection == null)
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(chapterId) && selection.chapterId == chapterId)
+            {
+                return selection;
+            }
+
+            if (!string.IsNullOrWhiteSpace(mapId) && selection.mapId == mapId)
+            {
+                return selection;
+            }
+        }
+
+        return null;
+    }
+
+    private void ApplyMapButtonBackground(MapSelection selection, string chapterId)
+    {
+        Sprite background = selection != null ? selection.buttonBackground : null;
+        if (background == null)
+        {
+            background = GetChapterBackground(chapterId);
+        }
+
+        if (background == null || mapBoxButton == null)
+        {
+            return;
+        }
+
+        // 선택 확정 후 로비의 Map Button 배경을 선택한 맵 이미지로 갱신합니다.
+        mapBoxButton.SetBackground(background);
+    }
+
+    private Sprite GetChapterBackground(string chapterId)
+    {
+        if (chapterManager == null || chapterManager.chapters == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < chapterManager.chapters.Count; i++)
+        {
+            HeatChapterManager.ChapterItem chapter = chapterManager.chapters[i];
+            if (chapter != null && chapter.chapterID == chapterId)
+            {
+                return chapter.background;
+            }
+        }
+
+        return null;
+    }
+
+    private static string NormalizeMapId(string chapterId)
+    {
+        if (string.IsNullOrWhiteSpace(chapterId))
+        {
+            return "local-test";
+        }
+
+        return chapterId.Trim().ToLowerInvariant().Replace(" ", "-");
+    }
+
+    private async Task UpdateHostedRoomMapAsync(string mapId)
+    {
+        if (activeBackendRoomId <= 0 || string.IsNullOrWhiteSpace(mapId))
+        {
+            return;
+        }
+
+        try
+        {
+            await GetRoomApiClient().SetRoomMapIdAsync(activeBackendRoomId, mapId);
+            await RefreshRoomsAsync();
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning($"방 맵 정보 갱신 실패: {exception.Message}");
+        }
+    }
+
+    private void SetMapPanelVisible(bool visible)
+    {
+        ResolveMapPanelReferences();
+
+        GameObject targetRoot = mapPanelRoot != null ? mapPanelRoot : chaptersPanelRoot;
+        if (targetRoot == null)
+        {
+            return;
+        }
+
+        // Chapters Panel의 부모 Map Panel에 PanelManager가 있으면 자식만 꺼도 런타임에 다시 켜질 수 있다.
+        targetRoot.SetActive(visible);
+    }
+
+    private static GameObject ResolveMapPanelRoot(GameObject chaptersPanel)
+    {
+        if (chaptersPanel == null || chaptersPanel.transform.parent == null)
+        {
+            return chaptersPanel;
+        }
+
+        Transform parent = chaptersPanel.transform.parent;
+        return parent.GetComponent<HeatPanelManager>() != null ? parent.gameObject : chaptersPanel;
+    }
+
+    private static GameObject FindSceneGameObjectByName(string objectName)
+    {
+        if (string.IsNullOrWhiteSpace(objectName))
+        {
+            return null;
+        }
+
+        Transform[] transforms = Resources.FindObjectsOfTypeAll<Transform>();
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            GameObject candidate = transforms[i].gameObject;
+            if (candidate.name == objectName && candidate.scene.IsValid())
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
     private void ApplyDefaultValues()
@@ -192,6 +681,7 @@ public class LobbyUIController : MonoBehaviour
 
             if (sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
             {
+                PublishCurrentMapSelectionIfHost();
                 ShowWaitingRoomAfterHostStarted();
                 await RegisterHostedRoomAsync();
             }
@@ -363,6 +853,11 @@ public class LobbyUIController : MonoBehaviour
 
     public void HandleReadyClicked()
     {
+        if (sessionManager != null && sessionManager.IsHost)
+        {
+            return;
+        }
+
         isReady = !isReady;
         if (sessionManager != null)
         {
@@ -379,9 +874,14 @@ public class LobbyUIController : MonoBehaviour
             return;
         }
 
-        sessionManager.StartGame();
+        if (!sessionManager.CanHostStartGame)
+        {
+            return;
+        }
 
-        if (activeBackendRoomId > 0 && sessionManager.IsHost)
+        bool didStartGame = sessionManager.StartGame();
+
+        if (didStartGame && activeBackendRoomId > 0 && sessionManager.IsHost)
         {
             try
             {
@@ -505,6 +1005,43 @@ public class LobbyUIController : MonoBehaviour
         }
     }
 
+    private void HandleMapSelectionChanged(string chapterId, string mapId, string sceneName)
+    {
+        selectedMapChapterId = string.IsNullOrWhiteSpace(chapterId) ? string.Empty : chapterId.Trim();
+        if (!string.IsNullOrWhiteSpace(sceneName))
+        {
+            selectedMapSceneName = sceneName.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(mapId))
+        {
+            defaultMapId = mapId.Trim();
+        }
+
+        MapSelection selection = FindMapSelection(chapterId, mapId);
+        string backgroundChapterId = selection != null && !string.IsNullOrWhiteSpace(selection.chapterId)
+            ? selection.chapterId
+            : chapterId;
+
+        // 호스트가 확정한 맵 정보를 받은 클라이언트도 같은 Map Button 배경을 적용합니다.
+        ApplyMapButtonBackground(selection, backgroundChapterId);
+    }
+
+    private void PublishCurrentMapSelectionIfHost()
+    {
+        if (sessionManager == null || !sessionManager.IsServer || string.IsNullOrWhiteSpace(defaultMapId))
+        {
+            return;
+        }
+
+        string sceneName = !string.IsNullOrWhiteSpace(selectedMapSceneName)
+            ? selectedMapSceneName
+            : sessionManager.CurrentGameSceneName;
+
+        // 호스트가 방 생성 전에 고른 맵도 이후 접속하는 클라이언트에게 전달되도록 서버 상태에 올립니다.
+        sessionManager.SetSelectedMap(selectedMapChapterId, defaultMapId, sceneName);
+    }
+
     private async Task SyncHostedRoomPlayerCountAsync(bool force)
     {
         if (isSyncingBackendPlayerCount || activeBackendRoomId <= 0 || !activeBackendRoomOwnedByHost || sessionManager == null || !sessionManager.IsServer)
@@ -582,17 +1119,14 @@ public class LobbyUIController : MonoBehaviour
     {
         bool isOnline = sessionManager != null && sessionManager.IsOnline;
         bool isBusy = sessionManager != null && sessionManager.IsBusy;
+        bool isHost = sessionManager != null && sessionManager.IsHost;
 
         if (leaveButton != null)
         {
             leaveButton.interactable = isOnline && !isBusy;
         }
 
-        if (readyButton != null)
-        {
-            readyButton.interactable = isOnline && !isBusy;
-            SetButtonLabel(readyButton, isReady ? "준비 완료" : "준비");
-        }
+        UpdateLobbyActionButtons(isOnline, isHost, isBusy);
 
         if (roomNameInputField != null)
         {
@@ -616,6 +1150,8 @@ public class LobbyUIController : MonoBehaviour
             roomCodeDisplayText.text = GetDisplayedRoomCode();
         }
 
+        UpdateMapButtonInteractable();
+
         if (roomEntryPanel != null)
         {
             // 방에 들어간 상태에서만 입장 패널을 표시합니다.
@@ -630,6 +1166,42 @@ public class LobbyUIController : MonoBehaviour
         }
 
         wasOnline = isOnline;
+    }
+
+    private void UpdateLobbyActionButtons(bool isOnline, bool isHost, bool isBusy)
+    {
+        ResolveLobbyActionButtons();
+
+        bool showReadyButton = isOnline && !isHost;
+        bool showStartButton = isOnline && isHost;
+        bool canStartGame = showStartButton && !isBusy && sessionManager != null && sessionManager.CanHostStartGame;
+
+        // 호스트는 Start만, 클라이언트는 Ready만 보이도록 로비 액션 버튼을 분리합니다.
+        SetLobbyActionButtonVisible(readyButtonRoot, showReadyButton);
+        SetLobbyActionButtonVisible(startButtonRoot, showStartButton);
+        SetLobbyActionButtonInteractable(readyButton, readyHeatButton, showReadyButton && !isBusy);
+        SetLobbyActionButtonInteractable(startButton, startHeatButton, canStartGame);
+    }
+
+    private static void SetLobbyActionButtonVisible(GameObject buttonRoot, bool visible)
+    {
+        if (buttonRoot != null && buttonRoot.activeSelf != visible)
+        {
+            buttonRoot.SetActive(visible);
+        }
+    }
+
+    private static void SetLobbyActionButtonInteractable(CanvasButton canvasButton, HeatButtonManager heatButton, bool interactable)
+    {
+        if (canvasButton != null)
+        {
+            canvasButton.interactable = interactable;
+        }
+
+        if (heatButton != null)
+        {
+            heatButton.Interactable(interactable);
+        }
     }
 
     private void ShowWaitingRoomAfterHostStarted()
@@ -762,6 +1334,7 @@ public class LobbyUIController : MonoBehaviour
         if (itemView != null)
         {
             itemView.Bind(room, () => HandleRoomJoinClicked(room));
+            BindRoomListPanelsToClose(itemView);
             return row;
         }
 
@@ -777,6 +1350,17 @@ public class LobbyUIController : MonoBehaviour
             texts[1].text = $"{room.currentPlayers} / {room.maxPlayers}  {GetRoomStatusText(room.status)}  {mapText}";
         }
 
+        bool canJoin = !isJoiningRoom && room.status == "open" && room.currentPlayers < room.maxPlayers;
+        HeatBoxButtonManager heatRowButton = row.GetComponent<HeatBoxButtonManager>();
+        if (heatRowButton != null)
+        {
+            // RoomContainer가 Heat BoxButton만 가진 경우에도 룸 입장 클릭을 연결합니다.
+            heatRowButton.onClick.RemoveAllListeners();
+            heatRowButton.onClick.AddListener(() => HandleRoomJoinClicked(room));
+            heatRowButton.Interactable(canJoin);
+            return row;
+        }
+
         CanvasButton rowButton = row.GetComponentInChildren<CanvasButton>(true);
         if (rowButton == null)
         {
@@ -787,9 +1371,44 @@ public class LobbyUIController : MonoBehaviour
 
         rowButton.onClick.RemoveAllListeners();
         rowButton.onClick.AddListener(() => HandleRoomJoinClicked(room));
-        rowButton.interactable = !isJoiningRoom && room.status == "open" && room.currentPlayers < room.maxPlayers;
+        rowButton.interactable = canJoin;
 
         return row;
+    }
+
+    private void BindRoomListPanelsToClose(RoomListItemView itemView)
+    {
+        if (itemView == null)
+        {
+            return;
+        }
+
+        if (HasRoomListPanelsToClose())
+        {
+            // 새 리스트 필드를 우선 사용해서 여러 Heat UI 패널을 순서대로 닫습니다.
+            itemView.BindPanelsToClose(roomListPanelsToCloseOnRoomClick);
+            return;
+        }
+
+        itemView.BindPanelToClose(roomListPanelToCloseOnRoomClick);
+    }
+
+    private bool HasRoomListPanelsToClose()
+    {
+        if (roomListPanelsToCloseOnRoomClick == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < roomListPanelsToCloseOnRoomClick.Count; i++)
+        {
+            if (roomListPanelsToCloseOnRoomClick[i] != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void SetButtonLabel(CanvasButton button, string text)

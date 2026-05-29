@@ -16,7 +16,7 @@ public class LobbySpawnPointGroup : MonoBehaviour
             return false;
         }
 
-        // Netcode clientId 순서대로 미리 배치한 대기 위치를 사용합니다.
+        // Netcode clientId 순서대로 미리 배치한 스폰 위치를 사용합니다.
         int index = (int)ownerClientId;
         if (wrapWhenFull)
         {
