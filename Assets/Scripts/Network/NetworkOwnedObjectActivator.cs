@@ -60,15 +60,26 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private Vector3 nameLabelOffset = new Vector3(0f, 2.2f, 0f);
     [SerializeField] private float nameLabelFontSize = 4f;
 
+    [Header("Ready Check Indicator")]
+    [SerializeField] private Sprite readyCheckSprite;
+    [SerializeField] private Color readyCheckColor = new Color(0.2f, 1f, 0.35f, 1f);
+    [SerializeField] private bool showReadyCheckOnlyInLobby = true;
+    [SerializeField] private Vector3 readyCheckOffset = new Vector3(0f, 2.75f, 0f);
+    [SerializeField] private Vector3 readyCheckScale = new Vector3(0.35f, 0.35f, 0.35f);
+    [SerializeField] private int readyCheckSortingOrder = 20;
+
     private readonly NetworkVariable<Vector3> syncedPosition =
         new NetworkVariable<Vector3>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<Quaternion> syncedRotation =
         new NetworkVariable<Quaternion>(Quaternion.identity, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<int> syncedCharacterIndex =
         new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<bool> syncedReadyState =
+        new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private CinemachineCamera boundCamera;
     private TextMeshPro nameLabel;
+    private SpriteRenderer readyCheckRenderer;
     private Coroutine spawnPresentationCoroutine;
     private Outline lobbyCharacterOutline;
     private Transform lobbyCharacterOutlineRoot;
@@ -94,9 +105,11 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         CacheReferences();
         ConfigureOwnershipAuthority();
         syncedCharacterIndex.OnValueChanged += HandleCharacterIndexChanged;
+        syncedReadyState.OnValueChanged += HandleReadyStateChanged;
         SceneManager.sceneLoaded += HandleSceneLoaded;
 
         UpdateNameLabel();
+        UpdateReadyCheckIndicator();
 
         if (IsServer)
         {
@@ -132,6 +145,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         syncedCharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
+        syncedReadyState.OnValueChanged -= HandleReadyStateChanged;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         ClearLocalCameraBinding();
         ClearLobbyCharacterOutline();
@@ -146,6 +160,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     {
         UpdateTransformSync();
         UpdateNameLabelFacing();
+        UpdateReadyCheckFacing();
     }
 
     private void ApplyOwnershipState(bool isOwner)
@@ -224,6 +239,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         ApplyOwnershipState(IsOwner);
         ApplyLobbyCharacterOutlineState();
         UpdateNameLabel();
+        UpdateReadyCheckIndicator();
 
         if (IsOwner)
         {
@@ -281,6 +297,11 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         ApplyCharacterIndex(newValue);
     }
 
+    private void HandleReadyStateChanged(bool previousValue, bool newValue)
+    {
+        UpdateReadyCheckIndicator();
+    }
+
     private void ApplyCharacterIndex(int characterIndex)
     {
         if (characterView != null)
@@ -316,6 +337,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     private void ApplyReadyStateOnServer(ulong clientId, bool isReady)
     {
+        syncedReadyState.Value = isReady;
+
         NetworkSessionManager sessionManager = FindFirstObjectByType<NetworkSessionManager>();
         if (sessionManager != null)
         {
@@ -869,6 +892,81 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         nameLabel.transform.rotation = sceneCamera.transform.rotation;
+    }
+
+    private void UpdateReadyCheckIndicator()
+    {
+        if (readyCheckSprite == null)
+        {
+            SetReadyCheckVisible(false);
+            return;
+        }
+
+        if (showReadyCheckOnlyInLobby && !IsInLobbyScene())
+        {
+            SetReadyCheckVisible(false);
+            return;
+        }
+
+        EnsureReadyCheckIndicator();
+        if (readyCheckRenderer == null)
+        {
+            return;
+        }
+
+        readyCheckRenderer.transform.localPosition = readyCheckOffset;
+        readyCheckRenderer.transform.localScale = readyCheckScale;
+        readyCheckRenderer.sprite = readyCheckSprite;
+        readyCheckRenderer.color = readyCheckColor;
+        readyCheckRenderer.sortingOrder = readyCheckSortingOrder;
+        SetReadyCheckVisible(syncedReadyState.Value);
+    }
+
+    private void EnsureReadyCheckIndicator()
+    {
+        if (readyCheckRenderer != null)
+        {
+            return;
+        }
+
+        Transform existing = transform.Find("Ready Check Indicator");
+        GameObject indicatorObject = existing != null ? existing.gameObject : new GameObject("Ready Check Indicator");
+        indicatorObject.transform.SetParent(transform, false);
+
+        readyCheckRenderer = indicatorObject.GetComponent<SpriteRenderer>();
+        if (readyCheckRenderer == null)
+        {
+            readyCheckRenderer = indicatorObject.AddComponent<SpriteRenderer>();
+        }
+
+        // 스프라이트만 할당하면 런타임에 머리 위 체크 표시가 자동으로 생성됩니다.
+        readyCheckRenderer.sprite = readyCheckSprite;
+        readyCheckRenderer.color = readyCheckColor;
+        readyCheckRenderer.sortingOrder = readyCheckSortingOrder;
+    }
+
+    private void UpdateReadyCheckFacing()
+    {
+        if (readyCheckRenderer == null || !readyCheckRenderer.gameObject.activeSelf)
+        {
+            return;
+        }
+
+        Camera sceneCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+        if (sceneCamera == null)
+        {
+            return;
+        }
+
+        readyCheckRenderer.transform.rotation = sceneCamera.transform.rotation;
+    }
+
+    private void SetReadyCheckVisible(bool visible)
+    {
+        if (readyCheckRenderer != null)
+        {
+            readyCheckRenderer.gameObject.SetActive(visible);
+        }
     }
 
     private void SetNameLabelVisible(bool visible)
