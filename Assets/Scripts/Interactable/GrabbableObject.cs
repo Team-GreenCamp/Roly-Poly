@@ -36,6 +36,10 @@ public class GrabbableObject : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         colliders = GetComponentsInChildren<Collider>(true);
+        
+        // 💡 상자 기믹 등에 의해 물리 상태가 강제로 변경되기 전에
+        // 게임 시작 첫 프레임(Awake)에 원래의 완전한 물리 원본 상태를 먼저 캐싱합니다.
+        StoreOriginalState();
     }
 
     private void Start()
@@ -74,11 +78,6 @@ public class GrabbableObject : MonoBehaviour
     public void AddInteractor(PlayerInteractor interactor)
     {
         if (interactors.Contains(interactor)) return;
-
-        if (interactors.Count == 0)
-        {
-            StoreOriginalState();
-        }
 
         interactors.Add(interactor);
 

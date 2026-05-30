@@ -16,6 +16,14 @@ public class DoorController : MonoBehaviour, IInteractable
     [Tooltip("체크하면 플레이어가 다가가서 직접 E키로 열고 닫을 수 있습니다.\n체크 해제하면 버튼이나 레버 같은 외부 스위치로만 열립니다.")]
     public bool canDirectInteract = false;
 
+    [Header("열쇠 잠금 설정")]
+    [Tooltip("체크하면 문을 열기 위해 특정 열쇠 오브젝트가 필요합니다.")]
+    public bool needsKey = false;
+    [Tooltip("열쇠로 인식할 오브젝트의 태그입니다.")]
+    public string keyTag = "Key";
+
+    private bool isLocked = false; // 현재 문이 잠겨있는지 여부
+
     [Header("자동 반복 타이머 (Auto Timing Trap)")]
     [Tooltip("체크하면 설정한 시간에 맞춰 자동으로 열리고 닫히기를 무한 반복합니다.")]
     public bool isAutoLoop = false;
@@ -49,11 +57,42 @@ public class DoorController : MonoBehaviour, IInteractable
         {
             StartCoroutine(AutoLoopRoutine());
         }
+
+        // 열쇠가 필요한 문이면 초기 상태를 잠금 상태로 설정합니다.
+        if (needsKey)
+        {
+            isLocked = true;
+        }
     }
 
     // ⭐ 플레이어가 문을 향해 E키를 눌렀을 때 실행되는 함수
     public void RequestInteract(GameObject interactor)
     {
+        // 🔑 열쇠가 필요한 문이고 아직 잠겨있는 상태라면
+        if (needsKey && isLocked)
+        {
+            PlayerInteractor playerInteractor = interactor.GetComponent<PlayerInteractor>();
+            if (playerInteractor != null)
+            {
+                GrabbableObject heldObj = playerInteractor.CurrentHeldGrabbable;
+                if (heldObj != null && heldObj.CompareTag(keyTag))
+                {
+                    Debug.Log($"🔑 [{gameObject.name}] {interactor.name}이(가) 열쇠({keyTag})를 사용하여 문을 열었습니다!");
+                    
+                    // 열쇠 소모
+                    playerInteractor.ConsumeHeldObject();
+                    isLocked = false;
+                    
+                    // 문 열기
+                    OpenDoor();
+                    return;
+                }
+            }
+
+            Debug.Log($"🔒 [{gameObject.name}] 문이 잠겨있습니다! 열쇠({keyTag})가 필요합니다.");
+            return;
+        }
+
         // 직접 열 수 없는 문이라면 거절
         if (!canDirectInteract)
         {

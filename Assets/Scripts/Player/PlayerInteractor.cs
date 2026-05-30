@@ -106,6 +106,20 @@ public class PlayerInteractor : MonoBehaviour
         // 이미 가벼운 무언가를 들고 있다면 E키로 내려놓기
         if (currentHeldGrabbable != null && !currentHeldGrabbable.isHeavy)
         {
+            // 💡 [개선] 만약 손에 물건을 든 상태에서 조준선에 상호작용 가능한 문(IInteractable)이 감지된다면,
+            // 물건을 즉시 내려놓기 전에 문과의 상호작용을 먼저 수행해 열쇠 사용을 시도합니다.
+            if (currentTargetInteractable != null)
+            {
+                currentTargetInteractable.RequestInteract(gameObject);
+                
+                // 만약 문이 열리면서 손에 쥐고 있던 열쇠가 안전하게 소모(파괴)되었다면 그대로 종료합니다.
+                if (currentHeldGrabbable == null)
+                {
+                    return;
+                }
+            }
+
+            // 조준선에 기믹이 없거나 열쇠가 사용되지 않았다면 원래대로 바닥에 내려놓습니다.
             DropHeldObject();
             return;
         }
@@ -129,26 +143,50 @@ public class PlayerInteractor : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * raycastHeightOffset;
         Ray ray = new Ray(origin, transform.forward);
 
-        // 반경 내의 모든 물체를 감지 (부모 오브젝트 안에 있는 것도 찾기 위함)
-        RaycastHit[] hits = Physics.SphereCastAll(ray, sphereCastRadius, interactRange, interactLayerMask);
+        // 반경 내의 모든 물체를 감지 (트리거 콜라이더 상태인 열쇠도 무조건 잡도록 QueryTriggerInteraction.Collide 명시)
+        RaycastHit[] hits = Physics.SphereCastAll(ray, sphereCastRadius, interactRange, interactLayerMask, QueryTriggerInteraction.Collide);
         
         // 가까운 순서대로 정렬
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
+        GrabbableObject foundGrabbable = null;
+        IInteractable foundInteractable = null;
+
         foreach (var hit in hits)
         {
-            // 부모에 묶인 경우를 대비해 GetComponentInParent 사용
-            currentTargetInteractable = hit.collider.GetComponentInParent<IInteractable>();
-            currentTargetGrabbable = hit.collider.GetComponentInParent<GrabbableObject>();
-
-            if (currentTargetInteractable != null || currentTargetGrabbable != null)
+            // 💡 상자 안에 담긴 열쇠를 조준할 때 상자 콜라이더가 가로막는 현상을 해결하기 위해
+            // 레이캐스트에 걸린 모든 물체 중에서 들 수 있는 물체(GrabbableObject)와 상호작용 물체(IInteractable)를 각각 먼저 수집합니다.
+            GrabbableObject grabbable = hit.collider.GetComponentInParent<GrabbableObject>();
+            
+            // 💥 [추가 핵심] 내가 이미 손(머리 위)에 들고 있는 물건은 본인의 조준 레이저를 가로막지 않도록 조준 검사 대상에서 제외합니다!
+            if (grabbable != null && grabbable == currentHeldGrabbable)
             {
-                return;
+                continue;
+            }
+
+            if (grabbable != null && foundGrabbable == null)
+            {
+                foundGrabbable = grabbable;
+            }
+
+            IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
+            if (interactable != null && foundInteractable == null)
+            {
+                foundInteractable = interactable;
             }
         }
 
-        currentTargetInteractable = null;
-        currentTargetGrabbable = null;
+        // ⭐ 들고 다닐 수 있는 물체(GrabbableObject)를 일반 상호작용 기믹(IInteractable)보다 최우선적으로 조준합니다!
+        if (foundGrabbable != null)
+        {
+            currentTargetGrabbable = foundGrabbable;
+            currentTargetInteractable = null;
+        }
+        else
+        {
+            currentTargetGrabbable = null;
+            currentTargetInteractable = foundInteractable;
+        }
     }
 
     private void HandleCharacterTilt()
@@ -194,8 +232,21 @@ public class PlayerInteractor : MonoBehaviour
     private bool TryPickUp(GrabbableObject grabbable)
     {
         Rigidbody target = grabbable.GetComponent<Rigidbody>();
-        if (target == null || target.mass > maxCarryMass) return false;
-        if (holdPoint == null) return false;
+        if (target == null)
+        {
+            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]에 Rigidbody 컴포넌트가 없어 집을 수 없습니다!");
+            return false;
+        }
+        if (target.mass > maxCarryMass)
+        {
+            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]의 무게({target.mass}kg)가 최대 들기 무게({maxCarryMass}kg)보다 무거워 집을 수 없습니다!");
+            return false;
+        }
+        if (holdPoint == null)
+        {
+            Debug.LogWarning($"⚠️ PlayerInteractor의 holdPoint가 지정되지 않아 물건을 집을 수 없습니다!");
+            return false;
+        }
 
         currentHeldGrabbable = grabbable;
         grabbable.AddInteractor(this);
@@ -205,8 +256,16 @@ public class PlayerInteractor : MonoBehaviour
     private bool TryDragObject(GrabbableObject grabbable)
     {
         Rigidbody target = grabbable.GetComponent<Rigidbody>();
-        if (target == null) return false;
-        if (dragPoint == null) return false;
+        if (target == null)
+        {
+            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]에 Rigidbody 컴포넌트가 없어 끌 수 없습니다!");
+            return false;
+        }
+        if (dragPoint == null)
+        {
+            Debug.LogWarning($"⚠️ PlayerInteractor의 dragPoint가 지정되지 않아 물건을 끌 수 없습니다!");
+            return false;
+        }
 
         currentHeldGrabbable = grabbable;
         grabbable.AddInteractor(this);
@@ -272,6 +331,19 @@ public class PlayerInteractor : MonoBehaviour
     private void ClearHeldObjectState()
     {
         currentHeldGrabbable = null;
+    }
+
+    public GrabbableObject CurrentHeldGrabbable => currentHeldGrabbable;
+
+    // 손에 든 물체를 강제로 소모(파괴)시키는 메서드
+    public void ConsumeHeldObject()
+    {
+        if (currentHeldGrabbable != null)
+        {
+            GrabbableObject objectToDestroy = currentHeldGrabbable;
+            ForceDropHeldObject();
+            Destroy(objectToDestroy.gameObject);
+        }
     }
 
     private void OnDrawGizmos()
