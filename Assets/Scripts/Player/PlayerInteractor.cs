@@ -37,10 +37,12 @@ public class PlayerInteractor : MonoBehaviour
 
     public CapsuleCollider PlayerCollider { get; private set; }
     private PlayerController playerController;
+    private PlayerCharacterView characterView; // 💡 실시간 활성 캐릭터 스킨 추적용 뷰 레퍼런스
 
     private void Awake()
     {
         playerController = GetComponent<PlayerController>();
+        characterView = GetComponent<PlayerCharacterView>(); // 💡 뷰 컴포넌트 캐싱
         
         PlayerCollider = GetComponentInParent<CapsuleCollider>();
         if (PlayerCollider == null)
@@ -191,6 +193,16 @@ public class PlayerInteractor : MonoBehaviour
 
     private void HandleCharacterTilt()
     {
+        // 💡 [스킨 자동 연동] 활성화된 캐릭터 비주얼 스킨 오브젝트를 자동으로 characterVisual에 매칭
+        if (characterView != null)
+        {
+            Transform activeRoot = characterView.GetActiveCharacterRoot();
+            if (activeRoot != null && characterVisual != activeRoot)
+            {
+                characterVisual = activeRoot;
+            }
+        }
+
         if (characterVisual == null) return;
 
         if (currentHeldGrabbable != null && currentHeldGrabbable.isHeavy)
@@ -201,15 +213,47 @@ public class PlayerInteractor : MonoBehaviour
 
             if (directionToObject.sqrMagnitude > 0.001f)
             {
+                Vector3 dirToObjectNorm = directionToObject.normalized;
+
                 // 몸통(물리 바디) 자체가 물체를 향하도록 방향 덮어쓰기
                 if (playerController != null)
                 {
-                    playerController.OverrideFacingDirection = directionToObject.normalized;
+                    playerController.OverrideFacingDirection = dirToObjectNorm;
+                }
+
+                // 💡 [물리 끄기 연출 극대화] 이동 및 속도에 기반한 동적 상체 굽히기(기울기) 계산
+                float currentTilt = tiltAngle; // 기본 인스펙터 tiltAngle (예: 15도)
+
+                if (playerController != null)
+                {
+                    Rigidbody playerRb = GetComponent<Rigidbody>();
+                    Vector3 velocity = playerRb != null ? playerRb.linearVelocity : Vector3.zero;
+                    Vector3 planarVelocity = Vector3.ProjectOnPlane(velocity, Vector3.up);
+
+                    // 플레이어가 움직이고 있을 때
+                    if (planarVelocity.sqrMagnitude > 0.01f)
+                    {
+                        // 물체 방향 벡터와 내 실제 이동 방향 벡터의 내적(Dot Product) 계산
+                        // 내적이 음수(-1)에 가까울수록 물체와 반대 방향(즉, 물체를 힘껏 뒤로 끄는 중)
+                        float dot = Vector3.Dot(dirToObjectNorm, planarVelocity.normalized);
+                        
+                        if (dot < 0f) // 물체 반대 방향으로 멀어지는 중 (당기기)
+                        {
+                            // 당길 때 상체가 물체 쪽(앞)으로 더 깊숙하게 굽혀지며 낑낑대는 텐션 연출 (최대 tiltAngle * 2.2f 배율, 약 33도 이상)
+                            float tensionIntensity = Mathf.Abs(dot) * Mathf.Clamp01(planarVelocity.magnitude / 3f);
+                            currentTilt = Mathf.Lerp(tiltAngle, tiltAngle * 2.2f, tensionIntensity);
+                        }
+                        else
+                        {
+                            // 물체 쪽으로 다가갈 때는 물체를 미는 상태거나 텐션이 풀린 상태이므로 가볍게 정렬만 유지
+                            currentTilt = Mathf.Lerp(tiltAngle, tiltAngle * 0.5f, dot);
+                        }
+                    }
                 }
 
                 // 비주얼 오브젝트(모델링) 기울기 연출
-                Quaternion lookRot = Quaternion.LookRotation(directionToObject);
-                Quaternion targetWorldRotation = lookRot * Quaternion.Euler(tiltAngle, 0, 0);
+                Quaternion lookRot = Quaternion.LookRotation(dirToObjectNorm);
+                Quaternion targetWorldRotation = lookRot * Quaternion.Euler(currentTilt, 0, 0);
                 characterVisual.rotation = Quaternion.Slerp(characterVisual.rotation, targetWorldRotation, tiltSpeed * Time.deltaTime);
             }
         }

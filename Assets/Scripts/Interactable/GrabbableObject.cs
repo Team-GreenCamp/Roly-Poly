@@ -28,6 +28,10 @@ public class GrabbableObject : MonoBehaviour
     private bool originalIsKinematic;
     private RigidbodyInterpolation originalInterpolation;
     private CollisionDetectionMode originalCollisionMode;
+    private float originalMass;
+    private float originalLinearDamping;
+    private float originalAngularDamping;
+    private RigidbodyConstraints originalConstraints;
     
     private Vector3 localMeshOffset = Vector3.zero;
     private float meshExtentsY = 0f;
@@ -87,6 +91,12 @@ public class GrabbableObject : MonoBehaviour
             rb.isKinematic = false;
             rb.useGravity = true;
 
+            // 💡 무거운 물체 끄기 시 질감 극대화를 위한 물리 튜닝
+            rb.mass = 40f; // 끄기 알맞은 묵직한 질량 설정 (플레이어가 튕기지 않는 최적선)
+            rb.linearDamping = 8f; // 질질 끌리는 뻑뻑한 선형 저항
+            rb.angularDamping = 10f; // 상자가 팽이처럼 돌지 않도록 회전 저항 증가
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ; // 수평 회전(Y)만 허용하고 뒹굴기 차단
+
             Transform dragPoint = interactor.dragPoint;
             if (dragPoint != null)
             {
@@ -107,13 +117,13 @@ public class GrabbableObject : MonoBehaviour
                 // 부모 피벗이 아닌 실제 자식 모델(Collider)의 중심을 스프링의 끝단으로 설정하여 오프셋 버그 완벽 해결
                 joint.anchor = localMeshOffset;
                 
-                // 물체가 플레이어 몸을 파고들거나 겹치는 현상을 방지하기 위해 최소 유지 거리 설정
-                joint.minDistance = 0.2f; // 플레이어 몸에서 최소 0.2m 거리를 유지하도록 스프링이 밀어냄
-                joint.maxDistance = 0.25f; // 최대 0.25m까지만 멀어짐
+                // 💡 [수정] 캐릭터 뒤에 찰지게 밀착되어 끌려오도록 거리 소폭 축소 조율 (겹치지 않는 최적선)
+                joint.minDistance = 0.55f; // 플레이어 중심에서 최소 0.55m 거리 유지
+                joint.maxDistance = 0.7f; // 최대 0.7m 범위 내에서 끌려옴
                 
-                // 스프링 탄성을 조절하여 너무 팍! 하고 순간이동하듯 날아오는 현상을 부드럽게 완화
-                joint.spring = 150f;
-                joint.damper = 15f;
+                // 💡 [수정] 강해진 질량과 지면 저항을 끌어당길 수 있도록 스프링 장력과 댐퍼 대폭 상향
+                joint.spring = 1200f;
+                joint.damper = 50f;
 
                 dragJoints[interactor] = joint;
             }
@@ -231,6 +241,10 @@ public class GrabbableObject : MonoBehaviour
         originalIsKinematic = rb.isKinematic;
         originalInterpolation = rb.interpolation;
         originalCollisionMode = rb.collisionDetectionMode;
+        originalMass = rb.mass;
+        originalLinearDamping = rb.linearDamping;
+        originalAngularDamping = rb.angularDamping;
+        originalConstraints = rb.constraints;
     }
 
     private void RestoreOriginalState()
@@ -239,6 +253,10 @@ public class GrabbableObject : MonoBehaviour
         rb.isKinematic = originalIsKinematic;
         rb.interpolation = originalInterpolation;
         rb.collisionDetectionMode = originalCollisionMode;
+        rb.mass = originalMass;
+        rb.linearDamping = originalLinearDamping;
+        rb.angularDamping = originalAngularDamping;
+        rb.constraints = originalConstraints;
     }
 
     private void IgnoreCollisionWith(PlayerInteractor interactor, bool ignore)
