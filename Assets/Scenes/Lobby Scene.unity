@@ -24228,9 +24228,14 @@ MonoBehaviour:
   chaptersPanelObjectName: Chapters Panel
   hideChaptersPanelOnStart: 1
   hideChaptersPanelAfterConfirm: 1
+  defaultMapChapterId: Chapter 1
   mapSelections:
   - chapterId: Chapter 1
     mapId: chapter-1
+    sceneName: Stage 1
+    buttonBackground: {fileID: 21300000, guid: b40193ac6ad554f14a52eee5d7ab0e6f, type: 3}
+  - chapterId: Chapter 2
+    mapId: chapter-2
     sceneName: City Stage
     buttonBackground: {fileID: 21300000, guid: 744eebb3e201e4423b3e27bfd464693c, type: 3}
   loadingRoot: {fileID: 1894725635}
@@ -24323,13 +24328,13 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 711759220}
   - {fileID: 434066333}
   - {fileID: 816226614}
   - {fileID: 632416932}
   - {fileID: 1024413140}
   - {fileID: 1894725636}
   - {fileID: 2139455795}
-  - {fileID: 711759220}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -68899,8 +68904,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chapters:
   - chapterID: Chapter 1
-    title: City
-    background: {fileID: 21300000, guid: 744eebb3e201e4423b3e27bfd464693c, type: 3}
+    title: Playground
+    background: {fileID: 21300000, guid: b40193ac6ad554f14a52eee5d7ab0e6f, type: 3}
     description: Chapter 1
     defaultState: 1
     titleKey: Chapter1Title
@@ -68939,62 +68944,42 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - chapterID: Chapter 2
-    title: Chapter 2
-    background: {fileID: 21300000, guid: f39e36f21f390244588363253c79a3ff, type: 3}
-    description: This is a description field. You can say something about the chapter
-      here. This is a multi-line field and is automatically sized depending on its
-      content. You can also use any TMP-supported rich text. You can use the 'Chapter
-      Manager' component to make any changes to the chapter panel. Don't worry, it's
-      really easy to use!
-    defaultState: 0
+    title: City
+    background: {fileID: 21300000, guid: 744eebb3e201e4423b3e27bfd464693c, type: 3}
+    description: Chapter 2
+    defaultState: 1
     titleKey: Chapter2Title
     descriptionKey: Chapter2Description
     onContinue:
       m_PersistentCalls:
-        m_Calls: []
+        m_Calls:
+        - m_Target: {fileID: 610003329}
+          m_TargetAssemblyTypeName: LobbyUIController, Assembly-CSharp
+          m_MethodName: ConfirmSelectedMap
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
     onPlay:
       m_PersistentCalls:
-        m_Calls: []
-    onReplay:
-      m_PersistentCalls:
-        m_Calls: []
-  - chapterID: Chapter 3
-    title: Chapter 3
-    background: {fileID: 21300000, guid: eccb35509692331468238aa3fee9b6fe, type: 3}
-    description: This is a description field. You can say something about the chapter
-      here. This is a multi-line field and is automatically sized depending on its
-      content. You can also use any TMP-supported rich text. You can use the 'Chapter
-      Manager' component to make any changes to the chapter panel. Don't worry, it's
-      really easy to use!
-    defaultState: 0
-    titleKey: Chapter3Title
-    descriptionKey: Chapter3Description
-    onContinue:
-      m_PersistentCalls:
-        m_Calls: []
-    onPlay:
-      m_PersistentCalls:
-        m_Calls: []
-    onReplay:
-      m_PersistentCalls:
-        m_Calls: []
-  - chapterID: Chapter 4
-    title: Chapter 4
-    background: {fileID: 21300000, guid: 93c7a66a2c6e2864c800bef5427bd672, type: 3}
-    description: This is a description field. You can say something about the chapter
-      here. This is a multi-line field and is automatically sized depending on its
-      content. You can also use any TMP-supported rich text. You can use the 'Chapter
-      Manager' component to make any changes to the chapter panel. Don't worry, it's
-      really easy to use!
-    defaultState: 0
-    titleKey: Chapter4Title
-    descriptionKey: Chapter4Description
-    onContinue:
-      m_PersistentCalls:
-        m_Calls: []
-    onPlay:
-      m_PersistentCalls:
-        m_Calls: []
+        m_Calls:
+        - m_Target: {fileID: 610003329}
+          m_TargetAssemblyTypeName: LobbyUIController, Assembly-CSharp
+          m_MethodName: ConfirmSelectedMap
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
     onReplay:
       m_PersistentCalls:
         m_Calls: []
@@ -79704,6 +79689,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Map Button
       objectReference: {fileID: 0}
+    - target: {fileID: 2305471245500124126, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2305471245500124127, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -79796,6 +79785,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: d21feae6b0dbe4b0a9bde70203bb5fe9, type: 3}
+    - target: {fileID: 2305471247338309760, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: m_PreserveAspect
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2305471247338309766, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1

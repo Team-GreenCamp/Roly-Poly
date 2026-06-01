@@ -29,6 +29,7 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private string chaptersPanelObjectName = "Chapters Panel";
     [SerializeField] private bool hideChaptersPanelOnStart = true;
     [SerializeField] private bool hideChaptersPanelAfterConfirm = true;
+    [SerializeField] private string defaultMapChapterId = "Chapter 1";
     [SerializeField] private List<MapSelection> mapSelections = new List<MapSelection>();
 
     [Header("Loading UI")]
@@ -104,6 +105,7 @@ public class LobbyUIController : MonoBehaviour
         ApplyDefaultValues();
         ResolveLobbyActionButtons();
         ResolveMapPanelReferences();
+        EnsureDefaultMapSelection();
         HideChaptersPanelForLobbyStart();
         roomApiClient = new RoomApiClient(backendBaseUrl);
     }
@@ -495,6 +497,35 @@ public class LobbyUIController : MonoBehaviour
         Debug.Log($"맵 선택 완료: chapter={chapterId}, mapId={defaultMapId}, scene={(sessionManager != null ? sessionManager.CurrentGameSceneName : "-")}");
     }
 
+    private void EnsureDefaultMapSelection()
+    {
+        if (!string.IsNullOrWhiteSpace(selectedMapChapterId) || string.IsNullOrWhiteSpace(defaultMapChapterId))
+        {
+            return;
+        }
+
+        string chapterId = defaultMapChapterId.Trim();
+        MapSelection selection = FindMapSelection(chapterId);
+        string selectedMapId = selection != null && !string.IsNullOrWhiteSpace(selection.mapId)
+            ? selection.mapId.Trim()
+            : NormalizeMapId(chapterId);
+
+        defaultMapId = selectedMapId;
+        selectedMapChapterId = chapterId;
+
+        if (selection != null && !string.IsNullOrWhiteSpace(selection.sceneName))
+        {
+            selectedMapSceneName = selection.sceneName.Trim();
+            if (sessionManager != null && !sessionManager.IsOnline)
+            {
+                sessionManager.SetGameSceneName(selectedMapSceneName);
+            }
+        }
+
+        // 방 생성 전에 사용자가 맵을 고르지 않아도 Chapter 1을 기본 맵으로 사용합니다.
+        ApplyMapButtonBackground(selection, chapterId);
+    }
+
     private MapSelection FindMapSelection(string chapterId)
     {
         return FindMapSelection(chapterId, null);
@@ -666,6 +697,7 @@ public class LobbyUIController : MonoBehaviour
             return;
         }
 
+        EnsureDefaultMapSelection();
         ShowLoading("방을 만드는 중입니다...");
 
         try
@@ -936,6 +968,8 @@ public class LobbyUIController : MonoBehaviour
 
     private async Task RegisterHostedRoomAsync()
     {
+        EnsureDefaultMapSelection();
+
         try
         {
             // 방 목록에서 선택 입장할 수 있도록 현재 접속 정보를 백엔드에 저장합니다.
