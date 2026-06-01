@@ -20,6 +20,8 @@ GameObject:
   - component: {fileID: 4253722849973858222}
   - component: {fileID: 7363093746037789180}
   - component: {fileID: 4081297831180302518}
+  - component: {fileID: 5112920333155259829}
+  - component: {fileID: 2462443946215769529}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -60,7 +62,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1374358220
+  GlobalObjectIdHash: 498835207
   InScenePlacedSourceGlobalObjectIdHash: 498835207
   DeferredDespawnTick: 0
   Ownership: 1
@@ -399,6 +401,37 @@ MonoBehaviour:
   tiltSpeed: 10
   interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   grabAction: {fileID: -8626289477208822049, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+--- !u!114 &5112920333155259829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d38e467973c204b4f8d3c4a7fa1e1b21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerClimber
+  interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  moveAction: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  jumpAction: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  climbMoveSpeed: 2
+  ledgeTag: Ledge
+  monkeyBarTag: MonkeyBar
+--- !u!114 &2462443946215769529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dccc07b868861646b050c98e99f5690, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMount
+  isMounted: 0
 --- !u!1 &2790217993094878390
 GameObject:
   m_ObjectHideFlags: 0
