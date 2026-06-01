@@ -29918,6 +29918,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 1681651414697798, guid: e082979a473bb914ab8af10a5d754993, type: 3}
+      propertyPath: m_TagString
+      value: Box
+      objectReference: {fileID: 0}
     - target: {fileID: 4315301396323988, guid: e082979a473bb914ab8af10a5d754993, type: 3}
       propertyPath: m_RootOrder
       value: 376
@@ -45336,6 +45340,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 1906384758145082, guid: d19c36dc5f97d444fa54380cf09bd828, type: 3}
+      propertyPath: m_TagString
+      value: Box
+      objectReference: {fileID: 0}
     - target: {fileID: 4625151964636756, guid: d19c36dc5f97d444fa54380cf09bd828, type: 3}
       propertyPath: m_RootOrder
       value: 5
@@ -47255,7 +47263,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd392e625e8282b4a97ca7ea7489573b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FallingPlatform
-  fallDelay: 1
+  fallDelay: 2
   respawnDelay: 3
 --- !u!4 &1568356701 stripped
 Transform:
@@ -55850,7 +55858,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd392e625e8282b4a97ca7ea7489573b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FallingPlatform
-  fallDelay: 1
+  fallDelay: 2
   respawnDelay: 3
 --- !u!1001 &1898297131
 PrefabInstance:
