@@ -8,6 +8,7 @@ TagManager:
   - Door
   - Ledge
   - MonkeyBar
+  - Key
   layers:
   - Default
   - TransparentFX
@@ -18,7 +19,7 @@ TagManager:
   - Ground
   - Object
   - Climbable
-  - 
+  - Vehicle
   - 
   - 
   - 
