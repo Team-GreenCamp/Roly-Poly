@@ -104,6 +104,14 @@ MonoBehaviour:
   landingSpeedPreserveDuration: 0.18
   landingSpeedPreserveRatio: 0.9
   landingTiltAngularDamping: 18
+  useStepAssist: 1
+  maxStepHeight: 0.35
+  stepCheckDistance: 0.35
+  stepLiftSpeed: 3.5
+  stepProbeRadius: 0.08
+  stepAssistLayers:
+    serializedVersion: 2
+    m_Bits: 0
   centerOfMassOffset: {x: 0, y: -0.35, z: 0}
   uprightTorque: 90
   uprightDamping: 10
@@ -387,15 +395,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d024126ed8ba134a922a5f2b9010132, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
-  interactRange: 3
+  interactRange: 2
   sphereCastRadius: 1.5
   interactLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 896
   raycastHeightOffset: 1
+  useInteractableOutline: 1
+  interactableOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+  interactableOutlineWidth: 15
+  interactableOutlineMode: 1
   holdPoint: {fileID: 2081467351840265412}
   dragPoint: {fileID: 2081467351840265412}
   maxCarryMass: 20
+  throwAction: {fileID: 9102826639700440424, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  throwForwardSpeed: 9
+  throwUpwardSpeed: 2.5
+  heavyThrowSpeedMultiplier: 0.45
+  throwSpinSpeed: 6
   characterVisual: {fileID: 0}
   tiltAngle: 15
   tiltSpeed: 10

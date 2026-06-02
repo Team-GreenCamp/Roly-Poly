@@ -14,11 +14,18 @@ public class GrabbableObject : MonoBehaviour
     [Tooltip("1명이 추가될 때마다 증가하는 속도 배율 보너스")]
     public float multiPlayerSpeedBonus = 0.4f;
 
+    [Header("잡기 안정화 설정")]
+    [SerializeField] private float heavySingleFollowAcceleration = 12f;
+    [SerializeField] private float heavyMultiFollowAccelerationBonus = 8f;
+    [SerializeField] private float heavyDragDamping = 5f;
+    [SerializeField] private float heavyAngularDamping = 8f;
+    [SerializeField] private float heavyMaxFollowAcceleration = 40f;
+    [SerializeField] private float heldFollowMaxDistance = 4.5f;
+
     private Rigidbody rb;
     private Collider[] colliders;
 
     private List<PlayerInteractor> interactors = new List<PlayerInteractor>();
-    private Dictionary<PlayerInteractor, SpringJoint> dragJoints = new Dictionary<PlayerInteractor, SpringJoint>();
 
     public bool IsBeingHeld => interactors.Count > 0;
     public int InteractorCount => interactors.Count;
@@ -83,43 +90,16 @@ public class GrabbableObject : MonoBehaviour
 
         if (isHeavy)
         {
-            // 무거운 상자: 같이 끌기 (스프링 조인트 다중 연결)
+            // 무거운 상자: 여러 조인트 대신 잡은 플레이어들의 평균 지점을 향해 무겁게 끌립니다.
             rb.isKinematic = false;
             rb.useGravity = true;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
-            Transform dragPoint = interactor.dragPoint;
-            if (dragPoint != null)
+            if (interactors.Count == 1)
             {
-                Rigidbody dragRb = dragPoint.GetComponent<Rigidbody>();
-                if (dragRb == null)
-                {
-                    dragRb = dragPoint.gameObject.AddComponent<Rigidbody>();
-                    dragRb.isKinematic = true;
-                }
-
-                SpringJoint joint = gameObject.AddComponent<SpringJoint>();
-                joint.connectedBody = dragRb;
-                
-                // 다시 false로 변경하여 플레이어의 dragPoint(머리/몸) 쪽으로 착 달라붙게 합니다.
-                joint.autoConfigureConnectedAnchor = false; 
-                joint.connectedAnchor = Vector3.zero; 
-                
-                // 부모 피벗이 아닌 실제 자식 모델(Collider)의 중심을 스프링의 끝단으로 설정하여 오프셋 버그 완벽 해결
-                joint.anchor = localMeshOffset;
-                
-                // 물체가 플레이어 몸을 파고들거나 겹치는 현상을 방지하기 위해 최소 유지 거리 설정
-                joint.minDistance = 0.2f; // 플레이어 몸에서 최소 0.2m 거리를 유지하도록 스프링이 밀어냄
-                joint.maxDistance = 0.25f; // 최대 0.25m까지만 멀어짐
-                
-                // 스프링 탄성을 조절하여 너무 팍! 하고 순간이동하듯 날아오는 현상을 부드럽게 완화
-                joint.spring = 150f;
-                joint.damper = 15f;
-
-                dragJoints[interactor] = joint;
+                rb.angularVelocity = Vector3.zero;
             }
-
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
             Debug.Log($"📦 무거운 상자를 플레이어가 잡았습니다. (현재 {interactors.Count}명)");
         }
         else
@@ -127,7 +107,7 @@ public class GrabbableObject : MonoBehaviour
             // 가벼운 상자: 같이 들기 (머리 위)
             rb.isKinematic = true;
             rb.useGravity = false;
-            rb.interpolation = RigidbodyInterpolation.None;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
             Debug.Log($"📦 가벼운 상자를 플레이어가 들었습니다. (현재 {interactors.Count}명)");
         }
@@ -141,12 +121,6 @@ public class GrabbableObject : MonoBehaviour
         if (!interactors.Contains(interactor)) return;
 
         interactors.Remove(interactor);
-
-        if (isHeavy && dragJoints.TryGetValue(interactor, out SpringJoint joint))
-        {
-            if (joint != null) Destroy(joint);
-            dragJoints.Remove(interactor);
-        }
 
         IgnoreCollisionWith(interactor, false);
 
@@ -180,7 +154,7 @@ public class GrabbableObject : MonoBehaviour
         if (pc != null) pc.ResetCarrySpeedMultiplier();
     }
 
-    private void LateUpdate()
+    private void FixedUpdate()
     {
         // 1. 플레이어가 너무 멀어지면 강제로 놓도록 거리 제한 추가 (버그 방지)
         for (int i = interactors.Count - 1; i >= 0; i--)
@@ -189,7 +163,7 @@ public class GrabbableObject : MonoBehaviour
             if (interactor != null)
             {
                 float dist = Vector3.Distance(transform.position, interactor.transform.position);
-                if (dist > 4.5f) // 물체와 플레이어가 4.5m 이상 멀어지면 끈이 끊어지며 놓음
+                if (dist > Mathf.Max(0.1f, heldFollowMaxDistance)) // 물체와 플레이어가 일정 거리 이상 멀어지면 끈이 끊어지며 놓음
                 {
                     interactor.SendMessage("ForceDropHeldObject", SendMessageOptions.DontRequireReceiver);
                     continue;
@@ -197,32 +171,100 @@ public class GrabbableObject : MonoBehaviour
             }
         }
 
-        // 가벼운 물체: 스케일 버그를 피하기 위해 부모자식 관계를 맺지 않고 매 프레임 강제로 위치 동기화
-        if (isHeavy || interactors.Count == 0) return;
+        if (interactors.Count == 0) return;
 
-        Vector3 center = Vector3.zero;
-        Vector3 forward = Vector3.zero;
-
-        foreach (var interactor in interactors)
+        if (isHeavy)
         {
-            center += interactor.holdPoint.position;
-            forward += interactor.holdPoint.forward;
+            UpdateHeavyDragMotion();
+            return;
         }
 
-        center /= interactors.Count;
+        UpdateLightHoldMotion();
+    }
+
+    private void UpdateHeavyDragMotion()
+    {
+        if (!TryGetAveragePoint(useDragPoint: true, out Vector3 targetPoint, out _, out int validInteractorCount))
+        {
+            return;
+        }
+
+        targetPoint.y = rb.worldCenterOfMass.y;
+        Vector3 toTarget = targetPoint - rb.worldCenterOfMass;
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        float followAcceleration = heavySingleFollowAcceleration + ((validInteractorCount - 1) * heavyMultiFollowAccelerationBonus);
+        Vector3 desiredAcceleration = (toTarget * Mathf.Max(0f, followAcceleration)) - (planarVelocity * Mathf.Max(0f, heavyDragDamping));
+        float maxFollowAcceleration = Mathf.Max(0f, heavyMaxFollowAcceleration);
+
+        if (maxFollowAcceleration <= 0f)
+        {
+            desiredAcceleration = Vector3.zero;
+        }
+        else if (desiredAcceleration.magnitude > maxFollowAcceleration)
+        {
+            desiredAcceleration = desiredAcceleration.normalized * maxFollowAcceleration;
+        }
+
+        // 혼자 잡으면 천천히 질질 끌리고, 여러 명이 잡으면 평균 지점으로 더 안정적으로 따라오게 합니다.
+        rb.AddForce(desiredAcceleration, ForceMode.Acceleration);
+        rb.AddTorque(-rb.angularVelocity * Mathf.Max(0f, heavyAngularDamping), ForceMode.Acceleration);
+    }
+
+    private void UpdateLightHoldMotion()
+    {
+        if (!TryGetAveragePoint(useDragPoint: false, out Vector3 center, out Vector3 forward, out _))
+        {
+            return;
+        }
+
         if (forward.sqrMagnitude > 0.001f) forward.Normalize();
         else forward = transform.forward;
 
         // 1. 회전을 먼저 적용
-        transform.rotation = Quaternion.LookRotation(forward);
+        Quaternion targetRotation = Quaternion.LookRotation(forward);
+        rb.MoveRotation(targetRotation);
         
         // 2. 부모 피벗이 아니라 실제 모델(자식 콜라이더)이 플레이어의 머리(center)에 오도록 역산하여 위치 적용
-        Vector3 worldMeshOffset = transform.TransformPoint(localMeshOffset) - transform.position;
+        Vector3 scaledMeshOffset = Vector3.Scale(localMeshOffset, transform.lossyScale);
+        Vector3 worldMeshOffset = targetRotation * scaledMeshOffset;
         
         // 3. 상자가 플레이어 머리를 파고들지 않도록, 콜라이더의 절반 높이(meshExtentsY)만큼 강제로 위로 띄워줍니다.
         Vector3 verticalCorrection = Vector3.up * meshExtentsY;
         
-        transform.position = center - worldMeshOffset + verticalCorrection;
+        rb.MovePosition(center - worldMeshOffset + verticalCorrection);
+    }
+
+    private bool TryGetAveragePoint(bool useDragPoint, out Vector3 center, out Vector3 forward, out int validInteractorCount)
+    {
+        center = Vector3.zero;
+        forward = Vector3.zero;
+        validInteractorCount = 0;
+
+        foreach (var interactor in interactors)
+        {
+            if (interactor == null)
+            {
+                continue;
+            }
+
+            Transform followPoint = useDragPoint ? interactor.dragPoint : interactor.holdPoint;
+            if (followPoint == null)
+            {
+                continue;
+            }
+
+            center += followPoint.position;
+            forward += followPoint.forward;
+            validInteractorCount++;
+        }
+
+        if (validInteractorCount == 0)
+        {
+            return false;
+        }
+
+        center /= validInteractorCount;
+        return true;
     }
 
     private void StoreOriginalState()

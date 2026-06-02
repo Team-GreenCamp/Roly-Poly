@@ -43,6 +43,7 @@ public partial class PlayerController
         jumpQueued = false;
         landingSpeedPreserveTimer = 0f;
         currentHorizontalVelocity = Vector3.zero;
+        currentMoveDirection = Vector3.zero;
     }
 
     private void StopGameplayMotion()
@@ -113,6 +114,7 @@ public partial class PlayerController
     private void UpdateMovement()
     {
         Vector3 moveDirection = GetMoveDirection(moveInput);
+        currentMoveDirection = moveDirection;
         float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);
         float targetSpeed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude * currentCarrySpeedMultiplier;
         float acceleration = isGrounded ? movementAcceleration : airAcceleration;

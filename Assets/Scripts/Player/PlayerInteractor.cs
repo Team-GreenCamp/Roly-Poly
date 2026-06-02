@@ -14,6 +14,12 @@ public class PlayerInteractor : MonoBehaviour
     [Tooltip("상호작용 레이저가 시작될 높이 오프셋입니다.")]
     public float raycastHeightOffset = 1.0f;
 
+    [Header("상호작용 하이라이트 설정")]
+    [SerializeField] private bool useInteractableOutline = true;
+    [SerializeField] private Color interactableOutlineColor = new Color(1f, 0.85f, 0.2f, 1f);
+    [SerializeField] private float interactableOutlineWidth = 4f;
+    [SerializeField] private Outline.Mode interactableOutlineMode = Outline.Mode.OutlineVisible;
+
     [Header("운반(Hold) 설정")]
     [Tooltip("가벼운 물체를 들 때 위치할 빈 오브젝트를 연결하세요.")]
     public Transform holdPoint; 
@@ -21,6 +27,13 @@ public class PlayerInteractor : MonoBehaviour
     public Transform dragPoint; 
     public float maxCarryMass = 20f;
     private float holdTimer = 0f;
+
+    [Header("던지기 설정")]
+    public InputActionReference throwAction;
+    [SerializeField] private float throwForwardSpeed = 9f;
+    [SerializeField] private float throwUpwardSpeed = 2.5f;
+    [SerializeField] private float heavyThrowSpeedMultiplier = 0.45f;
+    [SerializeField] private float throwSpinSpeed = 6f;
 
     [Header("오뚜기 연출 설정")]
     [Tooltip("기울어질 캐릭터의 모델링(Visual) 오브젝트를 연결하세요.")]
@@ -34,6 +47,7 @@ public class PlayerInteractor : MonoBehaviour
     private IInteractable currentTargetInteractable;
     private GrabbableObject currentTargetGrabbable;
     private GrabbableObject currentHeldGrabbable;
+    private InteractableOutlineHighlight currentOutlineHighlight;
 
     public CapsuleCollider PlayerCollider { get; private set; }
     private PlayerController playerController;
@@ -57,6 +71,11 @@ public class PlayerInteractor : MonoBehaviour
             interactAction.action.started += OnInteractStarted;
         }
         if (grabAction != null) grabAction.action.Enable();
+        if (throwAction != null)
+        {
+            throwAction.action.Enable();
+            throwAction.action.started += OnThrowStarted;
+        }
     }
 
     private void OnDisable()
@@ -67,6 +86,12 @@ public class PlayerInteractor : MonoBehaviour
             interactAction.action.Disable();
         }
         if (grabAction != null) grabAction.action.Disable();
+        if (throwAction != null)
+        {
+            throwAction.action.started -= OnThrowStarted;
+            throwAction.action.Disable();
+        }
+        ClearCurrentOutlineHighlight();
         ForceDropHeldObject();
     }
 
@@ -99,6 +124,11 @@ public class PlayerInteractor : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void OnThrowStarted(InputAction.CallbackContext context)
+    {
+        ThrowHeldObject();
     }
 
     private void OnInteractStarted(InputAction.CallbackContext context)
@@ -181,12 +211,64 @@ public class PlayerInteractor : MonoBehaviour
         {
             currentTargetGrabbable = foundGrabbable;
             currentTargetInteractable = null;
+            SetCurrentOutlineTarget(foundGrabbable.gameObject);
         }
         else
         {
             currentTargetGrabbable = null;
             currentTargetInteractable = foundInteractable;
+            SetCurrentOutlineTarget(GetInteractableGameObject(foundInteractable));
         }
+    }
+
+    private void SetCurrentOutlineTarget(GameObject targetObject)
+    {
+        if (!useInteractableOutline)
+        {
+            ClearCurrentOutlineHighlight();
+            return;
+        }
+
+        InteractableOutlineHighlight nextHighlight = null;
+        if (targetObject != null)
+        {
+            nextHighlight = targetObject.GetComponent<InteractableOutlineHighlight>();
+            if (nextHighlight == null)
+            {
+                // 상호작용 가능한 대상에는 런타임에 Outline 래퍼를 붙여 별도 프리팹 수정 없이 표시합니다.
+                nextHighlight = targetObject.AddComponent<InteractableOutlineHighlight>();
+            }
+
+            nextHighlight.Configure(interactableOutlineColor, interactableOutlineWidth, interactableOutlineMode);
+        }
+
+        if (currentOutlineHighlight == nextHighlight)
+        {
+            return;
+        }
+
+        ClearCurrentOutlineHighlight();
+        currentOutlineHighlight = nextHighlight;
+
+        if (currentOutlineHighlight != null)
+        {
+            currentOutlineHighlight.SetHighlighted(true);
+        }
+    }
+
+    private void ClearCurrentOutlineHighlight()
+    {
+        if (currentOutlineHighlight != null)
+        {
+            currentOutlineHighlight.SetHighlighted(false);
+            currentOutlineHighlight = null;
+        }
+    }
+
+    private GameObject GetInteractableGameObject(IInteractable interactable)
+    {
+        Component component = interactable as Component;
+        return component != null ? component.gameObject : null;
     }
 
     private void HandleCharacterTilt()
@@ -317,6 +399,53 @@ public class PlayerInteractor : MonoBehaviour
         }
 
         ClearHeldObjectState();
+    }
+
+    private void ThrowHeldObject()
+    {
+        if (currentHeldGrabbable == null)
+        {
+            return;
+        }
+
+        if (currentHeldGrabbable.isHeavy && currentHeldGrabbable.InteractorCount > 1)
+        {
+            Debug.Log("[PlayerInteractor] 여러 명이 잡은 무거운 물체는 한 명만 임의로 던질 수 없습니다.");
+            return;
+        }
+
+        GrabbableObject objectToThrow = currentHeldGrabbable;
+        Rigidbody body = objectToThrow.GetComponent<Rigidbody>();
+        if (body == null)
+        {
+            Debug.LogWarning($"⚠️ [{objectToThrow.gameObject.name}]에 Rigidbody 컴포넌트가 없어 던질 수 없습니다!");
+            return;
+        }
+
+        Vector3 throwDirection = transform.forward.sqrMagnitude > 0.001f ? transform.forward.normalized : Vector3.forward;
+        float objectThrowMultiplier = objectToThrow.isHeavy ? heavyThrowSpeedMultiplier : 1f;
+        Vector3 throwVelocity = (throwDirection * throwForwardSpeed + Vector3.up * throwUpwardSpeed) * objectThrowMultiplier;
+
+        Rigidbody playerBody = GetComponent<Rigidbody>();
+        if (playerBody != null)
+        {
+            throwVelocity += Vector3.ProjectOnPlane(playerBody.linearVelocity, Vector3.up);
+        }
+
+        // 던지기는 스냅존 체크 없이 즉시 손에서 해제한 뒤 전방 속도를 부여합니다.
+        objectToThrow.RemoveInteractor(this, false);
+        ClearHeldObjectState();
+
+        body.isKinematic = false;
+        body.useGravity = true;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        body.linearVelocity = throwVelocity;
+
+        Vector3 spinAxis = Vector3.Cross(Vector3.up, throwDirection);
+        body.angularVelocity = spinAxis.sqrMagnitude > 0.001f
+            ? spinAxis.normalized * throwSpinSpeed
+            : Vector3.zero;
     }
 
     private void ForceDropHeldObject()

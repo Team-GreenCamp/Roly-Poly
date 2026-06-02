@@ -29,6 +29,14 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float landingSpeedPreserveRatio = 0.9f;
     [SerializeField] private float landingTiltAngularDamping = 18f;
 
+    [Header("Step Assist")]
+    [SerializeField] private bool useStepAssist = true;
+    [SerializeField] private float maxStepHeight = 0.35f;
+    [SerializeField] private float stepCheckDistance = 0.35f;
+    [SerializeField] private float stepLiftSpeed = 3.5f;
+    [SerializeField] private float stepProbeRadius = 0.08f;
+    [SerializeField] private LayerMask stepAssistLayers = 0;
+
     [Header("Balance")]
     [SerializeField] private Vector3 centerOfMassOffset = new Vector3(0f, -0.35f, 0f);
     [SerializeField] private float uprightTorque = 90f;
@@ -79,6 +87,7 @@ public partial class PlayerController : NetworkBehaviour
     public Vector3? OverrideFacingDirection { get; set; } = null;
 
     private Vector3 currentHorizontalVelocity;
+    private Vector3 currentMoveDirection;
     private Vector3 groundNormal = Vector3.up;
     private bool isGrounded;
     private bool jumpQueued;
@@ -170,6 +179,7 @@ public partial class PlayerController : NetworkBehaviour
         ApplyCustomGravity();
         ApplyJump();
         UpdateMovement();
+        ApplyStepAssist(currentMoveDirection);
         ApplySlopeSlide();
         ApplyLandingTiltDamping();
         ApplyBalanceTorques();
@@ -215,6 +225,10 @@ public partial class PlayerController : NetworkBehaviour
         landingSpeedPreserveDuration = Mathf.Max(0f, landingSpeedPreserveDuration);
         landingSpeedPreserveRatio = Mathf.Clamp01(landingSpeedPreserveRatio);
         landingTiltAngularDamping = Mathf.Max(0f, landingTiltAngularDamping);
+        maxStepHeight = Mathf.Max(0f, maxStepHeight);
+        stepCheckDistance = Mathf.Max(0.01f, stepCheckDistance);
+        stepLiftSpeed = Mathf.Max(0f, stepLiftSpeed);
+        stepProbeRadius = Mathf.Max(0.01f, stepProbeRadius);
         uprightTorque = Mathf.Max(0f, uprightTorque);
         uprightDamping = Mathf.Max(0f, uprightDamping);
         fallenTiltAngle = Mathf.Clamp(fallenTiltAngle, 1f, 89f);
@@ -248,8 +262,14 @@ public partial class PlayerController : NetworkBehaviour
             groundLayers = ~0;
         }
 
+        if (stepAssistLayers.value == 0)
+        {
+            stepAssistLayers = groundLayers;
+        }
+
         int selfLayerMask = 1 << gameObject.layer;
         groundLayers &= ~selfLayerMask;
+        stepAssistLayers &= ~selfLayerMask;
     }
 
     private void EnsurePlayerLayerConfigured()

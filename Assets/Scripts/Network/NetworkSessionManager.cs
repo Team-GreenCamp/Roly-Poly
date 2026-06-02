@@ -33,6 +33,7 @@ public class NetworkSessionManager : MonoBehaviour
     [SerializeField] private int localPort = 7777;
 
     [Header("Scene Flow")]
+    [SerializeField] private string lobbySceneName = "Lobby Scene";
     [SerializeField] private string gameSceneName = "GameScene";
 
     [Header("Debug")]
@@ -54,6 +55,7 @@ public class NetworkSessionManager : MonoBehaviour
     public bool IsConnectedClient => networkManager != null && networkManager.IsConnectedClient;
     public bool LocalReady { get; private set; }
     public string CurrentGameSceneName => gameSceneName;
+    public string CurrentLobbySceneName => lobbySceneName;
     public string CurrentMapChapterId { get; private set; } = string.Empty;
     public string CurrentMapId { get; private set; } = string.Empty;
     public bool CanHostStartGame => networkManager != null
@@ -414,6 +416,47 @@ public class NetworkSessionManager : MonoBehaviour
         gameStartRequested = true;
         SetStatus($"게임 씬으로 전환 중입니다: {gameSceneName}");
         LogReadyDebug($"StartGame succeeded. Scene loading started: {gameSceneName}");
+        return true;
+    }
+
+    public bool ReturnToLobby()
+    {
+        if (networkManager == null)
+        {
+            SetStatus("NetworkManager를 찾을 수 없습니다.");
+            return false;
+        }
+
+        if (!networkManager.IsServer)
+        {
+            SetStatus("로비 복귀는 호스트만 할 수 있습니다.");
+            return false;
+        }
+
+        if (!networkManager.NetworkConfig.EnableSceneManagement)
+        {
+            SetStatus("NetworkManager에서 Enable Scene Management를 켜야 합니다.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(lobbySceneName))
+        {
+            SetStatus("전환할 로비 씬 이름이 비어 있습니다.");
+            return false;
+        }
+
+        // 클리어 후 로비로 돌아오면 다시 Ready를 받아야 하므로 상태를 초기화합니다.
+        ResetReadyState();
+        SceneEventProgressStatus progressStatus =
+            networkManager.SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Single);
+
+        if (progressStatus != SceneEventProgressStatus.Started)
+        {
+            SetStatus($"로비 씬 전환을 시작하지 못했습니다. ({progressStatus})");
+            return false;
+        }
+
+        SetStatus($"로비 씬으로 전환 중입니다: {lobbySceneName}");
         return true;
     }
 
