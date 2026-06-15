@@ -114,7 +114,7 @@ MonoBehaviour:
     m_Bits: 0
   centerOfMassOffset: {x: 0, y: -0.35, z: 0}
   uprightTorque: 90
-  uprightDamping: 10
+  uprightDamping: 6
   fallenTiltAngle: 35
   recoveryDelay: 0.5
   recoveryTorqueMultiplier: 2
@@ -135,8 +135,8 @@ MonoBehaviour:
   rigidbodyImpactSpeedThreshold: 5
   heavyObjectMassThreshold: 20
   heavyObjectDownwardSpeedThreshold: 6
-  landingImpactThreshold: 30
-  landingTorqueMultiplier: 0.05
+  landingImpactThreshold: 11
+  landingTorqueMultiplier: 0.18
   externalImpactForceMultiplier: 1
   externalImpactTorqueMultiplier: 0.35
   slideSlopeAngle: 45

@@ -82,6 +82,7 @@ public class LobbyUIController : MonoBehaviour
     private HeatButtonManager mapHeatButton;
     private CanvasButton mapCanvasButton;
     private HeatChapterManager chapterManager;
+    private HeatPanelManager joinPanelManager;
 
     [System.Serializable]
     public class MapSelection
@@ -741,47 +742,80 @@ public class LobbyUIController : MonoBehaviour
         string joinCode = GetJoinCode();
         if (string.IsNullOrWhiteSpace(joinCode))
         {
+            // 참가 코드를 입력하지 않았으면 접속을 시도하지 않습니다.
+            // 확인 버튼이 무조건 실행하는 로딩 팝업/패널 닫힘을 한 프레임 뒤에 되돌려 무한 로딩을 막습니다.
             SetRoomListStatus("입장할 룸 코드를 입력해주세요.");
+            StartCoroutine(CancelJoinTransitionNextFrame());
             return;
         }
 
+        bool joinSucceeded = false;
         try
         {
-            ShowLoading("방 정보를 확인하는 중입니다...");
-            RoomApiClient.RoomDto room = await FindOpenRoomByCodeAsync(joinCode);
-            if (room != null)
-            {
-                await JoinBackendRoomAsync(room, "룸 코드로 방에 접속하는 중입니다...");
-                return;
-            }
-
             isJoiningRoom = true;
             RefreshUI();
-            ShowLoading("방에 접속하는 중입니다...");
-            SetRoomListStatus("일치하는 공개 방이 없어 직접 접속을 시도합니다...");
+            ShowLoading("방 정보를 확인하는 중입니다...");
 
-            if (useRelayForRoomList)
+            RoomApiClient.RoomDto room = null;
+            try
             {
-                await RunAsync(sessionManager.StartClientAsync(joinCode));
+                room = await FindOpenRoomByCodeAsync(joinCode);
+            }
+            catch (System.Exception lookupException)
+            {
+                // 백엔드 방 목록 조회에 실패해도 직접 접속은 계속 시도합니다.
+                Debug.LogWarning($"[Lobby] 방 목록 조회에 실패해 직접 접속을 시도합니다: {lookupException.Message}");
+            }
+
+            if (room != null)
+            {
+                joinSucceeded = await JoinBackendRoomAsync(room, "룸 코드로 방에 접속하는 중입니다...");
             }
             else
             {
-                await RunAsync(sessionManager.StartLocalClientAsync(joinCode));
-            }
+                UpdateLoadingMessage("방에 접속하는 중입니다...");
+                SetRoomListStatus("일치하는 공개 방이 없어 직접 접속을 시도합니다...");
 
-            if (sessionManager.IsOnline)
-            {
-                await RefreshRoomsAsync();
+                if (useRelayForRoomList)
+                {
+                    await RunAsync(sessionManager.StartClientAsync(joinCode));
+                }
+                else
+                {
+                    await RunAsync(sessionManager.StartLocalClientAsync(joinCode));
+                }
+
+                // 잘못된 코드면 세션이 온라인이 되지 않거나 접속이 끝까지 완료되지 않습니다.
+                joinSucceeded = sessionManager.IsOnline && await WaitForClientConnectionAsync();
+
+                if (joinSucceeded)
+                {
+                    await RefreshRoomsAsync();
+                }
             }
         }
         catch (System.Exception exception)
         {
+            joinSucceeded = false;
             SetRoomListStatus($"룸 코드 입장 실패: {exception.Message}");
         }
         finally
         {
             isJoiningRoom = false;
-            HideLoading();
+            ForceHideLoading();
+
+            if (!joinSucceeded)
+            {
+                // 잘못된 코드 등으로 접속에 실패하면 세션을 정리하고 입력 패널로 다시 돌아갑니다.
+                if (sessionManager.IsOnline && !sessionManager.IsHost)
+                {
+                    sessionManager.Shutdown();
+                }
+
+                ReopenJoinPanel();
+                SetRoomListStatus("방에 접속하지 못했습니다. 참가 코드를 다시 확인해주세요.");
+            }
+
             RefreshUI();
         }
     }
@@ -806,13 +840,14 @@ public class LobbyUIController : MonoBehaviour
         await JoinBackendRoomAsync(room, "방에 접속하는 중입니다...");
     }
 
-    private async Task JoinBackendRoomAsync(RoomApiClient.RoomDto room, string loadingMessage)
+    private async Task<bool> JoinBackendRoomAsync(RoomApiClient.RoomDto room, string loadingMessage)
     {
         if (sessionManager == null || room == null)
         {
-            return;
+            return false;
         }
 
+        bool joined = false;
         try
         {
             isJoiningRoom = true;
@@ -831,7 +866,7 @@ public class LobbyUIController : MonoBehaviour
             else
             {
                 SetRoomListStatus($"지원하지 않는 접속 방식입니다: {room.connectionType}");
-                return;
+                return false;
             }
 
             if (!await WaitForClientConnectionAsync())
@@ -842,7 +877,7 @@ public class LobbyUIController : MonoBehaviour
                     sessionManager.Shutdown();
                 }
 
-                return;
+                return false;
             }
 
             // 실제 네트워크 접속을 시작한 뒤에만 백엔드 인원을 올립니다.
@@ -852,9 +887,11 @@ public class LobbyUIController : MonoBehaviour
             backendConnectedPlayerCount = joinedRoom.currentPlayers;
             RefreshUI();
             await RefreshRoomsAsync();
+            joined = true;
         }
         catch (System.Exception exception)
         {
+            joined = false;
             SetRoomListStatus($"방 입장 실패: {exception.Message}");
 
             if (sessionManager.IsOnline && !sessionManager.IsHost)
@@ -868,6 +905,8 @@ public class LobbyUIController : MonoBehaviour
             HideLoading();
             RefreshUI();
         }
+
+        return joined;
     }
 
     public async void HandleLeaveClicked()
@@ -1333,6 +1372,65 @@ public class LobbyUIController : MonoBehaviour
     private bool HasLoadingPopup()
     {
         return loadingRoot != null && loadingRoot.GetComponent("UIPopup") != null;
+    }
+
+    private void UpdateLoadingMessage(string message)
+    {
+        // 로딩 요청 카운트를 늘리지 않고 메시지만 갱신합니다.
+        if (loadingMessageText != null)
+        {
+            loadingMessageText.text = message;
+        }
+    }
+
+    private void ForceHideLoading()
+    {
+        // 누적 카운트와 무관하게 로딩 팝업을 확실히 닫습니다.
+        loadingRequestCount = 0;
+
+        if (loadingRoot == null)
+        {
+            return;
+        }
+
+        // UIPopup이면 PlayOut으로 isOn 상태까지 동기화해야 다음에 다시 열 수 있습니다.
+        if (HasLoadingPopup())
+        {
+            loadingRoot.SendMessage("PlayOut", SendMessageOptions.DontRequireReceiver);
+        }
+        else
+        {
+            loadingRoot.SetActive(false);
+        }
+    }
+
+    private System.Collections.IEnumerator CancelJoinTransitionNextFrame()
+    {
+        // 확인 버튼의 PlayIn(로딩)/HideCurrentPanel(패널 닫힘)이 먼저 실행되도록 한 프레임 기다립니다.
+        yield return null;
+
+        ForceHideLoading();
+        ReopenJoinPanel();
+    }
+
+    private void ReopenJoinPanel()
+    {
+        HeatPanelManager panelManager = ResolveJoinPanelManager();
+        if (panelManager != null)
+        {
+            // 확인 버튼이 닫은 입력 패널을 다시 표시해 이전 화면으로 되돌립니다.
+            panelManager.ShowCurrentPanel();
+        }
+    }
+
+    private HeatPanelManager ResolveJoinPanelManager()
+    {
+        if (joinPanelManager == null)
+        {
+            joinPanelManager = GetComponent<HeatPanelManager>();
+        }
+
+        return joinPanelManager;
     }
 
     private int GetMaxPlayers()

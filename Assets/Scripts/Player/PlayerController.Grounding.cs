@@ -45,6 +45,9 @@ public partial class PlayerController
                 : transform.forward;
             Vector3 landingForce = landingDirection * (Mathf.Abs(previousVerticalVelocity) * landingTorqueMultiplier);
             ApplyExternalImpulse(landingForce, center + (Vector3.up * 0.5f));
+
+            // 높은 곳에서 떨어져 세게 착지하면 잠시 조작을 막고 오뚝이처럼 휘청였다가 복귀한다.
+            StartKnockdown();
         }
 
         lastVerticalVelocity = physicsBody.linearVelocity.y;

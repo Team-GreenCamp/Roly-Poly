@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 1567289229697225611}
   - component: {fileID: 2577236714047979779}
   - component: {fileID: 7940467641915578681}
-  - component: {fileID: 8674782252432565929}
   - component: {fileID: 2017468425339943887}
+  - component: {fileID: 8674782252432565929}
   m_Layer: 7
   m_Name: SM_Prop_Chest_Wood_01
   m_TagString: Untagged
@@ -116,23 +116,6 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: 9ffb334c672fd3e44aad2a8cf409323e, type: 3}
---- !u!114 &8674782252432565929
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1607879566882834388}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 50bcf104f2130f044964070db7caf439, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ChestController
-  lidTransform: {fileID: 4052806332979350376}
-  openRotationOffset: {x: -80, y: 0, z: 0}
-  openSpeed: 2
-  keyObject: {fileID: 0}
-  canDirectInteract: 1
 --- !u!114 &2017468425339943887
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,7 +128,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2647761000
+  GlobalObjectIdHash: 2089889450
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -158,6 +141,24 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &8674782252432565929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1607879566882834388}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 50bcf104f2130f044964070db7caf439, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChestController
+  ShowTopMostFoldoutHeaderGroup: 1
+  lidTransform: {fileID: 4052806332979350376}
+  openRotationOffset: {x: -80, y: 0, z: 0}
+  openSpeed: 2
+  keyObject: {fileID: 0}
+  canDirectInteract: 1
 --- !u!1 &7301610370815744927
 GameObject:
   m_ObjectHideFlags: 0

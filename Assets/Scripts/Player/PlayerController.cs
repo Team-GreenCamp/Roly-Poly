@@ -44,7 +44,7 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float fallenTiltAngle = 35f;
     [SerializeField] private float recoveryDelay = 1f;
     [SerializeField] private float recoveryTorqueMultiplier = 2.5f;
-    [SerializeField] private float knockdownMinimumDuration = 1.2f;
+    [SerializeField] private float knockdownMinimumDuration = 0.45f;
     [SerializeField] private float knockdownUprightAngle = 12f;
     [SerializeField] private float knockdownRecoveryAngularSpeed = 1.2f;
     [SerializeField] private float turnTorque = 35f;

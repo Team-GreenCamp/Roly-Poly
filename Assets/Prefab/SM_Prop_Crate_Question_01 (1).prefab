@@ -13,8 +13,8 @@ GameObject:
   - component: {fileID: 8495531054285029814}
   - component: {fileID: 9090835618896811297}
   - component: {fileID: 4319399853574150577}
-  - component: {fileID: 3216106155846112810}
   - component: {fileID: 4668166667383806434}
+  - component: {fileID: 3216106155846112810}
   - component: {fileID: -8868835401218727610}
   - component: {fileID: -9020927149498104634}
   m_Layer: 7
@@ -145,27 +145,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &3216106155846112810
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 516787146327134289}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9e4508bf9b71abe4eb30a276dc757e4d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GrabbableObject
-  isHeavy: 1
-  baseSpeedMultiplier: 0.6
-  multiPlayerSpeedBonus: 0.4
-  heavySingleFollowAcceleration: 12
-  heavyMultiFollowAccelerationBonus: 8
-  heavyDragDamping: 5
-  heavyAngularDamping: 8
-  heavyMaxFollowAcceleration: 40
-  heldFollowMaxDistance: 4.5
 --- !u!114 &4668166667383806434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -191,6 +170,28 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &3216106155846112810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 516787146327134289}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e4508bf9b71abe4eb30a276dc757e4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrabbableObject
+  ShowTopMostFoldoutHeaderGroup: 1
+  isHeavy: 1
+  baseSpeedMultiplier: 0.6
+  multiPlayerSpeedBonus: 0.4
+  heavySingleFollowAcceleration: 12
+  heavyMultiFollowAccelerationBonus: 8
+  heavyDragDamping: 5
+  heavyAngularDamping: 8
+  heavyMaxFollowAcceleration: 40
+  heldFollowMaxDistance: 4.5
 --- !u!114 &-8868835401218727610
 MonoBehaviour:
   m_ObjectHideFlags: 0
