@@ -105,7 +105,17 @@ public partial class PlayerController
             timeSinceLargeTilt = 0f;
         }
 
+        if (isKnockedDown && knockdownTimer < knockdownMinimumDuration)
+        {
+            return;
+        }
+
         float recoveryMultiplier = timeSinceLargeTilt >= recoveryDelay ? recoveryTorqueMultiplier : 1f;
+        if (isKnockedDown)
+        {
+            recoveryMultiplier = recoveryTorqueMultiplier;
+        }
+
         Vector3 uprightAxis = Vector3.Cross(transform.up, Vector3.up);
         Vector3 tiltAngularVelocity = Vector3.ProjectOnPlane(physicsBody.angularVelocity, Vector3.up);
 
@@ -114,5 +124,46 @@ public partial class PlayerController
             (tiltAngularVelocity * (uprightDamping * recoveryMultiplier));
 
         physicsBody.AddTorque(correctiveTorque, ForceMode.Acceleration);
+    }
+
+    private void StartKnockdown()
+    {
+        if (isKnockedDown)
+        {
+            knockdownTimer = 0f;
+            return;
+        }
+
+        // 넘어짐 중에는 입력만 막고 Rigidbody는 계속 물리/회전하도록 둡니다.
+        isKnockedDown = true;
+        knockdownTimer = 0f;
+        timeSinceLargeTilt = recoveryDelay;
+        ClearGameplayInputState();
+    }
+
+    private void UpdateKnockdownRecovery()
+    {
+        if (!isKnockedDown)
+        {
+            return;
+        }
+
+        knockdownTimer += Time.fixedDeltaTime;
+        float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
+        float tiltAngularSpeed = Vector3.ProjectOnPlane(physicsBody.angularVelocity, Vector3.up).magnitude;
+
+        if (knockdownTimer < knockdownMinimumDuration)
+        {
+            return;
+        }
+
+        if (tiltAngle > knockdownUprightAngle || tiltAngularSpeed > knockdownRecoveryAngularSpeed)
+        {
+            return;
+        }
+
+        isKnockedDown = false;
+        knockdownTimer = 0f;
+        ClearGameplayInputState();
     }
 }

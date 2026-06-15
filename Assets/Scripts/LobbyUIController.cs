@@ -21,6 +21,7 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private CanvasButton readyButton;
     [SerializeField] private GameObject roomEntryPanel;
     [SerializeField] private TMP_Text roomCodeDisplayText;
+    [SerializeField] private string lobbyButtonPanelObjectName = "Button Panel";
     [SerializeField] private string readyButtonObjectName = "Ready Button";
     [SerializeField] private string startButtonObjectName = "Start Button";
 
@@ -71,6 +72,7 @@ public class LobbyUIController : MonoBehaviour
     private RoomApiClient roomApiClient;
     private GameObject mapPanelRoot;
     private GameObject chaptersPanelRoot;
+    private GameObject lobbyButtonPanelRoot;
     private GameObject readyButtonRoot;
     private GameObject startButtonRoot;
     private HeatButtonManager readyHeatButton;
@@ -903,14 +905,17 @@ public class LobbyUIController : MonoBehaviour
     {
         if (sessionManager == null)
         {
+            Debug.Log("[LobbyStart] Start clicked, but NetworkSessionManager is null.");
             return;
         }
 
         if (!sessionManager.CanHostStartGame)
         {
+            Debug.Log($"[LobbyStart] Start blocked. isHost={sessionManager.IsHost}, connected={sessionManager.ConnectedPlayerCount}, notReady=[{string.Join(", ", sessionManager.GetNotReadyRequiredClientIds())}]");
             return;
         }
 
+        Debug.Log($"[LobbyStart] Start accepted. scene={sessionManager.CurrentGameSceneName}");
         bool didStartGame = sessionManager.StartGame();
 
         if (didStartGame && activeBackendRoomId > 0 && sessionManager.IsHost)
@@ -1192,6 +1197,8 @@ public class LobbyUIController : MonoBehaviour
             roomEntryPanel.SetActive(isOnline);
         }
 
+        ApplyLobbySessionPanelState(isOnline);
+
         if (wasOnline && !isOnline && activeBackendRoomId > 0)
         {
             _ = ReleaseBackendRoomAsync();
@@ -1240,11 +1247,33 @@ public class LobbyUIController : MonoBehaviour
 
     private void ShowWaitingRoomAfterHostStarted()
     {
+        ApplyLobbySessionPanelState(true);
+    }
+
+    private void ApplyLobbySessionPanelState(bool isOnline)
+    {
         if (roomEntryPanel != null)
         {
-            // 외부 UI 에셋의 패널 전환은 Inspector 이벤트가 맡고, 입장 정보 영역만 동기화합니다.
-            roomEntryPanel.SetActive(true);
+            roomEntryPanel.SetActive(isOnline);
         }
+
+        GameObject buttonPanel = ResolveLobbyButtonPanelRoot();
+        if (buttonPanel != null)
+        {
+            // 게임 클리어 후 로비 씬이 다시 로드되어도 세션이 살아 있으면 처음 버튼 패널 대신 대기방 UI를 보여줍니다.
+            buttonPanel.SetActive(!isOnline);
+        }
+    }
+
+    private GameObject ResolveLobbyButtonPanelRoot()
+    {
+        if (lobbyButtonPanelRoot != null)
+        {
+            return lobbyButtonPanelRoot;
+        }
+
+        lobbyButtonPanelRoot = FindSceneGameObjectByName(lobbyButtonPanelObjectName);
+        return lobbyButtonPanelRoot;
     }
 
     private void ShowLoading(string message)

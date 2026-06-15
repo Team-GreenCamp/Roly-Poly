@@ -1,7 +1,13 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class PressurePlateGimmick : MonoBehaviour
+// 서버 권한 기믹 패턴(압력판). 표준 설명은 LeverGimmick.cs 참고.
+// 차이점: 버튼/레버처럼 "요청"이 아니라 트리거 감지로 동작하므로, "서버만" 판 위 물체 수를 세고
+//         활성 상태를 NetworkVariable로 모든 클라이언트에 전파합니다.
+// (호스트에는 모든 플레이어 프록시와 서버 권한 박스가 올바른 위치에 있으므로 서버 트리거 감지가 성립합니다.)
+[RequireComponent(typeof(NetworkObject))]
+public class PressurePlateGimmick : NetworkBehaviour
 {
     [Header("발판 연출 설정")]
     [Tooltip("실제로 오르락내리락 할 자식 오브젝트(발판 뚜껑)를 연결하세요.")]
@@ -11,11 +17,11 @@ public class PressurePlateGimmick : MonoBehaviour
     public Vector3 pressDirection = new Vector3(0, -1, 0);
 
     public float pressDistance = 0.1f;
-    public float moveSpeed = 5.0f; // 버튼보다 약간 빠르게 설정하는 것이 밟는 맛이 좋습니다.
+    public float moveSpeed = 5.0f;
 
     [Header("상태")]
     public bool isActivated = false;
-    private int objectsOnPlate = 0; // 발판 위에 있는 물체의 수
+    private int objectsOnPlate = 0; // 발판 위 물체 수 (네트워크 시 서버에서만 카운트)
 
     private Vector3 originalPos;
     private Vector3 pressedPos;
@@ -25,14 +31,20 @@ public class PressurePlateGimmick : MonoBehaviour
     public UnityEvent onActivate;
     public UnityEvent onDeactivate;
 
-    private void Start()
+    private readonly NetworkVariable<bool> networkActivated =
+        new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private NetworkObject cachedNetworkObject;
+    private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+
+    private void Awake()
     {
+        TryGetComponent(out cachedNetworkObject);
+
         if (movingPart != null)
         {
             originalPos = movingPart.localPosition;
             pressedPos = originalPos + (pressDirection.normalized * pressDistance);
-
-            // 처음 목표 위치는 원래 위치(위쪽)로 설정합니다.
             targetPos = originalPos;
         }
         else
@@ -41,9 +53,24 @@ public class PressurePlateGimmick : MonoBehaviour
         }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        networkActivated.OnValueChanged += HandleActivatedChanged;
+
+        // 늦게 들어온 클라이언트도 현재 상태로 맞춥니다. (스냅)
+        isActivated = networkActivated.Value;
+        targetPos = isActivated ? pressedPos : originalPos;
+        if (movingPart != null) movingPart.localPosition = targetPos;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        networkActivated.OnValueChanged -= HandleActivatedChanged;
+    }
+
     private void Update()
     {
-        // 매 프레임마다 movingPart를 현재 targetPos를 향해 부드럽게 이동시킵니다.
+        // 연출은 모든 클라이언트에서 동일하게: 목표 위치로 부드럽게 이동
         if (movingPart != null && movingPart.localPosition != targetPos)
         {
             movingPart.localPosition = Vector3.MoveTowards(movingPart.localPosition, targetPos, moveSpeed * Time.deltaTime);
@@ -52,48 +79,77 @@ public class PressurePlateGimmick : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // 밟은 오브젝트의 태그가 Player이거나 Box일 때만 인식합니다.
-        if (other.CompareTag("Player") || other.CompareTag("Box"))
+        if (!(other.CompareTag("Player") || other.CompareTag("Box"))) return;
+
+        if (!IsNetworkActive)
         {
+            // 오프라인/네트워크 미구성: 로컬에서 카운트
             objectsOnPlate++;
             UpdatePlateState();
+            return;
         }
+
+        if (!IsServer) return; // 네트워크 시 카운트는 서버 권한
+        objectsOnPlate++;
+        UpdatePlateState();
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player") || other.CompareTag("Box"))
+        if (!(other.CompareTag("Player") || other.CompareTag("Box"))) return;
+
+        if (!IsNetworkActive)
         {
-            objectsOnPlate--;
-            if (objectsOnPlate < 0) objectsOnPlate = 0; // 오류 방지용 최소값 고정
+            objectsOnPlate = Mathf.Max(0, objectsOnPlate - 1);
             UpdatePlateState();
+            return;
+        }
+
+        if (!IsServer) return;
+        objectsOnPlate = Mathf.Max(0, objectsOnPlate - 1);
+        UpdatePlateState();
+    }
+
+    // 서버(또는 오프라인 로컬)에서 현재 카운트로 활성 상태를 갱신합니다.
+    private void UpdatePlateState()
+    {
+        bool shouldBeActivated = objectsOnPlate > 0;
+
+        if (IsNetworkActive)
+        {
+            // 서버만 상태를 바꾸고, 연출/이벤트는 OnValueChanged에서 모두가 실행합니다.
+            if (networkActivated.Value != shouldBeActivated)
+            {
+                networkActivated.Value = shouldBeActivated;
+            }
+            return;
+        }
+
+        if (isActivated != shouldBeActivated)
+        {
+            ApplyActivated(shouldBeActivated);
         }
     }
 
-    private void UpdatePlateState()
+    private void HandleActivatedChanged(bool previousValue, bool newValue)
     {
-        // 발판 위에 물체가 1개라도 있다면 활성화되어야 합니다.
-        bool shouldBeActivated = objectsOnPlate > 0;
+        ApplyActivated(newValue);
+    }
 
-        // 상태가 변했을 때만 실행합니다.
-        if (isActivated != shouldBeActivated)
+    private void ApplyActivated(bool activated)
+    {
+        isActivated = activated;
+        targetPos = activated ? pressedPos : originalPos;
+
+        if (activated)
         {
-            isActivated = shouldBeActivated;
-
-            if (isActivated)
-            {
-                Debug.Log($"⬇️ [{gameObject.name}] 발판이 눌렸습니다! (현재 위 숫자: {objectsOnPlate})");
-                targetPos = pressedPos; // 목표 위치를 아래로 변경
-
-                onActivate.Invoke();
-            }
-            else
-            {
-                Debug.Log($"⬆️ [{gameObject.name}] 발판이 원상복구 되었습니다. (현재 위 숫자: {objectsOnPlate})");
-                targetPos = originalPos; // 목표 위치를 위로 변경
-
-                onDeactivate.Invoke();
-            }
+            Debug.Log($"⬇️ [{gameObject.name}] 발판이 눌렸습니다!");
+            onActivate.Invoke();
+        }
+        else
+        {
+            Debug.Log($"⬆️ [{gameObject.name}] 발판이 원상복구 되었습니다.");
+            onDeactivate.Invoke();
         }
     }
 }

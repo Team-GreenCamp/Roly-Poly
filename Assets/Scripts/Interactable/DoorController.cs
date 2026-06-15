@@ -1,8 +1,18 @@
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
-// ⭐ IInteractable 인터페이스를 상속받아 플레이어의 레이저(레이캐스트)에 반응하게 만듭니다.
-public class DoorController : MonoBehaviour, IInteractable
+// 서버 권한 기믹 패턴(문). 표준 설명은 LeverGimmick.cs 참고.
+//
+// 동작 정리
+//  • 직접 상호작용 문(canDirectInteract=true)  : 플레이어 E키 → 서버가 열림 상태 토글 → 모두 동기화.
+//  • 스위치 구동 문(canDirectInteract=false)    : 레버/버튼의 동기화된 이벤트가 OpenDoor/CloseDoor를 호출.
+//      - 이 문에 NetworkObject가 없으면, 동기화된 스위치 이벤트가 각 클라이언트에서 동시에 OpenDoor를
+//        부르므로 NetworkObject 없이도 화면이 일치합니다(이 게임은 중간 난입이 없어 충분).
+//      - 이 문에 NetworkObject가 있으면 서버만 상태를 바꾸고 나머지는 NetworkVariable로 따라옵니다.
+//  • 열쇠 문(needsKey=true)                      : 잠긴 동안엔 열쇠를 든 플레이어만 열 수 있습니다.
+[RequireComponent(typeof(NetworkObject))]
+public class DoorController : NetworkBehaviour, IInteractable
 {
     public enum DoorType { Slide, Rotate }
 
@@ -22,117 +32,239 @@ public class DoorController : MonoBehaviour, IInteractable
     [Tooltip("열쇠로 인식할 오브젝트의 태그입니다.")]
     public string keyTag = "Key";
 
-    private bool isLocked = false; // 현재 문이 잠겨있는지 여부
-
     [Header("자동 반복 타이머 (Auto Timing Trap)")]
     [Tooltip("체크하면 설정한 시간에 맞춰 자동으로 열리고 닫히기를 무한 반복합니다.")]
     public bool isAutoLoop = false;
     public float openDuration = 3f;
     public float closeDuration = 2f;
 
-    private bool isOpen = false; // 현재 문이 열려있는지 상태 저장
+    private bool isOpen = false; // 현재 문이 열려있는지(동기화 상태의 로컬 캐시)
 
     private Vector3 closedPosition;
     private Vector3 openPosition;
     private Quaternion closedRotation;
     private Quaternion openRotation;
     private Coroutine moveCoroutine;
+    private Coroutine autoLoopCoroutine;
 
-    private void Start()
+    private readonly NetworkVariable<bool> networkIsOpen =
+        new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private NetworkObject cachedNetworkObject;
+
+    private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+
+    private void Awake()
     {
+        TryGetComponent(out cachedNetworkObject);
+
+        // 위치 캐싱은 스폰 시 스냅보다 먼저 끝나야 하므로 Awake에서 처리합니다.
         closedPosition = transform.localPosition;
         closedRotation = transform.localRotation;
 
         if (doorType == DoorType.Slide)
-        {
             openPosition = closedPosition + openOffset;
-        }
         else
-        {
             openRotation = closedRotation * Quaternion.Euler(openOffset);
-        }
+    }
 
-        // ⭐ 자동 루프가 켜져있다면 코루틴 시작
-        if (isAutoLoop)
+    private void Start()
+    {
+        // NetworkObject가 아예 없는 순수 로컬 문(에디터 테스트 등)에서만 여기서 자동 루프를 돌립니다.
+        // NetworkObject가 있는 문은 OnNetworkSpawn에서 서버만 루프를 돌립니다.
+        if (cachedNetworkObject == null && isAutoLoop)
         {
-            StartCoroutine(AutoLoopRoutine());
+            StartAutoLoop();
         }
+    }
 
-        // 열쇠가 필요한 문이면 초기 상태를 잠금 상태로 설정합니다.
-        if (needsKey)
+    public override void OnNetworkSpawn()
+    {
+        networkIsOpen.OnValueChanged += HandleOpenChanged;
+
+        // 늦게 들어온 클라이언트도 현재 상태로 즉시 맞춥니다.
+        isOpen = networkIsOpen.Value;
+        ApplyDoorInstant(isOpen);
+
+        if (IsServer && isAutoLoop)
         {
-            isLocked = true;
+            StartAutoLoop();
         }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        networkIsOpen.OnValueChanged -= HandleOpenChanged;
+        StopAutoLoop();
     }
 
     // ⭐ 플레이어가 문을 향해 E키를 눌렀을 때 실행되는 함수
     public void RequestInteract(GameObject interactor)
     {
-        // 🔑 열쇠가 필요한 문이고 아직 잠겨있는 상태라면
-        if (needsKey && isLocked)
+        if (!IsNetworkActive)
         {
-            PlayerInteractor playerInteractor = interactor.GetComponent<PlayerInteractor>();
-            if (playerInteractor != null)
-            {
-                GrabbableObject heldObj = playerInteractor.CurrentHeldGrabbable;
-                if (heldObj != null && heldObj.CompareTag(keyTag))
-                {
-                    Debug.Log($"🔑 [{gameObject.name}] {interactor.name}이(가) 열쇠({keyTag})를 사용하여 문을 열었습니다!");
-                    
-                    // 열쇠 소모
-                    playerInteractor.ConsumeHeldObject();
-                    isLocked = false;
-                    
-                    // 문 열기
-                    OpenDoor();
-                    return;
-                }
-            }
+            RequestInteractLocal(interactor);
+            return;
+        }
 
-            Debug.Log($"🔒 [{gameObject.name}] 문이 잠겨있습니다! 열쇠({keyTag})가 필요합니다.");
+        // 🔑 열쇠가 필요하고 아직 닫혀(=잠겨) 있는 상태
+        if (needsKey && !networkIsOpen.Value)
+        {
+            // 잡고 있는 열쇠는 상호작용한 클라이언트(소유자)만 알 수 있으므로 그쪽에서 검사/소모합니다.
+            PlayerInteractor playerInteractor = interactor != null ? interactor.GetComponent<PlayerInteractor>() : null;
+            GrabbableObject heldObj = playerInteractor != null ? playerInteractor.CurrentHeldGrabbable : null;
+
+            if (heldObj != null && heldObj.CompareTag(keyTag))
+            {
+                Debug.Log($"🔑 [{gameObject.name}] {interactor.name}이(가) 열쇠({keyTag})를 사용했습니다!");
+
+                // NOTE: 잡기/열쇠 시스템이 아직 비동기라 소모(파괴)도 로컬에서만 일어납니다.
+                //       잡기 시스템을 네트워크화한 뒤에는 서버에서 열쇠 보유를 검증하도록 바꿔야 합니다.
+                playerInteractor.ConsumeHeldObject();
+
+                if (IsServer) SetOpenOnServer(true);
+                else RequestSetOpenServerRpc(true);
+            }
+            else
+            {
+                Debug.Log($"🔒 [{gameObject.name}] 문이 잠겨있습니다! 열쇠({keyTag})가 필요합니다.");
+                // TODO: '잠김' 사운드 재생 또는 UI 텍스트 띄우기
+            }
             return;
         }
 
         // 직접 열 수 없는 문이라면 거절
         if (!canDirectInteract)
         {
-            Debug.Log($"🔒 [{gameObject.name}] 문은 잠겨있거나 다른 장치(스위치)로 열어야 합니다!");
+            Debug.Log($"🔒 [{gameObject.name}] 문은 다른 장치(스위치)로 열어야 합니다!");
             // TODO: '잠김' 사운드 재생 또는 UI 텍스트 띄우기
             return;
         }
 
-        // 직접 열 수 있다면 현재 상태의 반대로 작동 (토글)
-        if (isOpen)
-            CloseDoor();
-        else
-            OpenDoor();
+        // 직접 열 수 있다면 토글 요청
+        if (IsServer) ToggleOnServer();
+        else RequestToggleServerRpc();
     }
 
-    // 외부 스위치(버튼, 레버)나 내부 토글에서 호출할 수 있는 함수
+    // 외부 스위치(버튼, 레버)나 자동 루프에서 호출하는 함수
     public void OpenDoor()
     {
-        if (isOpen) return; // 이미 열려있으면 무시
-        isOpen = true;
+        if (!IsNetworkActive)
+        {
+            SetDoorLocal(true);
+            return;
+        }
 
-        if (moveCoroutine != null) StopCoroutine(moveCoroutine);
-
-        if (doorType == DoorType.Slide)
-            moveCoroutine = StartCoroutine(MoveRoutine(openPosition));
-        else
-            moveCoroutine = StartCoroutine(RotateRoutine(openRotation));
+        // 네트워크 문은 서버만 상태를 바꿉니다. 클라이언트 호출은 무시(서버 상태가 내려옴).
+        if (IsServer && !networkIsOpen.Value)
+        {
+            networkIsOpen.Value = true;
+        }
     }
 
     public void CloseDoor()
     {
-        if (!isOpen) return; // 이미 닫혀있으면 무시
-        isOpen = false;
+        if (!IsNetworkActive)
+        {
+            SetDoorLocal(false);
+            return;
+        }
 
+        if (IsServer && networkIsOpen.Value)
+        {
+            networkIsOpen.Value = false;
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestToggleServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ToggleOnServer();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestSetOpenServerRpc(bool open, ServerRpcParams rpcParams = default)
+    {
+        SetOpenOnServer(open);
+    }
+
+    private void ToggleOnServer()
+    {
+        networkIsOpen.Value = !networkIsOpen.Value;
+    }
+
+    private void SetOpenOnServer(bool open)
+    {
+        if (networkIsOpen.Value != open)
+        {
+            networkIsOpen.Value = open;
+        }
+    }
+
+    private void HandleOpenChanged(bool previousValue, bool newValue)
+    {
+        isOpen = newValue;
+        AnimateDoor(newValue);
+    }
+
+    // ───── 로컬(비네트워크) 폴백 ─────
+    private void RequestInteractLocal(GameObject interactor)
+    {
+        if (needsKey && !isOpen)
+        {
+            PlayerInteractor playerInteractor = interactor != null ? interactor.GetComponent<PlayerInteractor>() : null;
+            GrabbableObject heldObj = playerInteractor != null ? playerInteractor.CurrentHeldGrabbable : null;
+            if (heldObj != null && heldObj.CompareTag(keyTag))
+            {
+                playerInteractor.ConsumeHeldObject();
+                SetDoorLocal(true);
+            }
+            else
+            {
+                Debug.Log($"🔒 [{gameObject.name}] 문이 잠겨있습니다! 열쇠({keyTag})가 필요합니다.");
+            }
+            return;
+        }
+
+        if (!canDirectInteract)
+        {
+            Debug.Log($"🔒 [{gameObject.name}] 문은 다른 장치(스위치)로 열어야 합니다!");
+            return;
+        }
+
+        SetDoorLocal(!isOpen);
+    }
+
+    private void SetDoorLocal(bool open)
+    {
+        if (isOpen == open) return;
+        isOpen = open;
+        AnimateDoor(open);
+    }
+
+    // ───── 연출(모든 클라이언트 공통) ─────
+    private void AnimateDoor(bool open)
+    {
         if (moveCoroutine != null) StopCoroutine(moveCoroutine);
 
         if (doorType == DoorType.Slide)
-            moveCoroutine = StartCoroutine(MoveRoutine(closedPosition));
+            moveCoroutine = StartCoroutine(MoveRoutine(open ? openPosition : closedPosition));
         else
-            moveCoroutine = StartCoroutine(RotateRoutine(closedRotation));
+            moveCoroutine = StartCoroutine(RotateRoutine(open ? openRotation : closedRotation));
+    }
+
+    private void ApplyDoorInstant(bool open)
+    {
+        if (moveCoroutine != null)
+        {
+            StopCoroutine(moveCoroutine);
+            moveCoroutine = null;
+        }
+
+        if (doorType == DoorType.Slide)
+            transform.localPosition = open ? openPosition : closedPosition;
+        else
+            transform.localRotation = open ? openRotation : closedRotation;
     }
 
     private IEnumerator MoveRoutine(Vector3 targetPos)
@@ -155,7 +287,22 @@ public class DoorController : MonoBehaviour, IInteractable
         transform.localRotation = targetRot;
     }
 
-    // ⭐ 3초 열리고 2초 닫히는 무한 루프 코루틴
+    // ───── 자동 반복(권위 인스턴스에서만) ─────
+    private void StartAutoLoop()
+    {
+        if (autoLoopCoroutine != null) return;
+        autoLoopCoroutine = StartCoroutine(AutoLoopRoutine());
+    }
+
+    private void StopAutoLoop()
+    {
+        if (autoLoopCoroutine != null)
+        {
+            StopCoroutine(autoLoopCoroutine);
+            autoLoopCoroutine = null;
+        }
+    }
+
     private IEnumerator AutoLoopRoutine()
     {
         while (true)

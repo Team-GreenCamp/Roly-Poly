@@ -44,6 +44,9 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float fallenTiltAngle = 35f;
     [SerializeField] private float recoveryDelay = 1f;
     [SerializeField] private float recoveryTorqueMultiplier = 2.5f;
+    [SerializeField] private float knockdownMinimumDuration = 1.2f;
+    [SerializeField] private float knockdownUprightAngle = 12f;
+    [SerializeField] private float knockdownRecoveryAngularSpeed = 1.2f;
     [SerializeField] private float turnTorque = 35f;
     [SerializeField] private float turnDamping = 6f;
     [SerializeField] private float maxAngularVelocity = 25f;
@@ -70,6 +73,9 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float landingTorqueMultiplier = 0.2f;
     [SerializeField] private float externalImpactForceMultiplier = 1f;
     [SerializeField] private float externalImpactTorqueMultiplier = 0.35f;
+    [SerializeField] private float knockdownImpactSpeedThreshold = 7f;
+    [SerializeField] private float knockdownThrownObjectSpeedThreshold = 5.5f;
+    [SerializeField] private float knockdownFallingObjectSpeedThreshold = 5f;
 
     [Header("Slope")]
     [SerializeField] private float slideSlopeAngle = 32f;
@@ -80,6 +86,10 @@ public partial class PlayerController : NetworkBehaviour
     private InputAction sprintAction;
 
     public Vector2 MoveInput => moveInput;
+    public bool IsKnockedDown => isKnockedDown;
+    // 소유자(또는 네트워크 세션이 없는 단일 플레이) 인스턴스에서만 입력을 처리해야 하는지 여부.
+    // PlayerInteractor / PlayerClimber 등 비-NetworkBehaviour 입력 스크립트가 공유한다.
+    public bool HasInputAuthority => CanProcessInput();
     private Vector2 moveInput;
 
     private float currentCarrySpeedMultiplier = 1f;
@@ -93,9 +103,11 @@ public partial class PlayerController : NetworkBehaviour
     private bool jumpQueued;
     private bool isPhysicsOwner;
     private bool gameplayInputEnabled = true;
+    private bool isKnockedDown;
     private float groundedContactTimer;
     private float lastVerticalVelocity;
     private float timeSinceLargeTilt;
+    private float knockdownTimer;
     private float landingSpeedPreserveTimer;
     private Vector3 landingPreservedPlanarVelocity;
     private PhysicsMaterial lowFrictionColliderMaterial;
@@ -153,6 +165,12 @@ public partial class PlayerController : NetworkBehaviour
             return;
         }
 
+        if (isKnockedDown)
+        {
+            ClearGameplayInputState();
+            return;
+        }
+
         if (playerInput == null || physicsBody == null)
         {
             return;
@@ -177,6 +195,16 @@ public partial class PlayerController : NetworkBehaviour
         UpdateGroundedState();
         UpdateColliderSurfaceMaterial();
         ApplyCustomGravity();
+
+        if (isKnockedDown)
+        {
+            ApplySlopeSlide();
+            ApplyBalanceTorques();
+            UpdateKnockdownRecovery();
+            ClampVerticalVelocity();
+            return;
+        }
+
         ApplyJump();
         UpdateMovement();
         ApplyStepAssist(currentMoveDirection);
@@ -234,6 +262,9 @@ public partial class PlayerController : NetworkBehaviour
         fallenTiltAngle = Mathf.Clamp(fallenTiltAngle, 1f, 89f);
         recoveryDelay = Mathf.Max(0f, recoveryDelay);
         recoveryTorqueMultiplier = Mathf.Max(1f, recoveryTorqueMultiplier);
+        knockdownMinimumDuration = Mathf.Max(0f, knockdownMinimumDuration);
+        knockdownUprightAngle = Mathf.Clamp(knockdownUprightAngle, 1f, fallenTiltAngle);
+        knockdownRecoveryAngularSpeed = Mathf.Max(0f, knockdownRecoveryAngularSpeed);
         turnTorque = Mathf.Max(0f, turnTorque);
         turnDamping = Mathf.Max(0f, turnDamping);
         maxAngularVelocity = Mathf.Max(1f, maxAngularVelocity);
@@ -251,6 +282,9 @@ public partial class PlayerController : NetworkBehaviour
         landingTorqueMultiplier = Mathf.Max(0f, landingTorqueMultiplier);
         externalImpactForceMultiplier = Mathf.Max(0f, externalImpactForceMultiplier);
         externalImpactTorqueMultiplier = Mathf.Max(0f, externalImpactTorqueMultiplier);
+        knockdownImpactSpeedThreshold = Mathf.Max(0f, knockdownImpactSpeedThreshold);
+        knockdownThrownObjectSpeedThreshold = Mathf.Max(0f, knockdownThrownObjectSpeedThreshold);
+        knockdownFallingObjectSpeedThreshold = Mathf.Max(0f, knockdownFallingObjectSpeedThreshold);
         slideSlopeAngle = Mathf.Clamp(slideSlopeAngle, 1f, 89f);
         slideForce = Mathf.Max(0f, slideForce);
     }

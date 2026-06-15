@@ -44,6 +44,12 @@ public class PlayerClimber : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        // 원격 프록시에서 자동 매달리기가 일어나 동기화된 위치를 덮어쓰는 것을 막는다.
+        if (playerController != null && !playerController.HasInputAuthority)
+        {
+            return;
+        }
+
         if (other.CompareTag(ledgeTag) || other.CompareTag(monkeyBarTag))
         {
             if (!overlappingLedges.Contains(other))
@@ -66,6 +72,11 @@ public class PlayerClimber : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
+        if (playerController != null && !playerController.HasInputAuthority)
+        {
+            return;
+        }
+
         if (overlappingLedges.Contains(other))
             overlappingLedges.Remove(other);
 
@@ -126,6 +137,12 @@ public class PlayerClimber : MonoBehaviour
 
     private void Update()
     {
+        // 소유자(또는 오프라인 단일 플레이) 인스턴스에서만 매달리기 입력을 처리한다.
+        if (playerController != null && !playerController.HasInputAuthority)
+        {
+            return;
+        }
+
         // 1. 매달리지 않은 상태일 때
         if (!isHanging)
         {
@@ -204,7 +221,7 @@ public class PlayerClimber : MonoBehaviour
                         // 머리가 닿았을 때의 '현재 높이'를 강제로 유지 (1.7m 억지 보정으로 인해 밑으로 떨어지는 현상 완벽 해결)
                         closestPointOnWire.y = transform.position.y;
                         
-                        transform.position = closestPointOnWire;
+                        ApplyClimbPosition(closestPointOnWire);
                         
                         // 이동하는 방향을 자연스럽게 바라보도록 회전 (Y축 기준)
                         if (autoMoveDir.sqrMagnitude > 0.001f)
@@ -228,7 +245,7 @@ public class PlayerClimber : MonoBehaviour
                 Vector3 nextPos = transform.position + moveDir * climbMoveSpeed * Time.deltaTime;
 
                 // --- 장애물 통과 방지 (벽/기둥 클리핑 방지) ---
-                if (moveDir.sqrMagnitude > 0.001f)
+                if (isMonkeyBar && moveDir.sqrMagnitude > 0.001f)
                 {
                     // 플레이어 중심(가슴 높이쯤)에서 이동 방향으로 구체를 쏴서 충돌 검사
                     Vector3 origin = transform.position + Vector3.up * 1.0f;
@@ -305,7 +322,7 @@ public class PlayerClimber : MonoBehaviour
                         {
                             Debug.Log($"[Climber] 바닥 착지로 인해 종료: {hit.collider.name}");
                             nextPos.y = hit.point.y;
-                            transform.position = nextPos;
+                            ApplyClimbPosition(nextPos);
                             StopHanging();
                             return;
                         }
@@ -317,14 +334,25 @@ public class PlayerClimber : MonoBehaviour
                 {
                     Debug.Log("[Climber] 사다리 최하단 도달로 인해 종료");
                     nextPos.y = minY;
-                    transform.position = nextPos;
+                    ApplyClimbPosition(nextPos);
                     StopHanging();
                     return;
                 }
 
-                // 최종 이동 적용 (transform.position 직접 설정)
-                transform.position = nextPos;
+                // 최종 이동 적용: kinematic Rigidbody와 Transform 위치를 같이 맞춰 끼임/덜컥임을 줄입니다.
+                ApplyClimbPosition(nextPos);
             }
         }
+    }
+
+    private void ApplyClimbPosition(Vector3 nextPosition)
+    {
+        // 매달린 동안 Rigidbody가 kinematic이므로 위치 동기화를 한 곳에서 처리합니다.
+        if (physicsBody != null && physicsBody.isKinematic)
+        {
+            physicsBody.MovePosition(nextPosition);
+        }
+
+        transform.position = nextPosition;
     }
 }

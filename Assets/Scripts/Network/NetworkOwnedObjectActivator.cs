@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using Unity.Cinemachine;
@@ -210,22 +211,21 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     private bool ShouldLockCursorInCurrentScene()
     {
-        if (cursorLockSceneNames == null || cursorLockSceneNames.Length == 0)
-        {
-            return false;
-        }
-
         string activeSceneName = SceneManager.GetActiveScene().name;
-        for (int i = 0; i < cursorLockSceneNames.Length; i++)
+        if (cursorLockSceneNames != null)
         {
-            if (!string.IsNullOrWhiteSpace(cursorLockSceneNames[i]) &&
-                cursorLockSceneNames[i] == activeSceneName)
+            for (int i = 0; i < cursorLockSceneNames.Length; i++)
             {
-                return true;
+                if (!string.IsNullOrWhiteSpace(cursorLockSceneNames[i]) &&
+                    cursorLockSceneNames[i] == activeSceneName)
+                {
+                    return true;
+                }
             }
         }
 
-        return false;
+        // Stage 1처럼 Inspector 목록에 빠진 실제 게임 씬도 커서 잠금을 적용합니다.
+        return !IsInLobbyScene();
     }
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
@@ -326,6 +326,31 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         SubmitReadyStateServerRpc(isReady);
+    }
+
+    public bool BroadcastGameStart(string sceneName)
+    {
+        if (!IsSpawned || !IsServer || string.IsNullOrWhiteSpace(sceneName))
+        {
+            return false;
+        }
+
+        // Ready가 통과하는 Player NetworkObject 경로로 Start 상태도 클라이언트에 직접 전달합니다.
+        BroadcastGameStartClientRpc(new FixedString128Bytes(sceneName.Trim()));
+        return true;
+    }
+
+    [ClientRpc]
+    private void BroadcastGameStartClientRpc(FixedString128Bytes sceneName)
+    {
+        string targetSceneName = sceneName.ToString();
+        if (string.IsNullOrWhiteSpace(targetSceneName) || IsServer)
+        {
+            return;
+        }
+
+        Debug.Log($"[ReadyFlow][GameStartRpc] received from player object. scene={targetSceneName}");
+        // 실제 씬 로드는 Netcode SceneManager가 처리해야 Player NetworkObject spawn 순서가 보장됩니다.
     }
 
     [ServerRpc]
@@ -760,22 +785,21 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     private bool ShouldCreateRuntimeCameraInCurrentScene()
     {
-        if (runtimeCameraSceneNames == null || runtimeCameraSceneNames.Length == 0)
-        {
-            return false;
-        }
-
         string activeSceneName = SceneManager.GetActiveScene().name;
-        for (int i = 0; i < runtimeCameraSceneNames.Length; i++)
+        if (runtimeCameraSceneNames != null)
         {
-            if (!string.IsNullOrWhiteSpace(runtimeCameraSceneNames[i]) &&
-                runtimeCameraSceneNames[i] == activeSceneName)
+            for (int i = 0; i < runtimeCameraSceneNames.Length; i++)
             {
-                return true;
+                if (!string.IsNullOrWhiteSpace(runtimeCameraSceneNames[i]) &&
+                    runtimeCameraSceneNames[i] == activeSceneName)
+                {
+                    return true;
+                }
             }
         }
 
-        return false;
+        // 목록에 등록되지 않은 게임 씬에서도 카메라가 없으면 런타임 카메라를 보강합니다.
+        return !IsInLobbyScene();
     }
 
     private static CinemachineCamera FindSceneCinemachineCamera(Scene scene)

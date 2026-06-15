@@ -1,10 +1,14 @@
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class ButtonGimmick : MonoBehaviour, IInteractable
+// 서버 권한 기믹 패턴(순간식 버튼). 표준 설명은 LeverGimmick.cs 참고.
+// 차이점: 버튼은 "눌림" 상태를 서버가 일정 시간(resetTime) 유지한 뒤 자동으로 해제합니다.
+[RequireComponent(typeof(NetworkObject))]
+public class ButtonGimmick : NetworkBehaviour, IInteractable
 {
-    public bool isActivated = false;
+    public bool isActivated = false; // 런타임 표시용(동기화 상태의 로컬 캐시)
 
     [Header("버튼 연출 설정")]
     public Transform movingPart;
@@ -23,13 +27,24 @@ public class ButtonGimmick : MonoBehaviour, IInteractable
     public UnityEvent onActivate;   // 눌렸을 때 실행할 일
     public UnityEvent onDeactivate; // 튀어나올 때 실행할 일
 
-    private void Start()
+    private readonly NetworkVariable<bool> networkActivated =
+        new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private NetworkObject cachedNetworkObject;
+    private Coroutine moveCoroutine;
+    private Coroutine serverResetCoroutine;
+    private Coroutine localCycleCoroutine;
+
+    private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+
+    private void Awake()
     {
+        TryGetComponent(out cachedNetworkObject);
+
+        // 위치 캐싱은 OnNetworkSpawn(스냅)보다 먼저 끝나야 하므로 Awake에서 처리합니다.
         if (movingPart != null)
         {
             originalPos = movingPart.localPosition;
-
-            // 설정한 축(pressDirection)을 기준으로 거리(pressDistance)만큼 이동한 목표 위치를 잡습니다.
             pressedPos = originalPos + (pressDirection.normalized * pressDistance);
         }
         else
@@ -38,50 +53,122 @@ public class ButtonGimmick : MonoBehaviour, IInteractable
         }
     }
 
+    public override void OnNetworkSpawn()
+    {
+        networkActivated.OnValueChanged += HandleActivatedChanged;
+        isActivated = networkActivated.Value;
+        ApplyButtonInstant(isActivated);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        networkActivated.OnValueChanged -= HandleActivatedChanged;
+    }
+
     public void RequestInteract(GameObject interactor)
     {
-        if (isActivated) return;
+        if (!IsNetworkActive)
+        {
+            PressLocal();
+            return;
+        }
 
-        ExecuteInteract(interactor);
+        if (IsServer)
+        {
+            PressOnServer();
+            return;
+        }
+
+        RequestPressServerRpc();
     }
 
-    public void ExecuteInteract(GameObject interactor)
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestPressServerRpc(ServerRpcParams rpcParams = default)
     {
-        isActivated = true;
-        Debug.Log($"🔲 {interactor.name}이(가) [{gameObject.name}] 버튼을 눌렀습니다! ({resetTime}초 뒤 복구)");
+        PressOnServer();
+    }
 
+    private void PressOnServer()
+    {
+        if (networkActivated.Value) return; // 이미 눌린 상태면 무시
+
+        networkActivated.Value = true;
+
+        // 서버가 누름 상태를 일정 시간 유지한 뒤 자동 복귀시킵니다.
+        if (serverResetCoroutine != null) StopCoroutine(serverResetCoroutine);
+        serverResetCoroutine = StartCoroutine(ServerResetRoutine());
+    }
+
+    private IEnumerator ServerResetRoutine()
+    {
+        yield return new WaitForSeconds(resetTime);
+        networkActivated.Value = false;
+        serverResetCoroutine = null;
+    }
+
+    private void HandleActivatedChanged(bool previousValue, bool newValue)
+    {
+        isActivated = newValue;
+
+        if (newValue)
+        {
+            onActivate.Invoke();
+            AnimatePart(pressedPos);
+        }
+        else
+        {
+            onDeactivate.Invoke();
+            AnimatePart(originalPos);
+        }
+    }
+
+    // ───── 로컬(비네트워크) 폴백: 기존 동작 그대로 ─────
+    private void PressLocal()
+    {
+        if (isActivated) return;
+        isActivated = true;
         onActivate.Invoke();
 
-        if (movingPart != null)
-        {
-            StartCoroutine(ButtonPressRoutine());
-        }
+        if (localCycleCoroutine != null) StopCoroutine(localCycleCoroutine);
+        localCycleCoroutine = StartCoroutine(LocalPressCycle());
     }
 
-    private IEnumerator ButtonPressRoutine()
+    private IEnumerator LocalPressCycle()
     {
-        // 1. 설정한 축 방향으로 버튼 밀어넣기
-        while (Vector3.Distance(movingPart.localPosition, pressedPos) > 0.001f)
-        {
-            movingPart.localPosition = Vector3.MoveTowards(movingPart.localPosition, pressedPos, moveSpeed * Time.deltaTime);
-            yield return null;
-        }
-        movingPart.localPosition = pressedPos;
-
-        // 2. 대기
+        if (movingPart != null) yield return MovePartRoutine(pressedPos);
         yield return new WaitForSeconds(resetTime);
-
-        // 3. 원래 위치(축)로 복구
-        while (Vector3.Distance(movingPart.localPosition, originalPos) > 0.001f)
-        {
-            movingPart.localPosition = Vector3.MoveTowards(movingPart.localPosition, originalPos, moveSpeed * Time.deltaTime);
-            yield return null;
-        }
-        movingPart.localPosition = originalPos;
+        if (movingPart != null) yield return MovePartRoutine(originalPos);
 
         isActivated = false;
-        Debug.Log($"🔲 [{gameObject.name}] 버튼이 원상복구 되었습니다.");
-
         onDeactivate.Invoke();
+        localCycleCoroutine = null;
+    }
+
+    private void AnimatePart(Vector3 target)
+    {
+        if (movingPart == null) return;
+        if (moveCoroutine != null) StopCoroutine(moveCoroutine);
+        moveCoroutine = StartCoroutine(MovePartRoutine(target));
+    }
+
+    private void ApplyButtonInstant(bool activated)
+    {
+        if (movingPart == null) return;
+        if (moveCoroutine != null)
+        {
+            StopCoroutine(moveCoroutine);
+            moveCoroutine = null;
+        }
+        movingPart.localPosition = activated ? pressedPos : originalPos;
+    }
+
+    private IEnumerator MovePartRoutine(Vector3 target)
+    {
+        while (Vector3.Distance(movingPart.localPosition, target) > 0.001f)
+        {
+            movingPart.localPosition = Vector3.MoveTowards(movingPart.localPosition, target, moveSpeed * Time.deltaTime);
+            yield return null;
+        }
+        movingPart.localPosition = target;
     }
 }

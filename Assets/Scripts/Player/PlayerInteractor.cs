@@ -1,4 +1,5 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -22,9 +23,9 @@ public class PlayerInteractor : MonoBehaviour
 
     [Header("운반(Hold) 설정")]
     [Tooltip("가벼운 물체를 들 때 위치할 빈 오브젝트를 연결하세요.")]
-    public Transform holdPoint; 
+    public Transform holdPoint;
     [Tooltip("무거운 물체를 끌 때 위치할 빈 오브젝트를 연결하세요.")]
-    public Transform dragPoint; 
+    public Transform dragPoint;
     public float maxCarryMass = 20f;
     private float holdTimer = 0f;
 
@@ -37,25 +38,32 @@ public class PlayerInteractor : MonoBehaviour
 
     [Header("오뚜기 연출 설정")]
     [Tooltip("기울어질 캐릭터의 모델링(Visual) 오브젝트를 연결하세요.")]
-    public Transform characterVisual; 
+    public Transform characterVisual;
     public float tiltAngle = 15f;
     public float tiltSpeed = 10f;
 
     public InputActionReference interactAction; // E키
     public InputActionReference grabAction;     // R키
-    
+
     private IInteractable currentTargetInteractable;
     private GrabbableObject currentTargetGrabbable;
     private GrabbableObject currentHeldGrabbable;
+    private bool currentHeldIsHeavy;
     private InteractableOutlineHighlight currentOutlineHighlight;
+    private InteractableOutlineHighlight currentHeldOutlineHighlight;
 
     public CapsuleCollider PlayerCollider { get; private set; }
     private PlayerController playerController;
+    private NetworkObject playerNetworkObject;
+
+    // 잡기 요청 시 서버가 이 클라이언트의 PlayerInteractor를 역참조할 때 사용합니다.
+    public ulong OwnerClientId => playerNetworkObject != null ? playerNetworkObject.OwnerClientId : 0;
 
     private void Awake()
     {
         playerController = GetComponent<PlayerController>();
-        
+        playerNetworkObject = GetComponentInParent<NetworkObject>();
+
         PlayerCollider = GetComponentInParent<CapsuleCollider>();
         if (PlayerCollider == null)
         {
@@ -91,14 +99,40 @@ public class PlayerInteractor : MonoBehaviour
             throwAction.action.started -= OnThrowStarted;
             throwAction.action.Disable();
         }
-        ClearCurrentOutlineHighlight();
         ForceDropHeldObject();
+        ClearCurrentOutlineHighlight();
+        ClearHeldOutlineHighlight();
     }
 
     private void Update()
     {
+        // 원격 프록시 인스턴스는 로컬 키보드 입력에 반응하면 안 되므로 소유자만 처리한다.
+        if (playerController != null && !playerController.HasInputAuthority)
+        {
+            return;
+        }
+
+        if (playerController != null && playerController.IsKnockedDown)
+        {
+            playerController.OverrideFacingDirection = null;
+            ClearCurrentInteractionTargets();
+            ForceDropHeldObject();
+            holdTimer = 0f;
+            return;
+        }
+
+        // 들고 있는 물체와 너무 멀어지면 강제로 놓는다. (소유자가 직접 판단 → 서버에 놓기 요청)
+        if (currentHeldGrabbable != null)
+        {
+            float dist = Vector3.Distance(currentHeldGrabbable.transform.position, transform.position);
+            if (dist > currentHeldGrabbable.HeldFollowMaxDistance)
+            {
+                ForceDropHeldObject();
+            }
+        }
+
         CheckForInteractable();
-        HandleCharacterTilt();  
+        HandleCharacterTilt();
 
         // R키(grabAction)는 타이머를 통해 무거운 물체 끄는 것을 처리합니다.
         if (grabAction != null)
@@ -128,28 +162,47 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnThrowStarted(InputAction.CallbackContext context)
     {
+        if (playerController != null && !playerController.HasInputAuthority)
+        {
+            return;
+        }
+
+        if (playerController != null && playerController.IsKnockedDown)
+        {
+            return;
+        }
+
         ThrowHeldObject();
     }
 
     private void OnInteractStarted(InputAction.CallbackContext context)
     {
+        if (playerController != null && !playerController.HasInputAuthority)
+        {
+            return;
+        }
+
+        if (playerController != null && playerController.IsKnockedDown)
+        {
+            return;
+        }
+
         // 이미 가벼운 무언가를 들고 있다면 E키로 내려놓기
         if (currentHeldGrabbable != null && !currentHeldGrabbable.isHeavy)
         {
-            // 💡 [개선] 만약 손에 물건을 든 상태에서 조준선에 상호작용 가능한 문(IInteractable)이 감지된다면,
-            // 물건을 즉시 내려놓기 전에 문과의 상호작용을 먼저 수행해 열쇠 사용을 시도합니다.
+            // 손에 물건을 든 상태에서 조준선에 상호작용 가능한 문(IInteractable)이 감지되면,
+            // 내려놓기 전에 문과 상호작용을 먼저 수행해 열쇠 사용을 시도합니다.
             if (currentTargetInteractable != null)
             {
                 currentTargetInteractable.RequestInteract(gameObject);
-                
-                // 만약 문이 열리면서 손에 쥐고 있던 열쇠가 안전하게 소모(파괴)되었다면 그대로 종료합니다.
+
+                // 열쇠가 소모되어 손이 비었으면 그대로 종료
                 if (currentHeldGrabbable == null)
                 {
                     return;
                 }
             }
 
-            // 조준선에 기믹이 없거나 열쇠가 사용되지 않았다면 원래대로 바닥에 내려놓습니다.
             DropHeldObject();
             return;
         }
@@ -167,16 +220,13 @@ public class PlayerInteractor : MonoBehaviour
             currentTargetInteractable.RequestInteract(gameObject);
         }
     }
-    
+
     private void CheckForInteractable()
     {
         Vector3 origin = transform.position + Vector3.up * raycastHeightOffset;
         Ray ray = new Ray(origin, transform.forward);
 
-        // 반경 내의 모든 물체를 감지 (트리거 콜라이더 상태인 열쇠도 무조건 잡도록 QueryTriggerInteraction.Collide 명시)
         RaycastHit[] hits = Physics.SphereCastAll(ray, sphereCastRadius, interactRange, interactLayerMask, QueryTriggerInteraction.Collide);
-        
-        // 가까운 순서대로 정렬
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         GrabbableObject foundGrabbable = null;
@@ -184,11 +234,9 @@ public class PlayerInteractor : MonoBehaviour
 
         foreach (var hit in hits)
         {
-            // 💡 상자 안에 담긴 열쇠를 조준할 때 상자 콜라이더가 가로막는 현상을 해결하기 위해
-            // 레이캐스트에 걸린 모든 물체 중에서 들 수 있는 물체(GrabbableObject)와 상호작용 물체(IInteractable)를 각각 먼저 수집합니다.
             GrabbableObject grabbable = hit.collider.GetComponentInParent<GrabbableObject>();
-            
-            // 💥 [추가 핵심] 내가 이미 손(머리 위)에 들고 있는 물건은 본인의 조준 레이저를 가로막지 않도록 조준 검사 대상에서 제외합니다!
+
+            // 내가 이미 들고 있는 물건은 조준 검사 대상에서 제외
             if (grabbable != null && grabbable == currentHeldGrabbable)
             {
                 continue;
@@ -206,7 +254,6 @@ public class PlayerInteractor : MonoBehaviour
             }
         }
 
-        // ⭐ 들고 다닐 수 있는 물체(GrabbableObject)를 일반 상호작용 기믹(IInteractable)보다 최우선적으로 조준합니다!
         if (foundGrabbable != null)
         {
             currentTargetGrabbable = foundGrabbable;
@@ -226,19 +273,14 @@ public class PlayerInteractor : MonoBehaviour
         if (!useInteractableOutline)
         {
             ClearCurrentOutlineHighlight();
+            ClearHeldOutlineHighlight();
             return;
         }
 
         InteractableOutlineHighlight nextHighlight = null;
         if (targetObject != null)
         {
-            nextHighlight = targetObject.GetComponent<InteractableOutlineHighlight>();
-            if (nextHighlight == null)
-            {
-                // 상호작용 가능한 대상에는 런타임에 Outline 래퍼를 붙여 별도 프리팹 수정 없이 표시합니다.
-                nextHighlight = targetObject.AddComponent<InteractableOutlineHighlight>();
-            }
-
+            nextHighlight = GetOrCreateOutlineHighlight(targetObject);
             nextHighlight.Configure(interactableOutlineColor, interactableOutlineWidth, interactableOutlineMode);
         }
 
@@ -260,9 +302,73 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (currentOutlineHighlight != null)
         {
-            currentOutlineHighlight.SetHighlighted(false);
+            if (currentOutlineHighlight != currentHeldOutlineHighlight)
+            {
+                currentOutlineHighlight.SetHighlighted(false);
+            }
+
             currentOutlineHighlight = null;
         }
+    }
+
+    private void SetHeldOutlineTarget(GameObject targetObject)
+    {
+        if (!useInteractableOutline)
+        {
+            ClearHeldOutlineHighlight();
+            return;
+        }
+
+        InteractableOutlineHighlight nextHighlight = null;
+        if (targetObject != null)
+        {
+            nextHighlight = GetOrCreateOutlineHighlight(targetObject);
+            nextHighlight.Configure(interactableOutlineColor, interactableOutlineWidth, interactableOutlineMode);
+        }
+
+        if (currentHeldOutlineHighlight == nextHighlight)
+        {
+            return;
+        }
+
+        ClearHeldOutlineHighlight();
+        currentHeldOutlineHighlight = nextHighlight;
+
+        if (currentHeldOutlineHighlight != null)
+        {
+            currentHeldOutlineHighlight.SetHighlighted(true);
+        }
+    }
+
+    private void ClearHeldOutlineHighlight()
+    {
+        if (currentHeldOutlineHighlight != null)
+        {
+            if (currentHeldOutlineHighlight != currentOutlineHighlight)
+            {
+                currentHeldOutlineHighlight.SetHighlighted(false);
+            }
+
+            currentHeldOutlineHighlight = null;
+        }
+    }
+
+    private InteractableOutlineHighlight GetOrCreateOutlineHighlight(GameObject targetObject)
+    {
+        InteractableOutlineHighlight outlineHighlight = targetObject.GetComponent<InteractableOutlineHighlight>();
+        if (outlineHighlight == null)
+        {
+            outlineHighlight = targetObject.AddComponent<InteractableOutlineHighlight>();
+        }
+
+        return outlineHighlight;
+    }
+
+    private void ClearCurrentInteractionTargets()
+    {
+        currentTargetGrabbable = null;
+        currentTargetInteractable = null;
+        ClearCurrentOutlineHighlight();
     }
 
     private GameObject GetInteractableGameObject(IInteractable interactable)
@@ -277,19 +383,16 @@ public class PlayerInteractor : MonoBehaviour
 
         if (currentHeldGrabbable != null && currentHeldGrabbable.isHeavy)
         {
-            // 1. 캐릭터가 끌고 있는 물체를 바라보게 회전
             Vector3 directionToObject = currentHeldGrabbable.transform.position - transform.position;
-            directionToObject.y = 0; 
+            directionToObject.y = 0;
 
             if (directionToObject.sqrMagnitude > 0.001f)
             {
-                // 몸통(물리 바디) 자체가 물체를 향하도록 방향 덮어쓰기
                 if (playerController != null)
                 {
                     playerController.OverrideFacingDirection = directionToObject.normalized;
                 }
 
-                // 비주얼 오브젝트(모델링) 기울기 연출
                 Quaternion lookRot = Quaternion.LookRotation(directionToObject);
                 Quaternion targetWorldRotation = lookRot * Quaternion.Euler(tiltAngle, 0, 0);
                 characterVisual.rotation = Quaternion.Slerp(characterVisual.rotation, targetWorldRotation, tiltSpeed * Time.deltaTime);
@@ -297,7 +400,6 @@ public class PlayerInteractor : MonoBehaviour
         }
         else
         {
-            // 방향 덮어쓰기 해제
             if (playerController != null)
             {
                 playerController.OverrideFacingDirection = null;
@@ -308,7 +410,7 @@ public class PlayerInteractor : MonoBehaviour
     }
 
     // ====================================================================
-    // 물리 기반 잡기 / 놓기 로직 (GrabbableObject 연동)
+    // 물리 기반 잡기 / 놓기 로직 (서버 권한 GrabbableObject 연동)
     // ====================================================================
 
     private bool TryPickUp(GrabbableObject grabbable)
@@ -316,12 +418,12 @@ public class PlayerInteractor : MonoBehaviour
         Rigidbody target = grabbable.GetComponent<Rigidbody>();
         if (target == null)
         {
-            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]에 Rigidbody 컴포넌트가 없어 집을 수 없습니다!");
+            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]에 Rigidbody가 없어 집을 수 없습니다!");
             return false;
         }
         if (target.mass > maxCarryMass)
         {
-            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]의 무게({target.mass}kg)가 최대 들기 무게({maxCarryMass}kg)보다 무거워 집을 수 없습니다!");
+            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]의 무게가 최대 들기 무게보다 무거워 집을 수 없습니다!");
             return false;
         }
         if (holdPoint == null)
@@ -330,8 +432,7 @@ public class PlayerInteractor : MonoBehaviour
             return false;
         }
 
-        currentHeldGrabbable = grabbable;
-        grabbable.AddInteractor(this);
+        BeginHold(grabbable);
         return true;
     }
 
@@ -340,7 +441,7 @@ public class PlayerInteractor : MonoBehaviour
         Rigidbody target = grabbable.GetComponent<Rigidbody>();
         if (target == null)
         {
-            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]에 Rigidbody 컴포넌트가 없어 끌 수 없습니다!");
+            Debug.LogWarning($"⚠️ [{grabbable.gameObject.name}]에 Rigidbody가 없어 끌 수 없습니다!");
             return false;
         }
         if (dragPoint == null)
@@ -349,53 +450,61 @@ public class PlayerInteractor : MonoBehaviour
             return false;
         }
 
-        currentHeldGrabbable = grabbable;
-        grabbable.AddInteractor(this);
+        BeginHold(grabbable);
         return true;
+    }
+
+    // 잡기 시작: 서버에 홀더 추가를 요청하고, 소유자 로컬 효과(아웃라인/충돌무시/운반속도)를 적용한다.
+    private void BeginHold(GrabbableObject grabbable)
+    {
+        currentHeldGrabbable = grabbable;
+        currentHeldIsHeavy = grabbable.isHeavy;
+
+        grabbable.RequestAddInteractor(this);
+
+        if (!grabbable.isHeavy)
+        {
+            // 가벼운 물체는 내 플레이어와 충돌하지 않도록 로컬에서 무시 처리(각 머신 기준).
+            grabbable.SetIgnoreCollisionWith(this, true);
+        }
+
+        if (playerController != null)
+        {
+            playerController.SetCarrySpeedMultiplier(grabbable.GetCarrySpeedMultiplier());
+        }
+
+        SetHeldOutlineTarget(grabbable.gameObject);
     }
 
     private void DropHeldObject()
     {
         if (currentHeldGrabbable == null) return;
 
-        Rigidbody body = currentHeldGrabbable.GetComponent<Rigidbody>();
+        GrabbableObject grabbable = currentHeldGrabbable;
+        Rigidbody body = grabbable.GetComponent<Rigidbody>();
 
-        // --- 기믹 6: 스냅존(SnapZone) 확인 ---
-        Collider[] snapZones = Physics.OverlapSphere(body.transform.position, 1.5f, interactLayerMask, QueryTriggerInteraction.Collide);
-        SnapZone closestSnapZone = null;
-        float minDistance = float.MaxValue;
-
-        foreach (var col in snapZones)
-        {
-            SnapZone snapZone = col.GetComponent<SnapZone>();
-            if (snapZone != null && snapZone.CanSnap(currentHeldGrabbable))
-            {
-                float dist = Vector3.Distance(body.transform.position, snapZone.transform.position);
-                if (dist < minDistance)
-                {
-                    minDistance = dist;
-                    closestSnapZone = snapZone;
-                }
-            }
-        }
+        // --- 스냅존(SnapZone) 확인 ---
+        SnapZone closestSnapZone = FindSnapZone(grabbable);
 
         if (closestSnapZone != null)
         {
-            // 스냅존에 물체를 넘김
-            currentHeldGrabbable.RemoveInteractor(this, true);
-            closestSnapZone.SnapObject(body);
+            grabbable.RequestRemoveInteractor(this, true);
+            closestSnapZone.RequestSnap(grabbable);
+        }
+        else if (!grabbable.isHeavy)
+        {
+            // 가벼운 물체: 플레이어의 이동 속도를 실어 살짝 던지듯 내려놓기 (서버에서 물리 적용)
+            Vector3 tossVelocity = Vector3.zero;
+            Rigidbody playerRb = GetComponent<Rigidbody>();
+            if (playerRb != null)
+            {
+                tossVelocity = Vector3.ProjectOnPlane(playerRb.linearVelocity, Vector3.up);
+            }
+            grabbable.RequestThrow(this, tossVelocity, Vector3.zero);
         }
         else
         {
-            currentHeldGrabbable.RemoveInteractor(this, false);
-            
-            // 가벼운 물체는 플레이어의 이동 속도를 받아 던지는 효과 부여
-            Rigidbody playerRb = GetComponent<Rigidbody>();
-            if (playerRb != null && !currentHeldGrabbable.isHeavy)
-            {
-                Vector3 planarVelocity = Vector3.ProjectOnPlane(playerRb.linearVelocity, Vector3.up);
-                body.linearVelocity = planarVelocity;
-            }
+            grabbable.RequestRemoveInteractor(this, false);
         }
 
         ClearHeldObjectState();
@@ -415,12 +524,6 @@ public class PlayerInteractor : MonoBehaviour
         }
 
         GrabbableObject objectToThrow = currentHeldGrabbable;
-        Rigidbody body = objectToThrow.GetComponent<Rigidbody>();
-        if (body == null)
-        {
-            Debug.LogWarning($"⚠️ [{objectToThrow.gameObject.name}]에 Rigidbody 컴포넌트가 없어 던질 수 없습니다!");
-            return;
-        }
 
         Vector3 throwDirection = transform.forward.sqrMagnitude > 0.001f ? transform.forward.normalized : Vector3.forward;
         float objectThrowMultiplier = objectToThrow.isHeavy ? heavyThrowSpeedMultiplier : 1f;
@@ -432,46 +535,79 @@ public class PlayerInteractor : MonoBehaviour
             throwVelocity += Vector3.ProjectOnPlane(playerBody.linearVelocity, Vector3.up);
         }
 
-        // 던지기는 스냅존 체크 없이 즉시 손에서 해제한 뒤 전방 속도를 부여합니다.
-        objectToThrow.RemoveInteractor(this, false);
-        ClearHeldObjectState();
-
-        body.isKinematic = false;
-        body.useGravity = true;
-        body.interpolation = RigidbodyInterpolation.Interpolate;
-        body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        body.linearVelocity = throwVelocity;
-
         Vector3 spinAxis = Vector3.Cross(Vector3.up, throwDirection);
-        body.angularVelocity = spinAxis.sqrMagnitude > 0.001f
+        Vector3 angularVelocity = spinAxis.sqrMagnitude > 0.001f
             ? spinAxis.normalized * throwSpinSpeed
             : Vector3.zero;
+
+        objectToThrow.RequestThrow(this, throwVelocity, angularVelocity);
+        ClearHeldObjectState();
     }
 
     private void ForceDropHeldObject()
     {
         if (currentHeldGrabbable != null)
         {
-            currentHeldGrabbable.RemoveInteractor(this, false);
+            currentHeldGrabbable.RequestRemoveInteractor(this, false);
             ClearHeldObjectState();
         }
     }
 
     private void ClearHeldObjectState()
     {
+        if (currentHeldGrabbable != null && !currentHeldIsHeavy)
+        {
+            // 충돌 무시 해제(로컬)
+            currentHeldGrabbable.SetIgnoreCollisionWith(this, false);
+        }
+
+        if (playerController != null)
+        {
+            playerController.ResetCarrySpeedMultiplier();
+        }
+
+        ClearHeldOutlineHighlight();
         currentHeldGrabbable = null;
+        currentHeldIsHeavy = false;
+    }
+
+    private SnapZone FindSnapZone(GrabbableObject grabbable)
+    {
+        Rigidbody body = grabbable.GetComponent<Rigidbody>();
+        Vector3 center = body != null ? body.position : grabbable.transform.position;
+
+        Collider[] snapZones = Physics.OverlapSphere(center, 1.5f, interactLayerMask, QueryTriggerInteraction.Collide);
+        SnapZone closest = null;
+        float minDistance = float.MaxValue;
+
+        foreach (var col in snapZones)
+        {
+            SnapZone snapZone = col.GetComponent<SnapZone>();
+            if (snapZone != null && snapZone.CanSnap(grabbable))
+            {
+                float dist = Vector3.Distance(center, snapZone.transform.position);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    closest = snapZone;
+                }
+            }
+        }
+
+        return closest;
     }
 
     public GrabbableObject CurrentHeldGrabbable => currentHeldGrabbable;
 
-    // 손에 든 물체를 강제로 소모(파괴)시키는 메서드
+    // 손에 든 물체를 소모(파괴)시키는 메서드 (네트워크에서는 서버가 Despawn)
     public void ConsumeHeldObject()
     {
         if (currentHeldGrabbable != null)
         {
-            GrabbableObject objectToDestroy = currentHeldGrabbable;
-            ForceDropHeldObject();
-            Destroy(objectToDestroy.gameObject);
+            GrabbableObject objectToConsume = currentHeldGrabbable;
+            objectToConsume.RequestRemoveInteractor(this, true);
+            ClearHeldObjectState();
+            objectToConsume.RequestConsume(this);
         }
     }
 

@@ -58,20 +58,28 @@ public class EndPointClearTrigger : NetworkBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsServer || clearTriggered || !TryGetPlayerClientId(other, out ulong clientId))
+        if (!CanServerProcessTrigger() || clearTriggered || !TryGetPlayerClientId(other, out ulong clientId))
         {
             return;
         }
 
-        // 플레이어에 여러 Collider가 있어도 한 명은 한 번만 입장 처리되도록 접촉 수를 셉니다.
-        playerContactCounts.TryGetValue(clientId, out int contactCount);
-        playerContactCounts[clientId] = contactCount + 1;
-        TryTriggerClear();
+        RegisterPlayerInside(clientId, true);
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (!CanServerProcessTrigger() || clearTriggered || !TryGetPlayerClientId(other, out ulong clientId))
+        {
+            return;
+        }
+
+        // 씬 로드/스폰 타이밍 때문에 Enter를 놓친 경우에도 End Point 안에 있으면 다시 등록합니다.
+        RegisterPlayerInside(clientId, false);
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (!IsServer || clearTriggered || !TryGetPlayerClientId(other, out ulong clientId))
+        if (!CanServerProcessTrigger() || clearTriggered || !TryGetPlayerClientId(other, out ulong clientId))
         {
             return;
         }
@@ -105,6 +113,33 @@ public class EndPointClearTrigger : NetworkBehaviour
         return true;
     }
 
+    private bool CanServerProcessTrigger()
+    {
+        if (IsServer)
+        {
+            return true;
+        }
+
+        NetworkManager activeNetworkManager = NetworkManager != null ? NetworkManager : NetworkManager.Singleton;
+        return activeNetworkManager != null && activeNetworkManager.IsServer;
+    }
+
+    private void RegisterPlayerInside(ulong clientId, bool incrementContactCount)
+    {
+        // 플레이어에 여러 Collider가 있어도 한 명은 한 번만 입장 처리되도록 접촉 수를 셉니다.
+        playerContactCounts.TryGetValue(clientId, out int contactCount);
+        if (incrementContactCount)
+        {
+            playerContactCounts[clientId] = contactCount + 1;
+        }
+        else if (contactCount <= 0)
+        {
+            playerContactCounts[clientId] = 1;
+        }
+
+        TryTriggerClear();
+    }
+
     private void TryTriggerClear()
     {
         if (!AreAllConnectedPlayersInside())
@@ -113,7 +148,14 @@ public class EndPointClearTrigger : NetworkBehaviour
         }
 
         clearTriggered = true;
-        ShowClearPanelClientRpc();
+        if (IsSpawned)
+        {
+            ShowClearPanelClientRpc();
+        }
+        else
+        {
+            SetClearPanelVisible(true);
+        }
 
         if (returnRoutine == null)
         {
@@ -141,17 +183,38 @@ public class EndPointClearTrigger : NetworkBehaviour
 
     private IEnumerator ReturnToLobbyAfterDelay()
     {
-        yield return new WaitForSeconds(Mathf.Max(0f, returnToLobbyDelay));
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, returnToLobbyDelay));
 
         NetworkSessionManager sessionManager = FindFirstObjectByType<NetworkSessionManager>();
+        bool lobbyLoadStarted = false;
         if (sessionManager != null)
         {
-            sessionManager.ReturnToLobby();
+            lobbyLoadStarted = sessionManager.ReturnToLobby();
         }
-        else if (NetworkManager != null && NetworkManager.SceneManager != null && !string.IsNullOrWhiteSpace(fallbackLobbySceneName))
+
+        if (!lobbyLoadStarted)
         {
-            NetworkManager.SceneManager.LoadScene(fallbackLobbySceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+            // 세션 매니저 경로가 실패해도 서버의 Netcode SceneManager로 로비 복귀를 한 번 더 시도합니다.
+            TryLoadFallbackLobbyScene();
         }
+    }
+
+    private bool TryLoadFallbackLobbyScene()
+    {
+        NetworkManager activeNetworkManager = NetworkManager != null ? NetworkManager : NetworkManager.Singleton;
+        if (activeNetworkManager == null || !activeNetworkManager.IsServer || activeNetworkManager.SceneManager == null)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(fallbackLobbySceneName))
+        {
+            return false;
+        }
+
+        SceneEventProgressStatus progressStatus =
+            activeNetworkManager.SceneManager.LoadScene(fallbackLobbySceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+        return progressStatus == SceneEventProgressStatus.Started;
     }
 
     [ClientRpc]

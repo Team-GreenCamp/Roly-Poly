@@ -74,3 +74,12 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /.idea
+
+# macOS
+.DS_Store
+
+# Mono / Unity crash reports
+mono_crash.*
+mono_crash.eda558c06.0.json
+*.json
+mono_crash.eda558c06.0.json

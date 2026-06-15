@@ -24222,6 +24222,7 @@ MonoBehaviour:
   readyButton: {fileID: 0}
   roomEntryPanel: {fileID: 1280986891}
   roomCodeDisplayText: {fileID: 1269044844}
+  lobbyButtonPanelObjectName: Button Panel
   readyButtonObjectName: Ready Button
   startButtonObjectName: Start Button
   mapButtonObjectName: Map Button

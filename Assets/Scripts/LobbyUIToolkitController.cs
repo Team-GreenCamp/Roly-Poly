@@ -344,9 +344,11 @@ public class LobbyUIToolkitController : MonoBehaviour
     {
         if (sessionManager == null)
         {
+            Debug.Log("[LobbyStart] UI Toolkit start clicked, but NetworkSessionManager is null.");
             return;
         }
 
+        Debug.Log($"[LobbyStart] UI Toolkit start clicked. isHost={sessionManager.IsHost}, connected={sessionManager.ConnectedPlayerCount}, notReady=[{string.Join(", ", sessionManager.GetNotReadyRequiredClientIds())}], scene={sessionManager.CurrentGameSceneName}");
         sessionManager.StartGame();
 
         if (activeBackendRoomId > 0 && sessionManager.IsHost)

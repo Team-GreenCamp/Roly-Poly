@@ -1,12 +1,17 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine.Events;
 
-public class SnapZone : MonoBehaviour
+// 서버 권한 스냅존. 잡기 시스템(GrabbableObject)과 연동됩니다.
+// 동기화하려면 NetworkObject가 필요합니다. 스냅 모션은 서버가 박스 트랜스폼을 옮기고 NetworkTransform이 전파합니다.
+// (NetworkObject가 없으면 기존처럼 로컬에서 스냅합니다.)
+[RequireComponent(typeof(NetworkObject))]
+public class SnapZone : NetworkBehaviour
 {
     [Header("스냅 설정")]
     [Tooltip("스냅할 오브젝트의 태그 (비어있으면 모든 Grabbable 허용)")]
-    public string targetId = "Plank"; 
+    public string targetId = "Plank";
     public Transform snapPoint;
     public float snapDuration = 0.3f;
     public float snapDistance = 1.0f;
@@ -19,63 +24,131 @@ public class SnapZone : MonoBehaviour
     public UnityEvent onSnapped;
     public UnityEvent onUnsnapped;
 
-    private GrabbableObject snappedObject;
-    public bool IsOccupied => snappedObject != null;
+    private GrabbableObject snappedObject; // 권한 측 참조
+    private Coroutine snapCoroutine;
+
+    private readonly NetworkVariable<bool> networkOccupied =
+        new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private NetworkObject cachedNetworkObject;
+    private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+    private bool HasSnapAuthority => !IsNetworkActive || IsServer;
+
+    public bool IsOccupied => IsNetworkActive ? networkOccupied.Value : snappedObject != null;
 
     private void Awake()
     {
+        TryGetComponent(out cachedNetworkObject);
         if (ghostPreview != null) ghostPreview.SetActive(false);
         if (snapPoint == null) snapPoint = transform;
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        networkOccupied.OnValueChanged += HandleOccupiedChanged;
+        if (networkOccupied.Value && ghostPreview != null) ghostPreview.SetActive(false);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        networkOccupied.OnValueChanged -= HandleOccupiedChanged;
     }
 
     public bool CanSnap(GrabbableObject grabbable)
     {
         if (IsOccupied || grabbable == null) return false;
-        
-        // 특정 태그 검사
-        bool tagMatch = string.IsNullOrEmpty(targetId) || grabbable.CompareTag(targetId);
-        return tagMatch;
+        return string.IsNullOrEmpty(targetId) || grabbable.CompareTag(targetId);
     }
 
-    public void SnapObject(Rigidbody targetBody)
+    // PlayerInteractor가 물체를 스냅존에 넘길 때 호출.
+    public void RequestSnap(GrabbableObject grabbable)
     {
-        if (IsOccupied) return;
+        if (grabbable == null) return;
 
-        GrabbableObject grabbable = targetBody.GetComponent<GrabbableObject>();
-        if (grabbable != null && !grabbable.IsBeingHeld)
+        if (!IsNetworkActive)
         {
-            snappedObject = grabbable;
-            // 스냅된 상태임을 오브젝트에 알림
-            StartCoroutine(SnapCoroutine(targetBody));
+            SnapLocal(grabbable);
+            return;
+        }
+
+        if (IsServer)
+        {
+            SnapOnServer(grabbable);
+        }
+        else if (grabbable.TryGetComponent(out NetworkObject grabbableNo))
+        {
+            RequestSnapServerRpc(grabbableNo);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestSnapServerRpc(NetworkObjectReference grabbableRef, ServerRpcParams rpcParams = default)
+    {
+        if (grabbableRef.TryGet(out NetworkObject grabbableNo))
+        {
+            GrabbableObject grabbable = grabbableNo.GetComponent<GrabbableObject>();
+            if (grabbable != null) SnapOnServer(grabbable);
+        }
+    }
+
+    private void SnapOnServer(GrabbableObject grabbable)
+    {
+        if (networkOccupied.Value || grabbable.IsBeingHeld) return;
+
+        snappedObject = grabbable;
+        grabbable.DetachForSnap();
+        networkOccupied.Value = true; // OnValueChanged가 모두에게 onSnapped/고스트 처리
+
+        BeginSnapMotion(grabbable.GetComponent<Rigidbody>());
+    }
+
+    // ───── 오프라인(비네트워크) 폴백 ─────
+    private void SnapLocal(GrabbableObject grabbable)
+    {
+        if (snappedObject != null || grabbable.IsBeingHeld) return;
+        snappedObject = grabbable;
+        BeginSnapMotion(grabbable.GetComponent<Rigidbody>());
+        onSnapped?.Invoke();
+        if (ghostPreview != null) ghostPreview.SetActive(false);
+    }
+
+    private void HandleOccupiedChanged(bool previousValue, bool newValue)
+    {
+        if (newValue)
+        {
             onSnapped?.Invoke();
-            
             if (ghostPreview != null) ghostPreview.SetActive(false);
         }
+        else
+        {
+            onUnsnapped?.Invoke();
+        }
+    }
+
+    // 권한 측에서만 박스를 스냅 지점으로 이동시킵니다.
+    private void BeginSnapMotion(Rigidbody targetBody)
+    {
+        if (!HasSnapAuthority || targetBody == null) return;
+        if (snapCoroutine != null) StopCoroutine(snapCoroutine);
+        snapCoroutine = StartCoroutine(SnapCoroutine(targetBody));
     }
 
     private IEnumerator SnapCoroutine(Rigidbody targetBody)
     {
         targetBody.isKinematic = true;
         targetBody.useGravity = false;
-        
-        // 물리 엔진 충돌 방해를 최소화하기 위해 잠시 트리거로 변경하거나 레이어 조정 가능
-        // 여기서는 기본적으로 kinematic 처리를 신뢰합니다.
 
         Vector3 startPos = targetBody.transform.position;
         Quaternion startRot = targetBody.transform.rotation;
-        
         Vector3 targetPos = snapPoint.position;
         Quaternion targetRot = snapPoint.rotation;
 
         float elapsedTime = 0f;
         while (elapsedTime < snapDuration)
         {
-            if (snappedObject == null) yield break; // 중간에 탈출(그럴 일은 거의 없지만)
+            if (snappedObject == null) yield break;
 
-            float t = elapsedTime / snapDuration;
-            // 부드러운 가속/감속 커브
-            t = Mathf.SmoothStep(0, 1, t);
-            
+            float t = Mathf.SmoothStep(0, 1, elapsedTime / snapDuration);
             targetBody.transform.position = Vector3.Lerp(startPos, targetPos, t);
             targetBody.transform.rotation = Quaternion.Slerp(startRot, targetRot, t);
 
@@ -83,23 +156,29 @@ public class SnapZone : MonoBehaviour
             yield return null;
         }
 
-        targetBody.transform.position = targetPos;
-        targetBody.transform.rotation = targetRot;
+        targetBody.transform.SetPositionAndRotation(targetPos, targetRot);
+        snapCoroutine = null;
     }
 
-    public void ReleaseObject()
+    private void ReleaseObject()
     {
-        if (snappedObject != null)
+        snappedObject = null;
+
+        if (IsNetworkActive)
         {
-            snappedObject = null;
+            if (IsServer && networkOccupied.Value) networkOccupied.Value = false;
+        }
+        else
+        {
             onUnsnapped?.Invoke();
         }
     }
 
     private void Update()
     {
-        // 만약 스냅된 물체를 누군가 다시 잡았다면 즉시 스냅 상태 해제
-        if (IsOccupied && snappedObject.IsBeingHeld)
+        // 스냅된 물체를 누군가 다시 잡았다면 스냅 해제 (판정은 권한 측에서)
+        if (!HasSnapAuthority) return;
+        if (snappedObject != null && snappedObject.IsBeingHeld)
         {
             ReleaseObject();
         }
@@ -107,6 +186,7 @@ public class SnapZone : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        // 고스트 미리보기는 로컬 시각 힌트
         if (IsOccupied) return;
 
         GrabbableObject grabbable = other.GetComponentInParent<GrabbableObject>();
@@ -122,9 +202,8 @@ public class SnapZone : MonoBehaviour
         if (grabbable != null)
         {
             if (ghostPreview != null) ghostPreview.SetActive(false);
-            
-            // 만약 스냅되어 있던 물체가 나간 것이라면 (플레이어가 다시 집어갔을 때)
-            if (grabbable == snappedObject)
+
+            if (HasSnapAuthority && grabbable == snappedObject)
             {
                 ReleaseObject();
             }
