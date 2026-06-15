@@ -71,7 +71,10 @@ namespace Michsky.UI.Heat
 
         void Start()
         {
-            if (startBehaviour == StartBehaviour.Disable) { isOn = false; gameObject.SetActive(false); }
+            // 모달이 비활성 상태로 씬에 배치되면, 첫 OpenWindow() 가 GameObject 를 활성화하면서
+            // Awake/Start 가 그제서야 실행된다. 이때 원래 코드는 무조건 SetActive(false) 로 다시 닫아버려
+            // "버튼을 두 번 눌러야 패널이 뜨는" 문제가 생긴다. 이미 열린(isOn) 경우에는 닫지 않도록 가드한다.
+            if (startBehaviour == StartBehaviour.Disable) { if (!isOn) { gameObject.SetActive(false); } }
             else if (startBehaviour == StartBehaviour.Enable) { isOn = false; OpenWindow(); }
         }
 
