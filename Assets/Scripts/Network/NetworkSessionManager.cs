@@ -37,6 +37,14 @@ public class NetworkSessionManager : MonoBehaviour
     [SerializeField] private string lobbySceneName = "Lobby Scene";
     [SerializeField] private string gameSceneName = "GameScene";
 
+    [Header("Game Start Broadcast")]
+    [Tooltip("게임 시작 신호를 보낸 뒤 씬 전환을 시작하기까지 기다리는 시간(초). 지연이 큰 환경에서는 늘리세요.")]
+    [SerializeField] private float gameStartBroadcastDelaySeconds = 0.25f;
+    [Tooltip("게임 시작 신호 재전송 간격(초).")]
+    [SerializeField] private float gameStartBroadcastRetryIntervalSeconds = 0.35f;
+    [Tooltip("게임 시작 신호 재전송 횟수. 패킷 손실에 대비해 여러 번 보냅니다.")]
+    [SerializeField] private int gameStartBroadcastRetryCount = 3;
+
     [Header("Debug")]
     [SerializeField] private bool logReadyDebug = true;
 
@@ -67,9 +75,6 @@ public class NetworkSessionManager : MonoBehaviour
     private const string ReadyStateMessageName = "ReadyState";
     private const string MapSelectionMessageName = "MapSelection";
     private const string GameStartMessageName = "GameStart";
-    private const float GameStartBroadcastDelaySeconds = 0.25f;
-    private const float GameStartBroadcastRetryIntervalSeconds = 0.35f;
-    private const int GameStartBroadcastRetryCount = 3;
     private bool callbacksRegistered;
     private bool isShuttingDown;
     private bool gameStartRequested;
@@ -441,7 +446,7 @@ public class NetworkSessionManager : MonoBehaviour
 
     private IEnumerator LoadGameSceneAfterStartBroadcast(string targetSceneName)
     {
-        yield return new WaitForSecondsRealtime(GameStartBroadcastDelaySeconds);
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, gameStartBroadcastDelaySeconds));
 
         gameSceneLoadRoutine = null;
         if (networkManager == null || networkManager.SceneManager == null || string.IsNullOrWhiteSpace(targetSceneName))
@@ -882,9 +887,9 @@ public class NetworkSessionManager : MonoBehaviour
 
     private IEnumerator RepeatGameStartBroadcast(string targetSceneName)
     {
-        for (int i = 0; i < GameStartBroadcastRetryCount; i++)
+        for (int i = 0; i < gameStartBroadcastRetryCount; i++)
         {
-            yield return new WaitForSecondsRealtime(GameStartBroadcastRetryIntervalSeconds);
+            yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, gameStartBroadcastRetryIntervalSeconds));
 
             if (networkManager == null || !networkManager.IsServer || string.IsNullOrWhiteSpace(targetSceneName))
             {

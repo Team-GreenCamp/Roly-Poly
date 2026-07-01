@@ -33,14 +33,24 @@ public partial class PlayerController
 
         if (jumpAction != null && jumpAction.WasPressedThisFrame())
         {
-            jumpQueued = true;
+            // 입력은 가변 프레임(Update)에서 받고, 실제 점프는 FixedUpdate에서 처리하므로
+            // 누른 사실을 버퍼 타이머로 기억해 둔다. (착지 직전 입력 유실 방지)
+            jumpBufferTimer = jumpBufferTime;
+        }
+
+        // 돌진 입력도 FixedUpdate에서 임펄스로 처리하므로 눌림만 큐잉한다.
+        if (dashAction != null && dashAction.WasPressedThisFrame() && Time.time - lastDashTime > dashCooldown)
+        {
+            dashQueued = true;
         }
     }
 
     private void ClearGameplayInputState()
     {
         moveInput = Vector2.zero;
-        jumpQueued = false;
+        jumpBufferTimer = 0f;
+        coyoteTimer = 0f;
+        dashQueued = false;
         landingSpeedPreserveTimer = 0f;
         currentHorizontalVelocity = Vector3.zero;
         currentMoveDirection = Vector3.zero;
@@ -72,17 +82,29 @@ public partial class PlayerController
         return direction.sqrMagnitude > 1f ? direction.normalized : direction;
     }
 
+    private Camera cachedMovementCamera;
+    private Transform cachedCameraRoot;
+
     private Transform GetMovementReference()
     {
         // 카메라가 실제로 바라보는 방향 기준으로 이동한다.
-        Camera currentCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
-        if (currentCamera != null)
+        // Camera.main(내부 태그 검색)과 FindFirstObjectByType는 비싸므로, 캐시가 비었을 때(파괴/씬 전환)만 다시 찾는다.
+        if (cachedMovementCamera == null)
         {
-            return currentCamera.transform;
+            cachedMovementCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
         }
 
-        Transform cameraRoot = transform.Find("CameraRoot");
-        return cameraRoot != null ? cameraRoot : transform;
+        if (cachedMovementCamera != null)
+        {
+            return cachedMovementCamera.transform;
+        }
+
+        if (cachedCameraRoot == null)
+        {
+            cachedCameraRoot = transform.Find("CameraRoot");
+        }
+
+        return cachedCameraRoot != null ? cachedCameraRoot : transform;
     }
 
     private void ApplyCustomGravity()
@@ -97,10 +119,8 @@ public partial class PlayerController
 
     private void ApplyJump()
     {
-        bool shouldJump = jumpQueued;
-        jumpQueued = false;
-
-        if (!shouldJump || !isGrounded)
+        // 버퍼된 점프 입력이 살아 있고(jumpBufferTimer), 접지/코요테 윈도우 안일 때만 점프한다.
+        if (jumpBufferTimer <= 0f || coyoteTimer <= 0f)
         {
             return;
         }
@@ -108,7 +128,10 @@ public partial class PlayerController
         Vector3 velocity = physicsBody.linearVelocity;
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         physicsBody.linearVelocity = velocity;
+
         isGrounded = false;
+        jumpBufferTimer = 0f; // 입력 버퍼 소모
+        coyoteTimer = 0f;     // 코요테 소모(공중 더블 점프 방지)
     }
 
     private void UpdateMovement()

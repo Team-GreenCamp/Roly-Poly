@@ -257,6 +257,24 @@ public class GrabbableObject : NetworkBehaviour
         else Destroy(gameObject);
     }
 
+    // 서버가 특정 클라이언트가 이 물체를 들고 있는지 권위 있는 홀더 목록으로 검증합니다.
+    // (예: 문이 "열쇠를 들었다"는 클라이언트의 주장을 서버가 직접 확인할 때 사용)
+    public bool IsHeldByClientOnServer(ulong clientId)
+    {
+        for (int i = 0; i < interactors.Count; i++)
+        {
+            if (interactors[i] != null && interactors[i].OwnerClientId == clientId) return true;
+        }
+        return false;
+    }
+
+    // 서버가 이 물체를 소모(Despawn)합니다. 열쇠 사용처럼 서버에서 직접 호출하는 경로용입니다.
+    public void ServerConsume()
+    {
+        if (!IsServer) return;
+        DespawnOnServer();
+    }
+
     private void FixedUpdate()
     {
         // 클라이언트는 NetworkTransform이 박스를 옮기므로 물리를 굴리지 않습니다.

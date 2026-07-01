@@ -145,14 +145,22 @@ public class ChestController : NetworkBehaviour, IInteractable
     {
         if (keyObject == null) return;
 
-        // NOTE: 열쇠가 별도 NetworkObject라면 활성/물리 상태도 서버 권한으로 다뤄야 정확합니다.
-        //       현재는 잡기 시스템과 함께 다루는 범위라 기존처럼 각 클라이언트가 표시만 합니다.
+        // 표시(활성화)는 networkOpened 동기화로 모든 클라이언트가 동시에 실행합니다.
+        keyObject.SetActive(true);
+
+        // 물리 상태 변경은 권한 측에서만 합니다.
+        //  • 열쇠가 NetworkObject(서버 권한 Rigidbody)면 서버만 isKinematic을 만지고 나머지는 동기화로 따라옵니다.
+        //    (클라이언트가 임의로 isKinematic을 바꾸면 서버 권한 물리와 충돌합니다.)
+        //  • 비네트워크 열쇠면 기존처럼 각 클라이언트가 로컬로 처리합니다.
         Rigidbody keyRb = keyObject.GetComponent<Rigidbody>();
         if (keyRb != null)
         {
-            keyRb.isKinematic = true;
+            bool keyIsNetworked = keyObject.TryGetComponent(out NetworkObject keyNetworkObject) && keyNetworkObject.IsSpawned;
+            if (!keyIsNetworked || IsServer)
+            {
+                keyRb.isKinematic = true;
+            }
         }
-        keyObject.SetActive(true);
     }
 
     private IEnumerator OpenLidRoutine()

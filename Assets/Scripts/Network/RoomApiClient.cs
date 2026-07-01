@@ -42,9 +42,14 @@ public class RoomApiClient
 
     private readonly string baseUrl;
 
-    public RoomApiClient(string baseUrl)
+    // 백엔드 인증 토큰(선택). 비어 있으면 기존처럼 인증 헤더 없이 요청합니다.
+    // 보안을 실제로 적용하려면 Express 백엔드가 이 토큰을 검증해야 합니다(방 생성/삭제/수정 보호).
+    public string AuthToken { get; set; }
+
+    public RoomApiClient(string baseUrl, string authToken = null)
     {
         this.baseUrl = NormalizeBaseUrl(baseUrl);
+        AuthToken = authToken;
     }
 
     public async Task<RoomDto[]> GetRoomsAsync()
@@ -107,6 +112,12 @@ public class RoomApiClient
                 byte[] body = Encoding.UTF8.GetBytes(bodyJson);
                 request.uploadHandler = new UploadHandlerRaw(body);
                 request.SetRequestHeader("Content-Type", "application/json");
+            }
+
+            // 토큰이 설정돼 있으면 인증 헤더를 함께 보냅니다(백엔드 검증 전제).
+            if (!string.IsNullOrWhiteSpace(AuthToken))
+            {
+                request.SetRequestHeader("Authorization", "Bearer " + AuthToken);
             }
 
             UnityWebRequestAsyncOperation operation = request.SendWebRequest();

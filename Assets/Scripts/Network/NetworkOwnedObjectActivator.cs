@@ -85,6 +85,10 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     private Outline lobbyCharacterOutline;
     private Transform lobbyCharacterOutlineRoot;
 
+    // 로비에서 소유자가 캐릭터를 순환 선택할 때 쓰는 입력(Previous=←/dpad←, Next=→/dpad→).
+    private PlayerInput ownerPlayerInput;
+    [SerializeField] private bool logCharacterSelectDebug = true; // 문제 진단용. 확인 후 끄면 됩니다.
+
     private void Reset()
     {
         AutoAssignOwnerBehaviours();
@@ -128,6 +132,50 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         {
             BindLocalCamera();
         }
+    }
+
+    private void Update()
+    {
+        if (!IsSpawned || !IsOwner)
+        {
+            return;
+        }
+
+        // 액션 참조는 캐싱하지 않고 매 프레임 현재 PlayerInput에서 새로 읽는다.
+        // (PlayerInput이 활성/씬 전환 시 액션 인스턴스를 다시 만들면 캐싱한 참조가 죽기 때문)
+        if (ownerPlayerInput == null)
+        {
+            ownerPlayerInput = GetComponent<PlayerInput>();
+        }
+        if (ownerPlayerInput == null || ownerPlayerInput.actions == null)
+        {
+            return;
+        }
+
+        InputAction next = ownerPlayerInput.actions.FindAction("Next", false);
+        InputAction prev = ownerPlayerInput.actions.FindAction("Previous", false);
+        bool nextPressed = next != null && next.WasPressedThisFrame();
+        bool prevPressed = prev != null && prev.WasPressedThisFrame();
+
+        if (!nextPressed && !prevPressed)
+        {
+            return;
+        }
+
+        if (logCharacterSelectDebug)
+        {
+            Debug.Log($"[CharSelect] key={(nextPressed ? "Next(→)" : "Prev(←)")} " +
+                      $"inLobby={IsInLobbyScene()} scene='{SceneManager.GetActiveScene().name}' " +
+                      $"count={CharacterCount} cur={CurrentCharacterIndex} isServer={IsServer}");
+        }
+
+        // 실제 캐릭터 순환은 로비에서만. (게임 씬에서는 방향키가 이동에 쓰임)
+        if (!IsInLobbyScene())
+        {
+            return;
+        }
+
+        CycleCharacter(nextPressed ? 1 : -1);
     }
 
     public override void OnGainedOwnership()
@@ -294,7 +342,83 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     private void HandleCharacterIndexChanged(int previousValue, int newValue)
     {
+        if (logCharacterSelectDebug)
+        {
+            Debug.Log($"[CharSelect] index changed {previousValue} → {newValue} (owner={IsOwner}) → 모델 적용");
+        }
         ApplyCharacterIndex(newValue);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 캐릭터 선택(로비). 랜덤 배정 대신 소유자가 직접 고른다. 중복 허용.
+    // ─────────────────────────────────────────────────────────────
+    public int CharacterCount => characterView != null ? characterView.CharacterCount : 0;
+    public int CurrentCharacterIndex => syncedCharacterIndex.Value;
+
+    // 로비 UI 버튼/키에서 호출: 현재 캐릭터에서 delta만큼 순환 선택.
+    public void CycleCharacter(int delta)
+    {
+        int count = CharacterCount;
+        if (count <= 0)
+        {
+            return;
+        }
+
+        int next = (((syncedCharacterIndex.Value + delta) % count) + count) % count;
+        SelectCharacter(next);
+    }
+
+    // 특정 인덱스 선택 요청(소유자 → 서버 검증 → 전 클라 동기화).
+    public void SelectCharacter(int index)
+    {
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        int count = CharacterCount;
+        if (count <= 0)
+        {
+            return;
+        }
+
+        index = Mathf.Clamp(index, 0, count - 1);
+        if (index == syncedCharacterIndex.Value)
+        {
+            return;
+        }
+
+        if (IsServer)
+        {
+            SetCharacterOnServer(index);
+        }
+        else
+        {
+            RequestSetCharacterServerRpc(index);
+        }
+    }
+
+    [ServerRpc]
+    private void RequestSetCharacterServerRpc(int index, ServerRpcParams rpcParams = default)
+    {
+        SetCharacterOnServer(index);
+    }
+
+    private void SetCharacterOnServer(int index)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        int count = CharacterCount;
+        if (count <= 0)
+        {
+            return;
+        }
+
+        // 서버가 범위를 검증하고 확정한다. (중복은 허용 → 다른 플레이어와 겹쳐도 OK)
+        syncedCharacterIndex.Value = Mathf.Clamp(index, 0, count - 1);
     }
 
     private void HandleReadyStateChanged(bool previousValue, bool newValue)
@@ -489,7 +613,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         return true;
     }
 
-    private bool IsInLobbyScene()
+    public bool IsInLobbyScene()
     {
         string activeSceneName = SceneManager.GetActiveScene().name;
         return !string.IsNullOrWhiteSpace(lobbySceneName) && activeSceneName == lobbySceneName;

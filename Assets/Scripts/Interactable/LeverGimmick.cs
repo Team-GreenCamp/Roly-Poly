@@ -8,14 +8,13 @@ using UnityEngine.Events;
 //
 //  1) 상태(isOn)는 NetworkVariable로 두고 "서버만" 변경합니다.
 //  2) 클라이언트는 ServerRpc로 "토글 요청"만 보냅니다.
-//  3) 상태가 바뀌면 OnValueChanged 콜백에서 연출/이벤트를 "모든 클라이언트"가 동일하게 실행합니다.
+//  3) 상태가 바뀌면 OnStateChanged에서 연출/이벤트를 "모든 클라이언트"가 동일하게 실행합니다.
 //  4) NetworkObject가 없거나 아직 스폰되지 않았다면(에디터 단독 테스트 등) 기존처럼 로컬에서 동작합니다.
 //
-// 이 구조 덕분에 한 명이 켠 레버가 모든 플레이어 화면에서 동일하게 켜지고,
-// onToggleOn/Off 이벤트도 전원에게서 동시에 실행됩니다.
+// 스폰/디스폰 구독·스냅·서버 상태 변경 헬퍼 같은 공통 뼈대는 NetworkToggleGimmick(base)이 담당합니다.
 // ───────────────────────────────────────────────────────────────────────────
 [RequireComponent(typeof(NetworkObject))]
-public class LeverGimmick : NetworkBehaviour, IInteractable
+public class LeverGimmick : NetworkToggleGimmick
 {
     [Header("레버 상태")]
     public bool isOn = false; // 인스펙터에서 지정하는 초기 상태(런타임에는 동기화 상태의 로컬 캐시)
@@ -30,42 +29,18 @@ public class LeverGimmick : NetworkBehaviour, IInteractable
     public UnityEvent onToggleOn;  // 켰을 때 실행할 일
     public UnityEvent onToggleOff; // 껐을 때 실행할 일
 
-    // 서버만 쓰고 모두가 읽는 동기화 상태. 값이 바뀌면 모든 클라이언트에서 OnValueChanged가 호출됩니다.
+    // 서버만 쓰고 모두가 읽는 동기화 상태. (NGO 등록 안정성을 위해 NetworkVariable는 파생 클래스 필드로 유지)
     private readonly NetworkVariable<bool> networkIsOn =
         new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    private NetworkObject cachedNetworkObject;
+    protected override NetworkVariable<bool> StateVariable => networkIsOn;
+
     private Coroutine rotateCoroutine;
 
-    // NetworkObject가 붙어 있고 실제로 스폰된 경우에만 네트워크 경로를 사용합니다.
-    private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+    // 인스펙터에서 지정한 isOn을 서버가 스폰 시 초기 상태로 시드합니다.
+    protected override bool GetServerInitialState() => isOn;
 
-    private void Awake()
-    {
-        TryGetComponent(out cachedNetworkObject);
-    }
-
-    public override void OnNetworkSpawn()
-    {
-        // 초기 상태 시드는 구독 전에 처리해 스폰 시점에 이벤트가 튀지 않게 합니다.
-        if (IsServer && networkIsOn.Value != isOn)
-        {
-            networkIsOn.Value = isOn;
-        }
-
-        networkIsOn.OnValueChanged += HandleNetworkIsOnChanged;
-
-        // 늦게 들어온 클라이언트도 현재 상태로 즉시 맞춥니다. (연출/이벤트 없이 각도만 스냅)
-        isOn = networkIsOn.Value;
-        ApplyHandleInstant(isOn);
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        networkIsOn.OnValueChanged -= HandleNetworkIsOnChanged;
-    }
-
-    public void RequestInteract(GameObject interactor)
+    public override void RequestInteract(GameObject interactor)
     {
         if (!IsNetworkActive)
         {
@@ -76,7 +51,7 @@ public class LeverGimmick : NetworkBehaviour, IInteractable
 
         if (IsServer)
         {
-            ToggleOnServer();
+            ToggleStateOnServer();
             return;
         }
 
@@ -87,21 +62,21 @@ public class LeverGimmick : NetworkBehaviour, IInteractable
     [ServerRpc(RequireOwnership = false)]
     private void RequestToggleServerRpc(ServerRpcParams rpcParams = default)
     {
-        ToggleOnServer();
+        ToggleStateOnServer();
     }
 
-    private void ToggleOnServer()
-    {
-        // 서버에서만 상태를 뒤집습니다. 전파는 NetworkVariable가 담당합니다.
-        networkIsOn.Value = !networkIsOn.Value;
-    }
-
-    private void HandleNetworkIsOnChanged(bool previousValue, bool newValue)
+    protected override void OnStateChanged(bool previousValue, bool newValue)
     {
         // 모든 클라이언트(+서버)에서 동일하게 실행되는 연출/이벤트 처리.
         isOn = newValue;
         FireToggleEvents(newValue);
         AnimateHandle(newValue);
+    }
+
+    protected override void ApplyStateInstant(bool state)
+    {
+        isOn = state;
+        ApplyHandleInstant(state);
     }
 
     // ───── 로컬(비네트워크) 폴백 ─────

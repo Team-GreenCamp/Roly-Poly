@@ -599,6 +599,14 @@ public class PlayerInteractor : MonoBehaviour
 
     public GrabbableObject CurrentHeldGrabbable => currentHeldGrabbable;
 
+    // 서버가 들고 있던 물체를 소모(Despawn)하기로 결정했을 때, 소유자 로컬의 잡기 효과만 정리합니다.
+    // 실제 Despawn은 서버가 수행하며 NetworkObject 파괴가 모든 클라이언트에 복제됩니다.
+    // (DoorController의 서버 권한 열쇠 사용 경로에서 호출)
+    public void NotifyHeldObjectConsumedLocally()
+    {
+        ClearHeldObjectState();
+    }
+
     // 손에 든 물체를 소모(파괴)시키는 메서드 (네트워크에서는 서버가 Despawn)
     public void ConsumeHeldObject()
     {

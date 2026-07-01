@@ -46,6 +46,8 @@ public class LobbyUIController : MonoBehaviour
 
     [Header("Room List API")]
     [SerializeField] private string backendBaseUrl = "http://localhost:3000";
+    [Tooltip("백엔드 인증 토큰(선택). 입력하면 모든 방 API 요청에 Authorization: Bearer 헤더로 전송됩니다. 백엔드가 검증해야 실제 보안이 적용됩니다.")]
+    [SerializeField] private string backendAuthToken = "";
     [SerializeField] private string defaultRoomName = "Puzzle Room";
     [SerializeField] private string defaultMapId = "local-test";
     [SerializeField] private bool useRelayForRoomList;
@@ -110,7 +112,7 @@ public class LobbyUIController : MonoBehaviour
         ResolveMapPanelReferences();
         EnsureDefaultMapSelection();
         HideChaptersPanelForLobbyStart();
-        roomApiClient = new RoomApiClient(backendBaseUrl);
+        roomApiClient = new RoomApiClient(backendBaseUrl, backendAuthToken);
     }
 
     private void OnEnable()
@@ -720,6 +722,12 @@ public class LobbyUIController : MonoBehaviour
                 ShowWaitingRoomAfterHostStarted();
                 await RegisterHostedRoomAsync();
             }
+        }
+        catch (System.Exception exception)
+        {
+            // async void라 예외가 새어나가면 추적이 어려우므로 여기서 잡아 사용자에게 표시합니다.
+            SetRoomListStatus($"방 생성 실패: {exception.Message}");
+            Debug.LogException(exception);
         }
         finally
         {
@@ -1452,7 +1460,7 @@ public class LobbyUIController : MonoBehaviour
     {
         if (roomApiClient == null)
         {
-            roomApiClient = new RoomApiClient(backendBaseUrl);
+            roomApiClient = new RoomApiClient(backendBaseUrl, backendAuthToken);
         }
 
         return roomApiClient;

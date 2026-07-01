@@ -23,6 +23,10 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float gravity = -25f;
     [SerializeField] private float terminalVelocity = -50f;
     [SerializeField] private float fallGravityMultiplier = 2f;
+    [Tooltip("점프 입력 버퍼링 시간(초). 착지 직전에 누른 점프 입력을 이 시간 동안 기억했다가 착지하면 실행합니다.")]
+    [SerializeField] private float jumpBufferTime = 0.12f;
+    [Tooltip("코요테 타임(초). 발판에서 벗어난 직후 이 시간 동안은 여전히 점프할 수 있습니다.")]
+    [SerializeField] private float coyoteTime = 0.1f;
 
     [Header("Landing Stability")]
     [SerializeField] private float landingSpeedPreserveDuration = 0.18f;
@@ -100,7 +104,8 @@ public partial class PlayerController : NetworkBehaviour
     private Vector3 currentMoveDirection;
     private Vector3 groundNormal = Vector3.up;
     private bool isGrounded;
-    private bool jumpQueued;
+    private float jumpBufferTimer; // >0이면 최근에 누른 점프 입력이 아직 유효함(버퍼)
+    private float coyoteTimer;     // >0이면 최근까지 접지 상태였음(코요테 타임)
     private bool isPhysicsOwner;
     private bool gameplayInputEnabled = true;
     private bool isKnockedDown;
@@ -154,6 +159,12 @@ public partial class PlayerController : NetworkBehaviour
     {
         UpdatePhysicsOwnershipState();
 
+        // 찌부 비주얼은 소유권과 무관하게 모든 인스턴스에서 갱신한다.(원격 플레이어도 눌린 모습이 보여야 함)
+        UpdateSquashVisual();
+
+        // 애니메이션도 모든 인스턴스에서 구동한다.(소유자가 상태 판정 → 동기화 → 전 클라 재생)
+        DriveAnimation();
+
         if (!CanProcessInput())
         {
             return;
@@ -167,6 +178,13 @@ public partial class PlayerController : NetworkBehaviour
 
         if (isKnockedDown)
         {
+            ClearGameplayInputState();
+            return;
+        }
+
+        if (IsStunned)
+        {
+            // 머리를 밟혀 찌부/스턴된 동안에는 조작 불가.
             ClearGameplayInputState();
             return;
         }
@@ -205,7 +223,17 @@ public partial class PlayerController : NetworkBehaviour
             return;
         }
 
+        if (IsStunned)
+        {
+            // 스턴 중에는 이동/점프/돌진 입력을 반영하지 않되, 물리(중력·균형)는 유지한다.
+            ApplySlopeSlide();
+            ApplyBalanceTorques();
+            ClampVerticalVelocity();
+            return;
+        }
+
         ApplyJump();
+        ApplyDash();
         UpdateMovement();
         ApplyStepAssist(currentMoveDirection);
         ApplySlopeSlide();
@@ -250,6 +278,8 @@ public partial class PlayerController : NetworkBehaviour
         gravity = Mathf.Min(-0.01f, gravity);
         terminalVelocity = Mathf.Min(-1f, terminalVelocity);
         fallGravityMultiplier = Mathf.Max(1f, fallGravityMultiplier);
+        jumpBufferTime = Mathf.Max(0f, jumpBufferTime);
+        coyoteTime = Mathf.Max(0f, coyoteTime);
         landingSpeedPreserveDuration = Mathf.Max(0f, landingSpeedPreserveDuration);
         landingSpeedPreserveRatio = Mathf.Clamp01(landingSpeedPreserveRatio);
         landingTiltAngularDamping = Mathf.Max(0f, landingTiltAngularDamping);
@@ -287,6 +317,28 @@ public partial class PlayerController : NetworkBehaviour
         knockdownFallingObjectSpeedThreshold = Mathf.Max(0f, knockdownFallingObjectSpeedThreshold);
         slideSlopeAngle = Mathf.Clamp(slideSlopeAngle, 1f, 89f);
         slideForce = Mathf.Max(0f, slideForce);
+
+        stompMinDownSpeed = Mathf.Max(0f, stompMinDownSpeed);
+        stompBounceHeight = Mathf.Max(0.1f, stompBounceHeight);
+        stompHeadHeight = Mathf.Max(0f, stompHeadHeight);
+        stompDownImpulse = Mathf.Max(0f, stompDownImpulse);
+        stompStunDuration = Mathf.Max(0.05f, stompStunDuration);
+        stompCooldown = Mathf.Max(0f, stompCooldown);
+        squashScaleY = Mathf.Clamp(squashScaleY, 0.05f, 1f);
+        squashScaleXZ = Mathf.Max(1f, squashScaleXZ);
+        squashLerpSpeed = Mathf.Max(0.01f, squashLerpSpeed);
+        dashForce = Mathf.Max(0f, dashForce);
+        dashCooldown = Mathf.Max(0f, dashCooldown);
+        dashWindow = Mathf.Max(0f, dashWindow);
+        dashShoveStrength = Mathf.Max(0f, dashShoveStrength);
+
+        animWalkThreshold = Mathf.Max(0f, animWalkThreshold);
+        animRunThreshold = Mathf.Max(animWalkThreshold, animRunThreshold);
+        animCrossFadeDuration = Mathf.Max(0f, animCrossFadeDuration);
+        eyeReactionWeightLerpSpeed = Mathf.Max(0.01f, eyeReactionWeightLerpSpeed);
+        blinkIntervalMin = Mathf.Max(0.1f, blinkIntervalMin);
+        blinkIntervalMax = Mathf.Max(blinkIntervalMin, blinkIntervalMax);
+        blinkDuration = Mathf.Max(0.05f, blinkDuration);
     }
 
     private void EnsureLayerMasksConfigured()
@@ -352,6 +404,7 @@ public partial class PlayerController : NetworkBehaviour
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         sprintAction = playerInput.actions["Sprint"];
+        ResolveDashAction();
     }
 
     private bool CanProcessInput()

@@ -5,8 +5,9 @@ using UnityEngine.Events;
 
 // 서버 권한 기믹 패턴(순간식 버튼). 표준 설명은 LeverGimmick.cs 참고.
 // 차이점: 버튼은 "눌림" 상태를 서버가 일정 시간(resetTime) 유지한 뒤 자동으로 해제합니다.
+// 공통 뼈대(스폰/디스폰 구독·스냅·서버 상태 변경)는 NetworkToggleGimmick(base)이 담당합니다.
 [RequireComponent(typeof(NetworkObject))]
-public class ButtonGimmick : NetworkBehaviour, IInteractable
+public class ButtonGimmick : NetworkToggleGimmick
 {
     public bool isActivated = false; // 런타임 표시용(동기화 상태의 로컬 캐시)
 
@@ -30,18 +31,15 @@ public class ButtonGimmick : NetworkBehaviour, IInteractable
     private readonly NetworkVariable<bool> networkActivated =
         new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    private NetworkObject cachedNetworkObject;
+    protected override NetworkVariable<bool> StateVariable => networkActivated;
+
     private Coroutine moveCoroutine;
     private Coroutine serverResetCoroutine;
     private Coroutine localCycleCoroutine;
 
-    private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
-
-    private void Awake()
+    protected override void OnGimmickAwake()
     {
-        TryGetComponent(out cachedNetworkObject);
-
-        // 위치 캐싱은 OnNetworkSpawn(스냅)보다 먼저 끝나야 하므로 Awake에서 처리합니다.
+        // 위치 캐싱은 OnNetworkSpawn(스냅)보다 먼저 끝나야 하므로 Awake 시점에 처리합니다.
         if (movingPart != null)
         {
             originalPos = movingPart.localPosition;
@@ -53,19 +51,7 @@ public class ButtonGimmick : NetworkBehaviour, IInteractable
         }
     }
 
-    public override void OnNetworkSpawn()
-    {
-        networkActivated.OnValueChanged += HandleActivatedChanged;
-        isActivated = networkActivated.Value;
-        ApplyButtonInstant(isActivated);
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        networkActivated.OnValueChanged -= HandleActivatedChanged;
-    }
-
-    public void RequestInteract(GameObject interactor)
+    public override void RequestInteract(GameObject interactor)
     {
         if (!IsNetworkActive)
         {
@@ -92,7 +78,7 @@ public class ButtonGimmick : NetworkBehaviour, IInteractable
     {
         if (networkActivated.Value) return; // 이미 눌린 상태면 무시
 
-        networkActivated.Value = true;
+        SetStateOnServer(true);
 
         // 서버가 누름 상태를 일정 시간 유지한 뒤 자동 복귀시킵니다.
         if (serverResetCoroutine != null) StopCoroutine(serverResetCoroutine);
@@ -102,11 +88,11 @@ public class ButtonGimmick : NetworkBehaviour, IInteractable
     private IEnumerator ServerResetRoutine()
     {
         yield return new WaitForSeconds(resetTime);
-        networkActivated.Value = false;
+        SetStateOnServer(false);
         serverResetCoroutine = null;
     }
 
-    private void HandleActivatedChanged(bool previousValue, bool newValue)
+    protected override void OnStateChanged(bool previousValue, bool newValue)
     {
         isActivated = newValue;
 
@@ -120,6 +106,12 @@ public class ButtonGimmick : NetworkBehaviour, IInteractable
             onDeactivate.Invoke();
             AnimatePart(originalPos);
         }
+    }
+
+    protected override void ApplyStateInstant(bool state)
+    {
+        isActivated = state;
+        ApplyButtonInstant(state);
     }
 
     // ───── 로컬(비네트워크) 폴백: 기존 동작 그대로 ─────

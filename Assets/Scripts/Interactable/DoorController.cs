@@ -32,6 +32,9 @@ public class DoorController : NetworkBehaviour, IInteractable
     [Tooltip("열쇠로 인식할 오브젝트의 태그입니다.")]
     public string keyTag = "Key";
 
+    [Tooltip("잠긴 문을 열려고 시도했을 때 재생할 사운드입니다(선택). 비워두면 무시합니다.")]
+    public AudioClip lockedSound;
+
     [Header("자동 반복 타이머 (Auto Timing Trap)")]
     [Tooltip("체크하면 설정한 시간에 맞춰 자동으로 열리고 닫히기를 무한 반복합니다.")]
     public bool isAutoLoop = false;
@@ -118,17 +121,31 @@ public class DoorController : NetworkBehaviour, IInteractable
             {
                 Debug.Log($"🔑 [{gameObject.name}] {interactor.name}이(가) 열쇠({keyTag})를 사용했습니다!");
 
-                // NOTE: 잡기/열쇠 시스템이 아직 비동기라 소모(파괴)도 로컬에서만 일어납니다.
-                //       잡기 시스템을 네트워크화한 뒤에는 서버에서 열쇠 보유를 검증하도록 바꿔야 합니다.
-                playerInteractor.ConsumeHeldObject();
+                NetworkObject keyNetworkObject = heldObj.GetComponent<NetworkObject>();
+                if (keyNetworkObject != null && keyNetworkObject.IsSpawned)
+                {
+                    // 서버가 열쇠 보유를 검증한 뒤 '열쇠 소모 + 문 열기'를 원자적으로 처리합니다.
+                    // (클라이언트의 주장만 믿지 않고, 서버 권한 홀더 목록으로 실제 보유를 확인)
+                    ulong keyId = keyNetworkObject.NetworkObjectId;
+                    if (IsServer) TryUnlockWithKeyOnServer(keyId, NetworkManager.LocalClientId);
+                    else RequestUnlockWithKeyServerRpc(keyId);
 
-                if (IsServer) SetOpenOnServer(true);
-                else RequestSetOpenServerRpc(true);
+                    // 소유자 로컬의 잡기 효과(운반 속도/아웃라인 등)만 정리합니다.
+                    // 실제 Despawn은 서버가 수행하고 모든 클라이언트에 복제됩니다.
+                    playerInteractor.NotifyHeldObjectConsumedLocally();
+                }
+                else
+                {
+                    // 비네트워크 열쇠(구 프리팹/단독 테스트) 폴백: 기존 로컬 소모 경로.
+                    playerInteractor.ConsumeHeldObject();
+                    if (IsServer) SetOpenOnServer(true);
+                    else RequestSetOpenServerRpc(true);
+                }
             }
             else
             {
                 Debug.Log($"🔒 [{gameObject.name}] 문이 잠겨있습니다! 열쇠({keyTag})가 필요합니다.");
-                // TODO: '잠김' 사운드 재생 또는 UI 텍스트 띄우기
+                PlayLockedFeedback();
             }
             return;
         }
@@ -137,7 +154,7 @@ public class DoorController : NetworkBehaviour, IInteractable
         if (!canDirectInteract)
         {
             Debug.Log($"🔒 [{gameObject.name}] 문은 다른 장치(스위치)로 열어야 합니다!");
-            // TODO: '잠김' 사운드 재생 또는 UI 텍스트 띄우기
+            PlayLockedFeedback();
             return;
         }
 
@@ -188,6 +205,44 @@ public class DoorController : NetworkBehaviour, IInteractable
         SetOpenOnServer(open);
     }
 
+    // 클라이언트가 "이 열쇠로 문을 연다"고 요청 → 서버가 보유를 검증하고 처리합니다.
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestUnlockWithKeyServerRpc(ulong keyNetworkObjectId, ServerRpcParams rpcParams = default)
+    {
+        TryUnlockWithKeyOnServer(keyNetworkObjectId, rpcParams.Receive.SenderClientId);
+    }
+
+    // 서버 전용: 요청자가 실제로 열쇠를 들고 있는지 확인한 뒤, 열쇠 소모와 문 열기를 한 번에 처리합니다.
+    private void TryUnlockWithKeyOnServer(ulong keyNetworkObjectId, ulong requesterClientId)
+    {
+        if (!IsServer || networkIsOpen.Value) return;
+
+        NetworkManager networkManager = NetworkManager;
+        if (networkManager == null || networkManager.SpawnManager == null) return;
+        if (!networkManager.SpawnManager.SpawnedObjects.TryGetValue(keyNetworkObjectId, out NetworkObject keyNetworkObject)
+            || keyNetworkObject == null)
+        {
+            return;
+        }
+
+        GrabbableObject keyGrabbable = keyNetworkObject.GetComponent<GrabbableObject>();
+        if (keyGrabbable == null || !keyGrabbable.CompareTag(keyTag)) return;
+
+        // 요청자가 정말 이 열쇠를 들고 있는지 서버 권한 홀더 목록으로 검증합니다.
+        if (!keyGrabbable.IsHeldByClientOnServer(requesterClientId)) return;
+
+        keyGrabbable.ServerConsume();
+        networkIsOpen.Value = true;
+    }
+
+    private void PlayLockedFeedback()
+    {
+        if (lockedSound != null)
+        {
+            AudioSource.PlayClipAtPoint(lockedSound, transform.position);
+        }
+    }
+
     private void ToggleOnServer()
     {
         networkIsOpen.Value = !networkIsOpen.Value;
@@ -222,6 +277,7 @@ public class DoorController : NetworkBehaviour, IInteractable
             else
             {
                 Debug.Log($"🔒 [{gameObject.name}] 문이 잠겨있습니다! 열쇠({keyTag})가 필요합니다.");
+                PlayLockedFeedback();
             }
             return;
         }
@@ -229,6 +285,7 @@ public class DoorController : NetworkBehaviour, IInteractable
         if (!canDirectInteract)
         {
             Debug.Log($"🔒 [{gameObject.name}] 문은 다른 장치(스위치)로 열어야 합니다!");
+            PlayLockedFeedback();
             return;
         }
 

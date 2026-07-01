@@ -52,6 +52,10 @@ public partial class PlayerController
 
         lastVerticalVelocity = physicsBody.linearVelocity.y;
         groundedContactTimer = Mathf.Max(0f, groundedContactTimer - Time.fixedDeltaTime);
+
+        // 점프 버퍼/코요테 타임 갱신. (UpdateGroundedState는 일반/넉다운 모두 매 FixedUpdate 호출됨)
+        jumpBufferTimer = Mathf.Max(0f, jumpBufferTimer - Time.fixedDeltaTime);
+        coyoteTimer = isGrounded ? coyoteTime : Mathf.Max(0f, coyoteTimer - Time.fixedDeltaTime);
     }
 
     private float GetWorldRadius()
