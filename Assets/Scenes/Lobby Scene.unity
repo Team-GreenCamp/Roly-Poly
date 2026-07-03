@@ -24239,16 +24239,22 @@ MonoBehaviour:
     mapId: chapter-2
     sceneName: City Stage
     buttonBackground: {fileID: 21300000, guid: 744eebb3e201e4423b3e27bfd464693c, type: 3}
+  - chapterId: Chapter 3
+    mapId: chapter-3
+    sceneName: Survival Arena
+    buttonBackground: {fileID: 21300000, guid: b40193ac6ad554f14a52eee5d7ab0e6f, type: 3}
   loadingRoot: {fileID: 1894725635}
   loadingMessageText: {fileID: 0}
   roomNameInputField: {fileID: 185845169}
   roomListContentRoot: {fileID: 1023128889}
   roomListItemTemplate: {fileID: 509827346854015873, guid: 080aa985c0de042feb29968ab55e5651, type: 3}
+  roomListStatusLabel: {fileID: 0}
   roomListPanelsToCloseOnRoomClick:
   - {fileID: 1387800909}
   - {fileID: 434066332}
   roomListPanelToCloseOnRoomClick: {fileID: 434066332}
   backendBaseUrl: http://localhost:3000
+  backendAuthToken: 
   defaultRoomName: Room
   defaultMapId: local-test
   useRelayForRoomList: 1
@@ -68913,34 +68919,10 @@ MonoBehaviour:
     descriptionKey: Chapter1Description
     onContinue:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 610003329}
-          m_TargetAssemblyTypeName: LobbyUIController, Assembly-CSharp
-          m_MethodName: ConfirmSelectedMap
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
     onPlay:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 610003329}
-          m_TargetAssemblyTypeName: LobbyUIController, Assembly-CSharp
-          m_MethodName: ConfirmSelectedMap
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
     onReplay:
       m_PersistentCalls:
         m_Calls: []
@@ -68953,34 +68935,26 @@ MonoBehaviour:
     descriptionKey: Chapter2Description
     onContinue:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 610003329}
-          m_TargetAssemblyTypeName: LobbyUIController, Assembly-CSharp
-          m_MethodName: ConfirmSelectedMap
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
     onPlay:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 610003329}
-          m_TargetAssemblyTypeName: LobbyUIController, Assembly-CSharp
-          m_MethodName: ConfirmSelectedMap
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
+    onReplay:
+      m_PersistentCalls:
+        m_Calls: []
+  - chapterID: Chapter 3
+    title: Arena
+    background: {fileID: 21300000, guid: b40193ac6ad554f14a52eee5d7ab0e6f, type: 3}
+    description: Survival
+    defaultState: 1
+    titleKey: 
+    descriptionKey: 
+    onContinue:
+      m_PersistentCalls:
+        m_Calls: []
+    onPlay:
+      m_PersistentCalls:
+        m_Calls: []
     onReplay:
       m_PersistentCalls:
         m_Calls: []

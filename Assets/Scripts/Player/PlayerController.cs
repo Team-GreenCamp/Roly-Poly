@@ -74,6 +74,8 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float heavyObjectMassThreshold = 20f;
     [SerializeField] private float heavyObjectDownwardSpeedThreshold = 6f;
     [SerializeField] private float landingImpactThreshold = 10f;
+    [Tooltip("일반 점프/스톰프 바운스 착지 속도보다 이만큼 더 빠르게 떨어져야 넉다운됩니다(m/s). 평범한 점프 착지로 스스로 넘어지는 것을 막습니다.")]
+    [SerializeField] private float landingKnockdownSpeedMargin = 2f;
     [SerializeField] private float landingTorqueMultiplier = 0.2f;
     [SerializeField] private float externalImpactForceMultiplier = 1f;
     [SerializeField] private float externalImpactTorqueMultiplier = 0.35f;
@@ -331,6 +333,14 @@ public partial class PlayerController : NetworkBehaviour
         dashCooldown = Mathf.Max(0f, dashCooldown);
         dashWindow = Mathf.Max(0f, dashWindow);
         dashShoveStrength = Mathf.Max(0f, dashShoveStrength);
+
+        // 착지 넉다운 임계값은 '일반 점프/스톰프 바운스 착지 속도'보다 항상 높게 강제한다.
+        // (그렇지 않으면 코드 기본값 기준 제자리 점프 착지 속도 ≈ 11m/s가 임계값 10을 넘겨 매 점프마다 스스로 넘어진다.)
+        landingKnockdownSpeedMargin = Mathf.Max(0f, landingKnockdownSpeedMargin);
+        float jumpLandingSpeed = Mathf.Sqrt(jumpHeight * -2f * gravity * fallGravityMultiplier);
+        float stompLandingSpeed = Mathf.Sqrt(stompBounceHeight * -2f * gravity * fallGravityMultiplier);
+        float minLandingKnockdownSpeed = Mathf.Max(jumpLandingSpeed, stompLandingSpeed) + landingKnockdownSpeedMargin;
+        landingImpactThreshold = Mathf.Max(landingImpactThreshold, minLandingKnockdownSpeed);
 
         animWalkThreshold = Mathf.Max(0f, animWalkThreshold);
         animRunThreshold = Mathf.Max(animWalkThreshold, animRunThreshold);

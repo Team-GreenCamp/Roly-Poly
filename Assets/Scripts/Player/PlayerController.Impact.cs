@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public partial class PlayerController
@@ -72,6 +73,9 @@ public partial class PlayerController
             {
                 ApplyExternalImpulse(impactDirection.normalized * playerCollisionImpact, contact.point);
             }
+
+            // 상대가 플레이어이면 여기서 종료. (아래 Rigidbody 블록으로 흘러가 임펄스가 이중 적용되는 것을 방지)
+            return;
         }
 
         Rigidbody otherBody = collision.rigidbody;
@@ -80,9 +84,19 @@ public partial class PlayerController
             return;
         }
 
+        // 내가 빠르게 물체에 부딪힌 경우의 가벼운 자기 반동(소유자가 자기 자신에게 적용이라 항상 안전).
         if (relativeSpeed >= rigidbodyImpactSpeedThreshold)
         {
             ApplyExternalImpulse(collision.relativeVelocity * 0.08f, contact.point);
+        }
+
+        // '물체가 나를 맞혀서' 넘어지는 판정은 물체의 실제 속도가 필요하다.
+        // 네트워크에서는 원격 물체가 서버 권한이라 각 클라에서 kinematic(속도 0)이므로 피해자 로컬 감지가 불가.
+        // → 물리 권한(서버)이 GrabbableObject.OnCollisionEnter에서 감지해 피해자 소유자에게 릴레이한다.
+        //   (ServerHandleObjectImpact) 따라서 여기서는 오프라인(비네트워크)일 때만 직접 판정한다.
+        if (networkObject != null && networkObject.IsSpawned)
+        {
+            return;
         }
 
         GrabbableObject grabbable = otherBody.GetComponentInParent<GrabbableObject>();
@@ -113,6 +127,54 @@ public partial class PlayerController
             ApplyExternalImpulse(knockdownForce, contact.point);
             StartKnockdown();
         }
+    }
+
+    // GrabbableObject(물리 권한=서버/오프라인)가 던져지거나 떨어진 물체로 이 플레이어를 맞혔을 때 호출한다.
+    // 원격 물체는 서버에서만 실제 속도를 가지므로 넉다운 판정은 여기(서버)에서 하고,
+    // 실제 임펄스/넘어짐은 전투와 동일하게 피해자 '소유자'에게 ClientRpc로 릴레이한다.
+    public void ServerHandleObjectImpact(Rigidbody objectBody, bool isGrabbable, float relativeSpeed, Vector3 contactPoint)
+    {
+        if (!IsServer || objectBody == null)
+        {
+            return;
+        }
+
+        bool isThrownOrFastObject =
+            isGrabbable && relativeSpeed >= knockdownThrownObjectSpeedThreshold;
+
+        bool isHeavyDownwardImpact =
+            objectBody.mass >= heavyObjectMassThreshold &&
+            objectBody.linearVelocity.y <= -heavyObjectDownwardSpeedThreshold &&
+            objectBody.worldCenterOfMass.y > BodyCenter.y; // 물체가 나보다 위에서 내려옴
+
+        bool isFallingObjectImpact =
+            objectBody.linearVelocity.y <= -knockdownFallingObjectSpeedThreshold &&
+            relativeSpeed >= knockdownImpactSpeedThreshold;
+
+        if (!(isThrownOrFastObject || isHeavyDownwardImpact || isFallingObjectImpact))
+        {
+            return;
+        }
+
+        // 밀어내는 방향은 물체의 실제 이동 방향(던진/낙하 방향)으로. 세기는 상대속도에 비례.
+        Vector3 pushDirection = objectBody.linearVelocity.sqrMagnitude > 0.0001f
+            ? objectBody.linearVelocity.normalized
+            : (BodyCenter - contactPoint).normalized;
+        Vector3 knockdownForce = pushDirection * (Mathf.Max(1f, relativeSpeed) * 0.12f);
+        if (isHeavyDownwardImpact)
+        {
+            knockdownForce += Vector3.down * (objectBody.mass * 0.1f);
+        }
+
+        // 임펄스/넉다운은 피해자 소유자만 로컬로 적용(그 머신에서만 dynamic). 전투 릴레이 경로 재사용.
+        ClientRpcParams target = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { OwnerClientId }
+            }
+        };
+        ApplyCombatHitOwnerClientRpc(knockdownForce, contactPoint, CombatEffectKnockdown, target);
     }
 
     // 위에서 하강하며 상대의 머리 영역을 밟았는지 판정한다.(공격자=자기 머신, self 속도는 신뢰 가능)

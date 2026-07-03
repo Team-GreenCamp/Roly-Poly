@@ -189,14 +189,5 @@ public class RoomListItemView : MonoBehaviour
         return false;
     }
 
-    private static string GetRoomStatusText(string status)
-    {
-        return status switch
-        {
-            "open" => "대기중",
-            "in_game" => "진행중",
-            "closed" => "닫힘",
-            _ => string.IsNullOrWhiteSpace(status) ? "알 수 없음" : status
-        };
-    }
+    private static string GetRoomStatusText(string status) => RoomApiClient.GetStatusText(status);
 }

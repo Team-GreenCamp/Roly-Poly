@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -21,7 +22,9 @@ public class PressurePlateGimmick : NetworkBehaviour
 
     [Header("상태")]
     public bool isActivated = false;
-    private int objectsOnPlate = 0; // 발판 위 물체 수 (네트워크 시 서버에서만 카운트)
+    // 발판 위 물체들(네트워크 시 서버 권한에서만 관리). 카운터 대신 실제 콜라이더를 추적해
+    // 파괴/디스폰(OnTriggerExit가 오지 않는 경우)으로 발판이 눌린 채 고착되는 것을 막는다.
+    private readonly HashSet<Collider> occupants = new HashSet<Collider>();
 
     private Vector3 originalPos;
     private Vector3 pressedPos;
@@ -36,6 +39,8 @@ public class PressurePlateGimmick : NetworkBehaviour
 
     private NetworkObject cachedNetworkObject;
     private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+    // 카운트/상태 확정은 서버(네트워크) 또는 오프라인 로컬에서만.
+    private bool HasPlateAuthority => !IsNetworkActive || IsServer;
 
     private void Awake()
     {
@@ -75,45 +80,49 @@ public class PressurePlateGimmick : NetworkBehaviour
         {
             movingPart.localPosition = Vector3.MoveTowards(movingPart.localPosition, targetPos, moveSpeed * Time.deltaTime);
         }
+
+        // 판 위 물체가 파괴/디스폰되면 OnTriggerExit가 오지 않으므로, 권한 측에서 주기적으로 정리한다.
+        if (HasPlateAuthority && PruneOccupants())
+        {
+            UpdatePlateState();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (!(other.CompareTag("Player") || other.CompareTag("Box"))) return;
+        if (!HasPlateAuthority) return; // 카운트는 권한(서버/오프라인) 측에서만
 
-        if (!IsNetworkActive)
+        if (occupants.Add(other))
         {
-            // 오프라인/네트워크 미구성: 로컬에서 카운트
-            objectsOnPlate++;
             UpdatePlateState();
-            return;
         }
-
-        if (!IsServer) return; // 네트워크 시 카운트는 서버 권한
-        objectsOnPlate++;
-        UpdatePlateState();
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (!(other.CompareTag("Player") || other.CompareTag("Box"))) return;
+        if (!HasPlateAuthority) return;
 
-        if (!IsNetworkActive)
+        if (occupants.Remove(other))
         {
-            objectsOnPlate = Mathf.Max(0, objectsOnPlate - 1);
             UpdatePlateState();
-            return;
         }
-
-        if (!IsServer) return;
-        objectsOnPlate = Mathf.Max(0, objectsOnPlate - 1);
-        UpdatePlateState();
     }
 
-    // 서버(또는 오프라인 로컬)에서 현재 카운트로 활성 상태를 갱신합니다.
+    // 파괴/비활성된 콜라이더를 제거한다. 무언가 정리됐으면 true.
+    private bool PruneOccupants()
+    {
+        if (occupants.Count == 0) return false;
+        int before = occupants.Count;
+        occupants.RemoveWhere(c => c == null || !c.enabled || !c.gameObject.activeInHierarchy);
+        return occupants.Count != before;
+    }
+
+    // 서버(또는 오프라인 로컬)에서 현재 점유 물체 수로 활성 상태를 갱신합니다.
     private void UpdatePlateState()
     {
-        bool shouldBeActivated = objectsOnPlate > 0;
+        bool shouldBeActivated = occupants.Count > 0;
 
         if (IsNetworkActive)
         {

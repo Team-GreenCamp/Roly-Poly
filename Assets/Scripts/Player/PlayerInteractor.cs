@@ -49,6 +49,8 @@ public class PlayerInteractor : MonoBehaviour
     private GrabbableObject currentTargetGrabbable;
     private GrabbableObject currentHeldGrabbable;
     private bool currentHeldIsHeavy;
+    private bool hasActiveHold;        // BeginHold~ClearHeldObjectState 사이 true. 물체 Despawn(참조 fake-null) 감지용.
+    private bool heldHoldConfirmed;    // 서버 홀더 목록에 실제로 올라온 것을 한 번이라도 확인했는지.
     private InteractableOutlineHighlight currentOutlineHighlight;
     private InteractableOutlineHighlight currentHeldOutlineHighlight;
 
@@ -112,13 +114,32 @@ public class PlayerInteractor : MonoBehaviour
             return;
         }
 
-        if (playerController != null && playerController.IsKnockedDown)
+        // 넘어짐(넉다운)뿐 아니라 머리 밟힘(스턴/찌부) 중에도 조작 불가 + 들고 있던 물체를 놓는다.
+        if (playerController != null && (playerController.IsKnockedDown || playerController.IsStunned))
         {
             playerController.OverrideFacingDirection = null;
             ClearCurrentInteractionTargets();
             ForceDropHeldObject();
             holdTimer = 0f;
             return;
+        }
+
+        // 서버가 이 물체를 소모(Despawn)했거나(참조 fake-null), 다른 홀더가 던져 홀더 목록이 비었는데도
+        // 아직 들고 있다고 믿으면 로컬 잡기 효과(운반 속도/아웃라인/충돌무시)를 정리한다.
+        if (hasActiveHold)
+        {
+            if (currentHeldGrabbable == null)
+            {
+                ClearHeldObjectState();
+            }
+            else if (currentHeldGrabbable.IsBeingHeld)
+            {
+                heldHoldConfirmed = true;
+            }
+            else if (heldHoldConfirmed)
+            {
+                ClearHeldObjectState();
+            }
         }
 
         // 들고 있는 물체와 너무 멀어지면 강제로 놓는다. (소유자가 직접 판단 → 서버에 놓기 요청)
@@ -172,6 +193,11 @@ public class PlayerInteractor : MonoBehaviour
             return;
         }
 
+        if (playerController != null && playerController.IsStunned)
+        {
+            return;
+        }
+
         ThrowHeldObject();
     }
 
@@ -182,7 +208,7 @@ public class PlayerInteractor : MonoBehaviour
             return;
         }
 
-        if (playerController != null && playerController.IsKnockedDown)
+        if (playerController != null && (playerController.IsKnockedDown || playerController.IsStunned))
         {
             return;
         }
@@ -459,6 +485,8 @@ public class PlayerInteractor : MonoBehaviour
     {
         currentHeldGrabbable = grabbable;
         currentHeldIsHeavy = grabbable.isHeavy;
+        hasActiveHold = true;
+        heldHoldConfirmed = false;
 
         grabbable.RequestAddInteractor(this);
 
@@ -569,6 +597,8 @@ public class PlayerInteractor : MonoBehaviour
         ClearHeldOutlineHighlight();
         currentHeldGrabbable = null;
         currentHeldIsHeavy = false;
+        hasActiveHold = false;
+        heldHoldConfirmed = false;
     }
 
     private SnapZone FindSnapZone(GrabbableObject grabbable)

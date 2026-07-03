@@ -15,8 +15,11 @@ public class FallingPlatform : NetworkBehaviour
     [Tooltip("플레이어가 밟고 나서 떨어질 때까지의 대기 시간 (초)")]
     public float fallDelay = 1f;
 
-    [Tooltip("떨어지고 나서 다시 원래 위치로 복귀하는 시간 (초). 0이면 복귀하지 않습니다.")]
+    [Tooltip("떨어지고 나서 다시 원래 위치로 복귀하는 시간 (초). 0이면 복귀하지 않고 아래 시간 후 제거됩니다.")]
     public float respawnDelay = 3f;
+
+    [Tooltip("복귀하지 않는 발판(respawnDelay=0)이 낙하 후 제거될 때까지의 시간(초). 영원히 떨어지며 동기화 트래픽을 만드는 것을 막습니다.")]
+    public float despawnAfterFallSeconds = 4f;
 
     private Vector3 initialPosition;
     private Quaternion initialRotation;
@@ -103,6 +106,20 @@ public class FallingPlatform : NetworkBehaviour
 
             networkFalling.Value = false;
         }
+        else
+        {
+            // 복귀하지 않는 발판: 잠시 후 서버가 제거해 전 클라이언트에서 사라진다.
+            yield return new WaitForSeconds(Mathf.Max(0.5f, despawnAfterFallSeconds));
+
+            if (cachedNetworkObject != null && cachedNetworkObject.IsSpawned)
+            {
+                cachedNetworkObject.Despawn(true);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
     }
 
     // ───── 오프라인(비네트워크) 폴백: 기존 동작 ─────
@@ -129,6 +146,12 @@ public class FallingPlatform : NetworkBehaviour
             transform.rotation = initialRotation;
 
             localFalling = false;
+        }
+        else
+        {
+            // 복귀하지 않는 발판(오프라인): 잠시 후 비활성화해 무한 낙하를 막는다.
+            yield return new WaitForSeconds(Mathf.Max(0.5f, despawnAfterFallSeconds));
+            gameObject.SetActive(false);
         }
     }
 }

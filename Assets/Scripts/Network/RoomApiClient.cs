@@ -106,6 +106,8 @@ public class RoomApiClient
         using (UnityWebRequest request = new UnityWebRequest(baseUrl + path, method))
         {
             request.downloadHandler = new DownloadHandlerBuffer();
+            // 백엔드가 응답하지 않아도 폴링 루프가 영원히 대기하지 않도록 타임아웃을 건다.
+            request.timeout = 10;
 
             if (bodyJson != null)
             {
@@ -134,6 +136,18 @@ public class RoomApiClient
 
             return request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
         }
+    }
+
+    // 방 상태 코드 → 한글 표시 텍스트. (UI 여러 곳에서 공유하는 단일 출처)
+    public static string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "open" => "대기중",
+            "in_game" => "진행중",
+            "closed" => "닫힘",
+            _ => string.IsNullOrWhiteSpace(status) ? "알 수 없음" : status
+        };
     }
 
     private static string NormalizeBaseUrl(string url)

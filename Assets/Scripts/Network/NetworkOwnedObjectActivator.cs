@@ -49,6 +49,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private bool syncTransformState = true;
     [SerializeField] private float remotePositionLerpSpeed = 20f;
     [SerializeField] private float remoteRotationLerpSpeed = 20f;
+    [Tooltip("원격 캐릭터 위치가 이 거리 이상 벌어지면 보간 대신 즉시 스냅(스폰/리스폰 텔레포트 대응).")]
+    [SerializeField] private float remoteTeleportSnapDistance = 3f;
 
     [Header("Camera")]
     [SerializeField] private string runtimeVirtualCameraName = "Runtime Cinemachine Camera";
@@ -79,15 +81,19 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private CinemachineCamera boundCamera;
+    private Camera cachedFacingCamera; // 이름표/Ready 표시가 카메라를 바라보게 할 때 쓰는 캐시(매 프레임 씬 검색 방지)
     private TextMeshPro nameLabel;
     private SpriteRenderer readyCheckRenderer;
     private Coroutine spawnPresentationCoroutine;
     private Outline lobbyCharacterOutline;
     private Transform lobbyCharacterOutlineRoot;
 
+    // 관전 카메라 등 외부에서 이 플레이어의 카메라 기준점을 따라갈 때 사용.
+    public Transform CameraRoot => cameraRoot;
+
     // 로비에서 소유자가 캐릭터를 순환 선택할 때 쓰는 입력(Previous=←/dpad←, Next=→/dpad→).
     private PlayerInput ownerPlayerInput;
-    [SerializeField] private bool logCharacterSelectDebug = true; // 문제 진단용. 확인 후 끄면 됩니다.
+    [SerializeField] private bool logCharacterSelectDebug = false; // 문제 진단용. 필요할 때만 켜세요.
 
     private void Reset()
     {
@@ -118,7 +124,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         if (IsServer)
         {
-            AssignCharacterIndexFromSession();
+            // 초기 캐릭터 인덱스는 0으로 시작(syncedCharacterIndex 기본값). 로비에서 소유자가 직접 선택한다.
             ApplySpawnPosition();
         }
 
@@ -278,6 +284,9 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
     {
+        // 씬이 바뀌면 카메라도 바뀌므로 캐시를 무효화한다(다음 사용 시 다시 찾음).
+        cachedFacingCamera = null;
+
         if (IsServer)
         {
             ApplySpawnPosition();
@@ -328,15 +337,6 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         if (spawnVisualRoot == null)
         {
             spawnVisualRoot = FindDefaultSpawnVisualRoot();
-        }
-    }
-
-    private void AssignCharacterIndexFromSession()
-    {
-        NetworkSessionManager sessionManager = FindFirstObjectByType<NetworkSessionManager>();
-        if (sessionManager != null)
-        {
-            syncedCharacterIndex.Value = sessionManager.GetOrAssignCharacterIndex(OwnerClientId);
         }
     }
 
@@ -529,18 +529,44 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             targetRotation = sceneRotation;
         }
 
-        ApplySpawnPose(targetPosition, targetRotation);
-
-        if (IsSpawned)
+        // 스폰 배치의 '위치 소스'는 owner-write 동기화 변수(syncedPosition/Rotation)다.
+        // 서버가 원격 플레이어의 트랜스폼을 직접 옮겨도 그 변수를 못 쓰므로, 소유자가 옛 위치를 계속 덮어써
+        // 다른 클라가 스폰 지점에서 옛 위치로 되돌아가는 레이스가 생긴다.
+        // → 서버 권한으로 '어디로 갈지'만 정하고, 실제 적용은 소유자가 한다(트랜스폼 + 동기화 변수 동시 갱신).
+        if (IsOwner)
         {
-            ApplySpawnPoseClientRpc(targetPosition, targetRotation);
+            ApplySpawnPose(targetPosition, targetRotation);
+            CommitOwnerTransformSync(targetPosition, targetRotation);
+        }
+        else if (IsSpawned)
+        {
+            ClientRpcParams ownerTarget = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
+            };
+            ApplySpawnPoseOwnerClientRpc(targetPosition, targetRotation, ownerTarget);
         }
     }
 
     [ClientRpc]
-    private void ApplySpawnPoseClientRpc(Vector3 targetPosition, Quaternion targetRotation)
+    private void ApplySpawnPoseOwnerClientRpc(Vector3 targetPosition, Quaternion targetRotation, ClientRpcParams rpcParams = default)
     {
+        // 타게팅되어 소유자에서만 실행됨. 로컬 트랜스폼과 owner-write 동기화 변수를 함께 갱신해
+        // 다른 클라가 옛 위치로 되돌아가는 레이스를 없앤다.
         ApplySpawnPose(targetPosition, targetRotation);
+        CommitOwnerTransformSync(targetPosition, targetRotation);
+    }
+
+    // 스폰/리스폰 텔레포트를 owner-write 동기화 변수에 즉시 반영한다(소유자에서만 유효).
+    private void CommitOwnerTransformSync(Vector3 position, Quaternion rotation)
+    {
+        if (!syncTransformState || !IsOwner || !IsSpawned)
+        {
+            return;
+        }
+
+        syncedPosition.Value = position;
+        syncedRotation.Value = rotation;
     }
 
     private void ApplySpawnPose(Vector3 targetPosition, Quaternion targetRotation)
@@ -832,7 +858,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        Camera sceneCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+        Camera sceneCamera = ResolveFacingCamera();
         if (sceneCamera == null)
         {
             return;
@@ -1026,6 +1052,17 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         SetNameLabelVisible(true);
     }
 
+    // 이름표/Ready 표시용 카메라를 캐시한다. 파괴/씬전환 시 자동으로 다시 찾는다.
+    private Camera ResolveFacingCamera()
+    {
+        if (cachedFacingCamera == null)
+        {
+            cachedFacingCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+        }
+
+        return cachedFacingCamera;
+    }
+
     private void UpdateNameLabelFacing()
     {
         if (nameLabel == null || !nameLabel.gameObject.activeSelf)
@@ -1033,7 +1070,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        Camera sceneCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+        Camera sceneCamera = ResolveFacingCamera();
         if (sceneCamera == null)
         {
             return;
@@ -1100,7 +1137,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        Camera sceneCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+        Camera sceneCamera = ResolveFacingCamera();
         if (sceneCamera == null)
         {
             return;
@@ -1139,10 +1176,20 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
+        Vector3 targetPosition = syncedPosition.Value;
+        Quaternion targetRotation = syncedRotation.Value;
+
+        // 스폰/리스폰처럼 위치가 크게 튀면 보간(슬라이드) 대신 즉시 스냅해, 옛 위치에서 미끄러져 오는 잔상을 없앤다.
+        if ((transform.position - targetPosition).sqrMagnitude >= remoteTeleportSnapDistance * remoteTeleportSnapDistance)
+        {
+            transform.SetPositionAndRotation(targetPosition, targetRotation);
+            return;
+        }
+
         float positionLerpFactor = 1f - Mathf.Exp(-remotePositionLerpSpeed * Time.deltaTime);
         float rotationLerpFactor = 1f - Mathf.Exp(-remoteRotationLerpSpeed * Time.deltaTime);
 
-        transform.position = Vector3.Lerp(transform.position, syncedPosition.Value, positionLerpFactor);
-        transform.rotation = Quaternion.Slerp(transform.rotation, syncedRotation.Value, rotationLerpFactor);
+        transform.position = Vector3.Lerp(transform.position, targetPosition, positionLerpFactor);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationLerpFactor);
     }
 }

@@ -41,6 +41,8 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private TMP_InputField roomNameInputField;
     [SerializeField] private Transform roomListContentRoot;
     [SerializeField] private GameObject roomListItemTemplate;
+    [Tooltip("방 목록/입장 관련 안내·오류 메시지를 표시할 라벨(선택). 연결하면 빌드에서도 실패 사유가 화면에 보입니다.")]
+    [SerializeField] private TMP_Text roomListStatusLabel;
     [SerializeField] private List<GameObject> roomListPanelsToCloseOnRoomClick = new List<GameObject>();
     [SerializeField, HideInInspector] private GameObject roomListPanelToCloseOnRoomClick;
 
@@ -845,7 +847,14 @@ public class LobbyUIController : MonoBehaviour
             return;
         }
 
-        await JoinBackendRoomAsync(room, "방에 접속하는 중입니다...");
+        bool joined = await JoinBackendRoomAsync(room, "방에 접속하는 중입니다...");
+
+        if (!joined)
+        {
+            // RoomListItemView가 접속 전에 방 목록 패널을 닫으므로, 실패 시 다시 열어 빈 화면에 갇히지 않게 한다.
+            ReopenJoinPanel();
+            SetRoomListStatus("방에 접속하지 못했습니다. 다시 시도해주세요.");
+        }
     }
 
     private async Task<bool> JoinBackendRoomAsync(RoomApiClient.RoomDto room, string loadingMessage)
@@ -1246,11 +1255,17 @@ public class LobbyUIController : MonoBehaviour
 
         ApplyLobbySessionPanelState(isOnline);
 
-        if (wasOnline && !isOnline && activeBackendRoomId > 0)
+        if (wasOnline && !isOnline)
         {
-            _ = ReleaseBackendRoomAsync();
-            backendConnectedPlayerCount = -1;
+            // 온라인→오프라인 전환 시 로컬 준비 상태는 항상 초기화한다(백엔드 방 유무와 무관).
+            // 그렇지 않으면 다음 방에서 Ready 토글이 true에서 시작해 두 번 눌러야 준비된다.
             isReady = false;
+
+            if (activeBackendRoomId > 0)
+            {
+                _ = ReleaseBackendRoomAsync();
+                backendConnectedPlayerCount = -1;
+            }
         }
 
         wasOnline = isOnline;
@@ -1604,6 +1619,12 @@ public class LobbyUIController : MonoBehaviour
 
     private void SetRoomListStatus(string message)
     {
+        // 라벨이 연결돼 있으면 화면에도 표시(빌드에서 사용자 피드백). 없으면 기존처럼 콘솔에만 남긴다.
+        if (roomListStatusLabel != null)
+        {
+            roomListStatusLabel.text = message ?? string.Empty;
+        }
+
         if (!string.IsNullOrWhiteSpace(message))
         {
             Debug.Log(message, this);
@@ -1631,8 +1652,38 @@ public class LobbyUIController : MonoBehaviour
             {
                 activeBackendRoomId = rooms[i].id;
                 backendConnectedPlayerCount = rooms[i].currentPlayers;
+
+                // 게임 씬 전환으로 이 컨트롤러가 재생성되면 호스트 소유 플래그가 유실된다.
+                // 호스트(서버)면 소유권을 복구해 하트비트를 재개하고, 방이 in_game으로 남아 있으면 open으로 되돌린다.
+                if (sessionManager != null && sessionManager.IsServer)
+                {
+                    if (!activeBackendRoomOwnedByHost)
+                    {
+                        activeBackendRoomOwnedByHost = true;
+                        nextRoomHeartbeatTime = Time.unscaledTime + Mathf.Max(1f, roomHeartbeatInterval);
+                    }
+
+                    if (rooms[i].status == "in_game")
+                    {
+                        _ = RestoreRoomToOpenAsync(rooms[i].id);
+                    }
+                }
+
                 return;
             }
+        }
+    }
+
+    // 로비로 복귀했는데 방 상태가 in_game으로 남아 있으면 다시 대기중(open)으로 되돌린다.
+    private async Task RestoreRoomToOpenAsync(long roomId)
+    {
+        try
+        {
+            await GetRoomApiClient().SetRoomStatusAsync(roomId, "open");
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning($"방 상태 복구 실패: {exception.Message}");
         }
     }
 
@@ -1682,15 +1733,6 @@ public class LobbyUIController : MonoBehaviour
         return string.IsNullOrWhiteSpace(joinCode) ? string.Empty : joinCode.Trim().ToUpperInvariant();
     }
 
-    private static string GetRoomStatusText(string status)
-    {
-        return status switch
-        {
-            "open" => "대기중",
-            "in_game" => "진행중",
-            "closed" => "닫힘",
-            _ => string.IsNullOrWhiteSpace(status) ? "알 수 없음" : status
-        };
-    }
+    private static string GetRoomStatusText(string status) => RoomApiClient.GetStatusText(status);
 
 }

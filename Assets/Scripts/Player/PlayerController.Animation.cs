@@ -39,8 +39,8 @@ public partial class PlayerController
     [Tooltip("한 번 깜빡일 때 눈 레이어가 켜져 있는 시간(초). 깜빡임 클립 길이에 맞추세요.")]
     [SerializeField] private float blinkDuration = 0.25f;
 
-    [Tooltip("애니메이션/눈 구동 진단 로그. 확인 후 끄세요.")]
-    [SerializeField] private bool logAnimationDebug = true;
+    [Tooltip("애니메이션/눈 구동 진단 로그. 필요할 때만 켜세요.")]
+    [SerializeField] private bool logAnimationDebug = false;
 
     // 소유자가 쓰고 모두가 읽는 애니메이션 상태(위 Anim* 상수).
     private readonly NetworkVariable<byte> animState =

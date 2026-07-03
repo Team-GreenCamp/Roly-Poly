@@ -275,6 +275,24 @@ public class GrabbableObject : NetworkBehaviour
         DespawnOnServer();
     }
 
+    // 던져지거나 떨어진 물체가 플레이어를 맞혀 넘어뜨리는 판정.
+    // 네트워크에서 이 물체는 서버 권한(원격은 kinematic·속도 0)이므로, 판정은 물리 권한(서버/오프라인)에서만 하고
+    // 실제 넉다운은 피해자 소유자에게 릴레이한다. (오프라인 넉다운은 PlayerController가 직접 처리)
+    private void OnCollisionEnter(Collision collision)
+    {
+        // 오프라인은 PlayerController.EvaluateImpactCollision이 직접 처리하므로 여기서는 네트워크 서버만 담당.
+        if (!IsNetworkActive || !IsServer) return;
+        if (collision.contactCount == 0) return;
+
+        // 들려 있는 물체(운반 중)는 넉다운 대상에서 제외. 던지면 홀더가 먼저 비워지므로 무관.
+        if (heldCount.Value > 0) return;
+
+        PlayerController victim = collision.collider.GetComponentInParent<PlayerController>();
+        if (victim == null) return;
+
+        victim.ServerHandleObjectImpact(rb, true, collision.relativeVelocity.magnitude, collision.GetContact(0).point);
+    }
+
     private void FixedUpdate()
     {
         // 클라이언트는 NetworkTransform이 박스를 옮기므로 물리를 굴리지 않습니다.

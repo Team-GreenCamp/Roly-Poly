@@ -35,6 +35,7 @@ public class ChestController : NetworkBehaviour, IInteractable
 
     private NetworkObject cachedNetworkObject;
     private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+    private Coroutine keyFreezeRoutine;
 
     private void Awake()
     {
@@ -51,9 +52,12 @@ public class ChestController : NetworkBehaviour, IInteractable
         }
 
         // 시작 시 상자 안의 열쇠는 숨깁니다.
+        // 주의: keyObject.SetActive(false)로 GameObject를 끄면, 열쇠가 씬에 배치된 NetworkObject일 때
+        // NGO가 이를 스폰하지 않습니다(비활성 in-scene NetworkObject는 스폰 제외). 그러면 열쇠가 로컬 모드로만
+        // 동작해 클라이언트마다 위치/소모가 어긋납니다. 따라서 오브젝트는 살려두고 렌더러만 끕니다.
         if (keyObject != null)
         {
-            keyObject.SetActive(false);
+            SetKeyRenderersVisible(false);
         }
         else
         {
@@ -72,11 +76,60 @@ public class ChestController : NetworkBehaviour, IInteractable
             RevealContents();
             if (lidTransform != null) lidTransform.localRotation = openRotation;
         }
+        else if (IsServer)
+        {
+            // 열쇠(중력 On·동적)가 열리기 전에 떨어지지 않도록 권한 측에서 고정한다.
+            // 열쇠 NetworkObject의 NetworkRigidbody가 스폰 시 authority를 동적으로 되돌리므로 스폰 이후에 고정한다.
+            if (keyFreezeRoutine != null) StopCoroutine(keyFreezeRoutine);
+            keyFreezeRoutine = StartCoroutine(FreezeHiddenKeyRoutine());
+        }
     }
 
     public override void OnNetworkDespawn()
     {
         networkOpened.OnValueChanged -= HandleOpenedChanged;
+
+        if (keyFreezeRoutine != null)
+        {
+            StopCoroutine(keyFreezeRoutine);
+            keyFreezeRoutine = null;
+        }
+    }
+
+    // 열쇠 NetworkObject가 스폰되어 NetworkRigidbody가 authority 상태를 잡은 뒤 kinematic으로 고정한다.
+    private IEnumerator FreezeHiddenKeyRoutine()
+    {
+        NetworkObject keyNetworkObject = keyObject != null ? keyObject.GetComponent<NetworkObject>() : null;
+
+        float timeout = 2f;
+        while (keyNetworkObject != null && !keyNetworkObject.IsSpawned && timeout > 0f)
+        {
+            timeout -= Time.deltaTime;
+            yield return null;
+        }
+
+        yield return null; // NetworkRigidbody가 authority를 동적으로 만드는 프레임 이후로 미룬다.
+
+        if (!networkOpened.Value && keyObject != null && keyObject.TryGetComponent(out Rigidbody keyRb))
+        {
+            keyRb.linearVelocity = Vector3.zero;
+            keyRb.angularVelocity = Vector3.zero;
+            keyRb.isKinematic = true;
+        }
+
+        keyFreezeRoutine = null;
+    }
+
+    // GameObject를 끄지 않고 렌더러만 껐다 켜서 열쇠(NetworkObject)의 스폰 상태를 유지한다.
+    private void SetKeyRenderersVisible(bool visible)
+    {
+        if (keyObject == null) return;
+
+        Renderer[] renderers = keyObject.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null) renderers[i].enabled = visible;
+        }
     }
 
     public void RequestInteract(GameObject interactor)
@@ -145,8 +198,15 @@ public class ChestController : NetworkBehaviour, IInteractable
     {
         if (keyObject == null) return;
 
-        // 표시(활성화)는 networkOpened 동기화로 모든 클라이언트가 동시에 실행합니다.
-        keyObject.SetActive(true);
+        // 열기 전 고정 코루틴이 남아 있으면 중단(이제 열림 상태로 넘어가므로).
+        if (keyFreezeRoutine != null)
+        {
+            StopCoroutine(keyFreezeRoutine);
+            keyFreezeRoutine = null;
+        }
+
+        // 표시는 networkOpened 동기화로 모든 클라이언트가 동시에 실행합니다(렌더러만 켬).
+        SetKeyRenderersVisible(true);
 
         // 물리 상태 변경은 권한 측에서만 합니다.
         //  • 열쇠가 NetworkObject(서버 권한 Rigidbody)면 서버만 isKinematic을 만지고 나머지는 동기화로 따라옵니다.
