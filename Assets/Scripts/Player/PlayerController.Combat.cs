@@ -89,6 +89,9 @@ public partial class PlayerController
             StopCoroutine(squashResetRoutine);
             squashResetRoutine = null;
         }
+
+        // 세션 종료/소멸 시 잡기 상태 정리(자기가 붙잡고 있으면 놓고, 붙잡혀 있으면 해제).
+        ServerGrappleCleanup();
     }
 
     private void HandleSquashChanged(bool previous, bool current)
@@ -212,6 +215,7 @@ public partial class PlayerController
         if (!networked)
         {
             // 오프라인/단독 테스트: 피해자에 직접 적용.
+            if (victim.HasInputAuthority) HitVignette.Show(); // 로컬 플레이어가 피해자일 때만 화면 연출
             if (effect == CombatEffectStun) victim.BeginSquashLocal(stunDuration);
             victim.ApplyExternalImpulse(force, point);
             if (effect == CombatEffectKnockdown) victim.StartKnockdown();
@@ -267,6 +271,9 @@ public partial class PlayerController
     private void ApplyCombatHitOwnerClientRpc(Vector3 force, Vector3 point, byte effect, ClientRpcParams rpcParams = default)
     {
         // 타게팅되어 피해자 소유자에서만 실행됨.
+        // 스톰프·대시 밀치기·던진 물체 피격이 전부 이 경로로 들어오므로 피격 화면 연출도 여기서 처리.
+        HitVignette.Show();
+
         ApplyExternalImpulse(force, point);
         if (effect == CombatEffectKnockdown)
         {

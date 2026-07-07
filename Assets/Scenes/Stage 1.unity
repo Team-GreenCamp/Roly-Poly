@@ -14230,6 +14230,7 @@ MonoBehaviour:
   canDirectInteract: 0
   needsKey: 1
   keyTag: Key
+  lockedSound: {fileID: 0}
   isAutoLoop: 0
   openDuration: 3
   closeDuration: 2
@@ -25357,6 +25358,7 @@ MonoBehaviour:
   canDirectInteract: 0
   needsKey: 0
   keyTag: Key
+  lockedSound: {fileID: 0}
   isAutoLoop: 0
   openDuration: 3
   closeDuration: 2
@@ -27317,6 +27319,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fallDelay: 0.5
   respawnDelay: 3
+  despawnAfterFallSeconds: 4
 --- !u!114 &843225986
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40605,6 +40608,7 @@ MonoBehaviour:
   canDirectInteract: 0
   needsKey: 0
   keyTag: Key
+  lockedSound: {fileID: 0}
   isAutoLoop: 0
   openDuration: 3
   closeDuration: 2
@@ -41054,6 +41058,7 @@ MonoBehaviour:
   canDirectInteract: 0
   needsKey: 0
   keyTag: Key
+  lockedSound: {fileID: 0}
   isAutoLoop: 0
   openDuration: 3
   closeDuration: 2
@@ -46438,6 +46443,7 @@ MonoBehaviour:
   canDirectInteract: 0
   needsKey: 1
   keyTag: Key
+  lockedSound: {fileID: 0}
   isAutoLoop: 0
   openDuration: 3
   closeDuration: 2
@@ -48012,6 +48018,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fallDelay: 2
   respawnDelay: 3
+  despawnAfterFallSeconds: 4
 --- !u!114 &1566770595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53989,6 +53996,7 @@ MonoBehaviour:
   canDirectInteract: 0
   needsKey: 1
   keyTag: Key
+  lockedSound: {fileID: 0}
   isAutoLoop: 0
   openDuration: 3
   closeDuration: 2
@@ -54932,6 +54940,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fallDelay: 0.5
   respawnDelay: 3
+  despawnAfterFallSeconds: 4
 --- !u!114 &1823991133
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -56863,6 +56872,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fallDelay: 2
   respawnDelay: 3
+  despawnAfterFallSeconds: 4
 --- !u!114 &1897218012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59999,6 +60009,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fallDelay: 0.5
   respawnDelay: 3
+  despawnAfterFallSeconds: 4
 --- !u!114 &1977605272
 MonoBehaviour:
   m_ObjectHideFlags: 0

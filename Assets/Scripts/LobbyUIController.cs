@@ -87,6 +87,8 @@ public class LobbyUIController : MonoBehaviour
     private CanvasButton mapCanvasButton;
     private HeatChapterManager chapterManager;
     private HeatPanelManager joinPanelManager;
+    private Coroutine reassertPanelStateRoutine;
+    private bool sessionEventsHooked;
 
     [System.Serializable]
     public class MapSelection
@@ -121,13 +123,19 @@ public class LobbyUIController : MonoBehaviour
     {
         RegisterListeners();
 
-        if (sessionManager != null)
-        {
-            sessionManager.StateChanged += HandleSessionStateChanged;
-            sessionManager.MapSelectionChanged += HandleMapSelectionChanged;
-        }
+        EnsureSessionManagerCurrent();
+        HookSessionEvents();
 
         RefreshUI();
+
+        // Heat PanelManager가 OnEnable에서 메인 Button Panel을 다시 켜므로(OnEnable 실행 순서 미정),
+        // 모든 OnEnable/Start가 끝난 뒤 몇 프레임에 걸쳐 세션 패널 상태를 다시 강제한다.
+        // (게임에서 로비로 복귀 시 아직 호스팅 중이면 메인 메뉴 대신 대기방 UI가 보이도록)
+        if (reassertPanelStateRoutine != null)
+        {
+            StopCoroutine(reassertPanelStateRoutine);
+        }
+        reassertPanelStateRoutine = StartCoroutine(ReassertLobbyPanelStateRoutine());
 
         if (HasRoomListUI())
         {
@@ -135,15 +143,90 @@ public class LobbyUIController : MonoBehaviour
         }
     }
 
+    private System.Collections.IEnumerator ReassertLobbyPanelStateRoutine()
+    {
+        // 첫 프레임에는 PanelManager.OnEnable이 Button Panel을 켜므로, 그 이후 여러 프레임 동안 다시 적용해 이긴다.
+        // 씬의 Network Manager 사본이 NGO 싱글턴 중복으로 파괴되는 타이밍이 있으므로 매 프레임 참조도 보정한다.
+        for (int i = 0; i < 10; i++)
+        {
+            yield return null;
+            EnsureSessionManagerCurrent();
+            HookSessionEvents();
+            bool isOnline = sessionManager != null && sessionManager.IsOnline;
+            ApplyLobbySessionPanelState(isOnline);
+
+            if (i == 9)
+            {
+                // 참조가 교체됐을 수 있으니 마지막에 전체 UI를 한 번 더 갱신한다.
+                RefreshUI();
+            }
+        }
+        reassertPanelStateRoutine = null;
+    }
+
     private void OnDisable()
     {
         UnregisterListeners();
+        UnhookSessionEvents();
+    }
 
-        if (sessionManager != null)
+    // ─────────────────────────────────────────────────────────────
+    // 세션 매니저 참조 보정
+    // ─────────────────────────────────────────────────────────────
+    // 로비 씬에는 Network Manager 프리팹 사본이 배치돼 있다. 게임에서 로비로 복귀하면
+    // NGO가 기존 싱글턴을 유지하고 씬의 사본(과 그 NetworkSessionManager)을 파괴하는데,
+    // 직렬화된 sessionManager가 그 사본을 가리키면 IsOnline=false로 오판해
+    // 대기방 UI 대신 메인 Button Panel이 표시된다. 살아있는 싱글턴의 NSM으로 교체한다.
+    private void EnsureSessionManagerCurrent()
+    {
+        NetworkSessionManager live = null;
+
+        Unity.Netcode.NetworkManager networkManager = Unity.Netcode.NetworkManager.Singleton;
+        if (networkManager != null)
+        {
+            live = networkManager.GetComponent<NetworkSessionManager>();
+        }
+
+        if (live == null && sessionManager == null)
+        {
+            live = FindFirstObjectByType<NetworkSessionManager>();
+        }
+
+        if (live == null || ReferenceEquals(sessionManager, live))
+        {
+            return;
+        }
+
+        bool rehook = sessionEventsHooked;
+        UnhookSessionEvents();
+        sessionManager = live;
+        if (rehook)
+        {
+            HookSessionEvents();
+        }
+    }
+
+    private void HookSessionEvents()
+    {
+        if (sessionManager == null || sessionEventsHooked)
+        {
+            return;
+        }
+
+        sessionManager.StateChanged += HandleSessionStateChanged;
+        sessionManager.MapSelectionChanged += HandleMapSelectionChanged;
+        sessionEventsHooked = true;
+    }
+
+    private void UnhookSessionEvents()
+    {
+        if (sessionManager != null && sessionEventsHooked)
         {
             sessionManager.StateChanged -= HandleSessionStateChanged;
             sessionManager.MapSelectionChanged -= HandleMapSelectionChanged;
         }
+
+        sessionEventsHooked = false;
     }
 
     private void Update()
@@ -238,6 +321,11 @@ public class LobbyUIController : MonoBehaviour
         if (chapterManager == null && chaptersPanelRoot != null)
         {
             chapterManager = chaptersPanelRoot.GetComponent<HeatChapterManager>();
+            if (chapterManager != null)
+            {
+                // 챕터 매니저를 처음 찾은 시점에 PLAY→맵 확정 연결을 걸어둔다(패널이 어떻게 열리든 동작).
+                WireChapterConfirmButtons();
+            }
         }
 
         GameObject mapButtonObject = FindSceneGameObjectByName(mapButtonObjectName);
@@ -388,6 +476,41 @@ public class LobbyUIController : MonoBehaviour
         if (chapterManager != null)
         {
             chapterManager.InitializeChapters();
+            WireChapterConfirmButtons();
+        }
+    }
+
+    // Heat ChapterManager는 각 챕터 패널의 PLAY/Continue 버튼을 chapters[i].onPlay/onContinue 이벤트에 연결하는데,
+    // 이 이벤트들이 인스펙터에서 비어 있어 눌러도 맵이 선택되지 않는다.
+    // 여기서 각 챕터의 onPlay/onContinue에 ConfirmSelectedMap을 런타임으로 연결한다(중복 방지).
+    private void WireChapterConfirmButtons()
+    {
+        if (chapterManager == null || chapterManager.chapters == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < chapterManager.chapters.Count; i++)
+        {
+            HeatChapterManager.ChapterItem chapter = chapterManager.chapters[i];
+            if (chapter == null)
+            {
+                continue;
+            }
+
+            if (chapter.onPlay == null)
+            {
+                chapter.onPlay = new UnityEngine.Events.UnityEvent();
+            }
+            chapter.onPlay.RemoveListener(ConfirmSelectedMap);
+            chapter.onPlay.AddListener(ConfirmSelectedMap);
+
+            if (chapter.onContinue == null)
+            {
+                chapter.onContinue = new UnityEngine.Events.UnityEvent();
+            }
+            chapter.onContinue.RemoveListener(ConfirmSelectedMap);
+            chapter.onContinue.AddListener(ConfirmSelectedMap);
         }
     }
 
@@ -396,12 +519,15 @@ public class LobbyUIController : MonoBehaviour
         ResolveMapPanelReferences();
 
         bool canInteract = CanInteractWithMapButton();
-        if (mapHeatButton != null)
+
+        // Heat UI의 Interactable()은 내부에서 애니메이션 코루틴을 시작하므로
+        // 비활성 오브젝트에 호출하면 "Coroutine couldn't be started" 에러가 난다. 활성일 때만 호출.
+        if (mapHeatButton != null && mapHeatButton.gameObject.activeInHierarchy)
         {
             mapHeatButton.Interactable(canInteract);
         }
 
-        if (mapBoxButton != null)
+        if (mapBoxButton != null && mapBoxButton.gameObject.activeInHierarchy)
         {
             mapBoxButton.Interactable(canInteract);
         }
@@ -1301,7 +1427,8 @@ public class LobbyUIController : MonoBehaviour
             canvasButton.interactable = interactable;
         }
 
-        if (heatButton != null)
+        // Heat UI의 Interactable()은 내부에서 코루틴을 시작하므로 활성 오브젝트에만 호출한다.
+        if (heatButton != null && heatButton.gameObject.activeInHierarchy)
         {
             heatButton.Interactable(interactable);
         }

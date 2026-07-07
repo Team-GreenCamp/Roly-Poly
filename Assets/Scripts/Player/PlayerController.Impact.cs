@@ -121,6 +121,7 @@ public partial class PlayerController
         if (isThrownOrFastObject || isHeavyDownwardImpact || isFallingObjectImpact)
         {
             // 다른 플레이어가 던진 물체나 높은 곳에서 떨어진 물체에 맞으면 잠시 조작 불가 상태로 넘어집니다.
+            HitVignette.Show(); // 오프라인 폴백 경로의 피격 화면 연출 (네트워크는 서버 릴레이 ClientRpc에서 처리)
             Vector3 knockdownForce = collision.relativeVelocity.sqrMagnitude > 0.01f
                 ? collision.relativeVelocity * 0.12f
                 : impactDirection.normalized * Mathf.Max(1f, relativeSpeed);

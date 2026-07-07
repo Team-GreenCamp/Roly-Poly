@@ -191,11 +191,19 @@ public partial class PlayerController : NetworkBehaviour
             return;
         }
 
+        if (IsGrabbed)
+        {
+            // 붙잡힌 동안에는 조작 불가(소유자가 공격자 앞으로 끌려감).
+            ClearGameplayInputState();
+            return;
+        }
+
         if (playerInput == null || physicsBody == null)
         {
             return;
         }
 
+        UpdateGrappleInput();
         ReadInput();
     }
 
@@ -209,6 +217,13 @@ public partial class PlayerController : NetworkBehaviour
         if (!gameplayInputEnabled)
         {
             StopGameplayMotion();
+            return;
+        }
+
+        if (IsGrabbed)
+        {
+            // 붙잡힌 피해자: 공격자 몸 앞으로 이동시키고 일반 이동/물리는 생략.
+            UpdateGrabbedVictimMotion();
             return;
         }
 
@@ -415,6 +430,7 @@ public partial class PlayerController : NetworkBehaviour
         jumpAction = playerInput.actions["Jump"];
         sprintAction = playerInput.actions["Sprint"];
         ResolveDashAction();
+        ResolveGrappleActions();
     }
 
     private bool CanProcessInput()

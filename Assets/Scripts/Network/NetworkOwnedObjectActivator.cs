@@ -205,7 +205,9 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         ClearLocalCameraBinding();
         ClearLobbyCharacterOutline();
 
-        if (lockCursorForOwner && IsOwner && ShouldLockCursorInCurrentScene())
+        // 소유자가 despawn(세션 종료)되면 씬과 무관하게 커서를 해제한다.
+        // (씬 조건으로 감싸면 이미 씬이 바뀐 뒤 despawn될 때 커서가 잠긴 채 남을 수 있다.)
+        if (lockCursorForOwner && IsOwner)
         {
             MouseController.SetCursorLock(false);
         }
@@ -242,9 +244,12 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             }
         }
 
-        if (lockCursorForOwner && ShouldLockCursorInCurrentScene())
+        // 커서는 로컬 소유자만 제어한다. 잠금 씬(게임)에선 잠그고, 로비 등에선 해제한다.
+        // (씬 조건으로만 감싸면 로비 복귀 시 SetCursorLock이 호출되지 않아 게임에서 잠긴 커서가 그대로 남는다.
+        //  또한 원격 플레이어의 NOA가 커서를 건드려 게임 중 커서가 풀리는 문제도 함께 방지한다.)
+        if (lockCursorForOwner && isOwner)
         {
-            MouseController.SetCursorLock(isOwner);
+            MouseController.SetCursorLock(ShouldLockCursorInCurrentScene());
         }
 
         ApplyGameplayInputState(isOwner);
