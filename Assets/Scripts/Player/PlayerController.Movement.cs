@@ -54,6 +54,9 @@ public partial class PlayerController
         landingSpeedPreserveTimer = 0f;
         currentHorizontalVelocity = Vector3.zero;
         currentMoveDirection = Vector3.zero;
+
+        // 조작 불가 상태(넉다운/스턴/탈락/로비)에서는 잡기 대상 아웃라인도 정리한다.
+        ClearGrappleOutline();
     }
 
     private void StopGameplayMotion()
@@ -167,6 +170,9 @@ public partial class PlayerController
         }
     }
 
+    // yaw는 직접 회전(MoveRotation)으로 제어한다. 토크 PD 방식은 게인이 낮으면 몸이 이동 방향보다
+    // 늦게 돌아 미끄러지듯 보이고, 높이면 목표 주변에서 진동해서 어느 쪽으로 튜닝해도 어색했다.
+    // 스윙-트위스트 분해로 yaw만 교체하므로 오뚝이 기울기(밸런스 물리)는 그대로 유지된다.
     private void ApplyTurnTorque(Vector3 facingDirection)
     {
         Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
@@ -180,19 +186,28 @@ public partial class PlayerController
         float targetYaw = Mathf.Atan2(facingDirection.x, facingDirection.z) * Mathf.Rad2Deg;
         float maxStep = rotationSpeed * Time.fixedDeltaTime;
         float desiredYaw = Mathf.MoveTowardsAngle(currentYaw, targetYaw, maxStep);
-        float yawDelta = Mathf.DeltaAngle(currentYaw, desiredYaw);
-        float desiredYawVelocity = yawDelta * Mathf.Deg2Rad / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
-        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
-        float torque = (desiredYawVelocity - currentYawVelocity) * turnTorque - (currentYawVelocity * turnDamping);
 
-        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
+        // 현재 회전에서 yaw(트위스트) 성분만 목표 yaw로 바꾸고 기울기(스윙)는 보존한다.
+        Quaternion currentTwist = Quaternion.Euler(0f, currentYaw, 0f);
+        Quaternion swing = physicsBody.rotation * Quaternion.Inverse(currentTwist);
+        physicsBody.MoveRotation(swing * Quaternion.Euler(0f, desiredYaw, 0f));
+
+        // 직접 제어와 싸우지 않도록 물리 각속도의 yaw 성분은 제거한다(기울기 각속도는 유지).
+        RemoveYawAngularVelocity(1f);
     }
 
     private void StabilizeIdleYaw()
     {
-        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
-        float torque = (-currentYawVelocity * turnDamping);
-        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
+        // 정지 중 외부 충격으로 생긴 yaw 회전은 감쇠로 서서히 멈춘다(즉시 죽이면 밀치기 맞았을 때 뻣뻣해 보임).
+        RemoveYawAngularVelocity(1f - Mathf.Exp(-turnDamping * Time.fixedDeltaTime));
+    }
+
+    private void RemoveYawAngularVelocity(float fraction)
+    {
+        Vector3 angularVelocity = physicsBody.angularVelocity;
+        float yawVelocity = Vector3.Dot(angularVelocity, Vector3.up);
+        angularVelocity -= Vector3.up * (yawVelocity * Mathf.Clamp01(fraction));
+        physicsBody.angularVelocity = angularVelocity;
     }
 
     private void ClampVerticalVelocity()

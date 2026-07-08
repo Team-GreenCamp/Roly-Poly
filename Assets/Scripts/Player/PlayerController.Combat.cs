@@ -21,8 +21,8 @@ public partial class PlayerController
     [SerializeField] private float stompMinDownSpeed = 3f;
     [Tooltip("머리를 밟았을 때 밟은 쪽이 튀어오르는 높이(m). 일반 점프보다 크게 두면 됩니다.")]
     [SerializeField] private float stompBounceHeight = 2.2f;
-    [Tooltip("접촉점이 피해자 기준 이 높이 이상이어야 '머리'로 인정합니다(로컬 y 오프셋).")]
-    [SerializeField] private float stompHeadHeight = 0.7f;
+    [Tooltip("접촉점이 피해자 기준 이 높이 이상이어야 '머리'로 인정합니다(로컬 y 오프셋). 동물 캐릭터 키(~0.9m) 기준.")]
+    [SerializeField] private float stompHeadHeight = 0.4f;
     [Tooltip("밟힌 쪽에 추가로 눌러주는 아래 방향 임펄스 세기.")]
     [SerializeField] private float stompDownImpulse = 2f;
     [Tooltip("밟힌 쪽이 찌부/스턴되는 시간(초).")]
@@ -47,11 +47,14 @@ public partial class PlayerController
     [SerializeField] private float dashWindow = 0.25f;
     [Tooltip("돌진 중 상대와 충돌 시 상대에게 가하는 넉백 세기.")]
     [SerializeField] private float dashShoveStrength = 12f;
+    [Tooltip("돌진 시 구르기(Roll) 애니메이션을 재생하는 시간(초).")]
+    [SerializeField] private float dashRollDuration = 0.5f;
 
     private float lastStompTime = -999f;
     private bool dashQueued;
     private float lastDashTime = -999f;
     private float dashActiveUntil = -999f;
+    private float dashRollAnimUntil = -999f; // 이 시각까지 Roll 애니메이션 재생
     private InputAction dashAction;
 
     // 서버가 켜고 끄는 찌부 상태(모든 클라가 읽어 비주얼 표시, 소유자는 입력잠금에 사용).
@@ -190,6 +193,7 @@ public partial class PlayerController
 
         lastDashTime = Time.time;
         dashActiveUntil = Time.time + dashWindow;
+        dashRollAnimUntil = Time.time + Mathf.Max(0.1f, dashRollDuration);
 
         Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
         if (flatForward.sqrMagnitude < 0.0001f)

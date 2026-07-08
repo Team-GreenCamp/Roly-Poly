@@ -84,8 +84,9 @@ public partial class PlayerController
             return;
         }
 
-        // 내가 빠르게 물체에 부딪힌 경우의 가벼운 자기 반동(소유자가 자기 자신에게 적용이라 항상 안전).
-        if (relativeSpeed >= rigidbodyImpactSpeedThreshold)
+        // 빠르게 움직이는 물체가 나를 쳤을 때의 가벼운 자기 반동.
+        // 상대속도가 아니라 '물체 자신의 속도'로 판정한다 — 내가 달려가 정지한 물체에 부딪힌 경우는 제외.
+        if (otherBody.linearVelocity.magnitude >= rigidbodyImpactSpeedThreshold)
         {
             ApplyExternalImpulse(collision.relativeVelocity * 0.08f, contact.point);
         }
@@ -100,9 +101,10 @@ public partial class PlayerController
         }
 
         GrabbableObject grabbable = otherBody.GetComponentInParent<GrabbableObject>();
+        // '물체 자신의 속도' 기준 — 스프린트로 정지한 물체에 부딪혀도 넉다운되지 않게 한다.
         bool isThrownOrFastObject =
             grabbable != null &&
-            relativeSpeed >= knockdownThrownObjectSpeedThreshold;
+            otherBody.linearVelocity.magnitude >= knockdownThrownObjectSpeedThreshold;
 
         bool isHeavyDownwardImpact =
             contact.normal.y < -0.2f &&
@@ -140,8 +142,9 @@ public partial class PlayerController
             return;
         }
 
+        // '물체 자신의 속도' 기준 — 플레이어가 달려와 정지한 물체에 부딪힌 경우(상대속도만 높음)는 제외.
         bool isThrownOrFastObject =
-            isGrabbable && relativeSpeed >= knockdownThrownObjectSpeedThreshold;
+            isGrabbable && objectBody.linearVelocity.magnitude >= knockdownThrownObjectSpeedThreshold;
 
         bool isHeavyDownwardImpact =
             objectBody.mass >= heavyObjectMassThreshold &&

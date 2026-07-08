@@ -1123,6 +1123,26 @@ public class NetworkSessionManager : MonoBehaviour
         LocalReady = false;
         gameStartRequested = false;
         readyClientIds.Clear();
+
+        // 머리 위 체크 표시(NOA syncedReadyState)도 함께 내린다.
+        // 서버 목록만 비우면 판정은 초기화되는데 표시는 켜진 채 로비로 돌아오는 불일치가 생긴다.
+        if (networkManager != null && networkManager.IsServer)
+        {
+            foreach (NetworkClient client in networkManager.ConnectedClients.Values)
+            {
+                if (client.PlayerObject == null)
+                {
+                    continue;
+                }
+
+                NetworkOwnedObjectActivator activator = client.PlayerObject.GetComponent<NetworkOwnedObjectActivator>();
+                if (activator != null)
+                {
+                    activator.ResetReadyStateOnServer();
+                }
+            }
+        }
+
         LogReadyDebug("Ready state reset.");
         NotifyStateChanged();
     }

@@ -489,6 +489,15 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         ApplyReadyStateOnServer(rpcParams.Receive.SenderClientId, isReady);
     }
 
+    // 매치 종료 후 로비 복귀 등에서 서버가 준비 표시(머리 위 체크)를 내릴 때 사용.
+    public void ResetReadyStateOnServer()
+    {
+        if (IsSpawned && IsServer && syncedReadyState.Value)
+        {
+            syncedReadyState.Value = false;
+        }
+    }
+
     private void ApplyReadyStateOnServer(ulong clientId, bool isReady)
     {
         syncedReadyState.Value = isReady;
@@ -1178,6 +1187,13 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         {
             syncedPosition.Value = transform.position;
             syncedRotation.Value = transform.rotation;
+            return;
+        }
+
+        // 붙잡힌 플레이어는 각 머신이 로컬로 공격자에 부착하므로(PlayerController.UpdateGrabbedFollow)
+        // 네트워크 보간이 그 위치를 덮어쓰지 않게 건너뛴다.
+        if (playerController != null && playerController.IsGrabbed)
+        {
             return;
         }
 

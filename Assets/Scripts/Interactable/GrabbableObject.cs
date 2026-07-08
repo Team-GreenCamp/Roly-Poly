@@ -287,6 +287,10 @@ public class GrabbableObject : NetworkBehaviour
         // 들려 있는 물체(운반 중)는 넉다운 대상에서 제외. 던지면 홀더가 먼저 비워지므로 무관.
         if (heldCount.Value > 0) return;
 
+        // 물체 자신이 충분히 움직이고 있을 때만 판정 — 바닥에 놓인 물체에 플레이어가
+        // 달려와 부딪힌 경우(상대속도만 높음)는 피격이 아니다.
+        if (rb == null || rb.linearVelocity.sqrMagnitude < 4f) return; // 2 m/s 미만
+
         PlayerController victim = collision.collider.GetComponentInParent<PlayerController>();
         if (victim == null) return;
 

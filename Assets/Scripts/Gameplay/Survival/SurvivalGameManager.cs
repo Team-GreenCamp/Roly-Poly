@@ -107,6 +107,12 @@ public class SurvivalGameManager : NetworkBehaviour
         // 매치에서 적용한 유령화/kinematic을 반드시 되돌린다. 안 하면 로비에 투명 캐릭터로 돌아간다.
         RestoreAllGhosting();
 
+        // 승자 세리머니(Spin)도 로비까지 이어지지 않게 끈다.
+        if (localPlayerController != null)
+        {
+            localPlayerController.SetCelebrating(false);
+        }
+
         if (Instance == this)
         {
             Instance = null;
@@ -539,6 +545,16 @@ public class SurvivalGameManager : NetworkBehaviour
         {
             // 서버는 winnerClientId를 matchState보다 먼저 세팅하므로 이 시점에 값이 유효하다.
             OnWinnerDecided?.Invoke(winnerClientId.Value);
+
+            // 승자 세리머니: 승자의 소유자 클라이언트가 Spin 상태를 켠다(animState 동기화로 모두에게 보임).
+            if (NetworkManager != null && winnerClientId.Value == NetworkManager.LocalClientId)
+            {
+                PlayerController localPlayer = ResolveLocalPlayer();
+                if (localPlayer != null)
+                {
+                    localPlayer.SetCelebrating(true);
+                }
+            }
         }
     }
 }

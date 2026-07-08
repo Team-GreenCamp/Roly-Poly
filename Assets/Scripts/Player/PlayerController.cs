@@ -43,16 +43,17 @@ public partial class PlayerController : NetworkBehaviour
 
     [Header("Balance")]
     [SerializeField] private Vector3 centerOfMassOffset = new Vector3(0f, -0.35f, 0f);
-    [SerializeField] private float uprightTorque = 90f;
-    [SerializeField] private float uprightDamping = 10f;
+    [Tooltip("평상시 몸을 꼿꼿하게 세우는 힘. 높을수록 걷기 중 잔흔들림이 없어지고, 피격 시 휘청과의 대비가 커집니다.")]
+    [SerializeField] private float uprightTorque = 150f;
+    [SerializeField] private float uprightDamping = 16f;
     [SerializeField] private float fallenTiltAngle = 35f;
     [SerializeField] private float recoveryDelay = 1f;
     [SerializeField] private float recoveryTorqueMultiplier = 2.5f;
     [SerializeField] private float knockdownMinimumDuration = 0.45f;
     [SerializeField] private float knockdownUprightAngle = 12f;
     [SerializeField] private float knockdownRecoveryAngularSpeed = 1.2f;
-    [SerializeField] private float turnTorque = 35f;
-    [SerializeField] private float turnDamping = 6f;
+    [Tooltip("정지 중 외부 충격으로 생긴 yaw 회전이 멈추는 감쇠 속도. (이동 중 회전은 rotationSpeed로 직접 제어)")]
+    [SerializeField] private float turnDamping = 8f;
     [SerializeField] private float maxAngularVelocity = 25f;
 
 
@@ -78,7 +79,8 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float landingKnockdownSpeedMargin = 2f;
     [SerializeField] private float landingTorqueMultiplier = 0.2f;
     [SerializeField] private float externalImpactForceMultiplier = 1f;
-    [SerializeField] private float externalImpactTorqueMultiplier = 0.35f;
+    [Tooltip("피격 시 휘청(기울기 토크) 배율. 피격 피드백의 체감을 좌우합니다.")]
+    [SerializeField] private float externalImpactTorqueMultiplier = 0.55f;
     [SerializeField] private float knockdownImpactSpeedThreshold = 7f;
     [SerializeField] private float knockdownThrownObjectSpeedThreshold = 5.5f;
     [SerializeField] private float knockdownFallingObjectSpeedThreshold = 5f;
@@ -166,6 +168,9 @@ public partial class PlayerController : NetworkBehaviour
 
         // 애니메이션도 모든 인스턴스에서 구동한다.(소유자가 상태 판정 → 동기화 → 전 클라 재생)
         DriveAnimation();
+
+        // 붙잡힌 플레이어는 모든 머신이 각자 로컬에서 공격자에 부착한다(공격자 화면 지연 0).
+        UpdateGrabbedFollow();
 
         if (!CanProcessInput())
         {
@@ -312,7 +317,6 @@ public partial class PlayerController : NetworkBehaviour
         knockdownMinimumDuration = Mathf.Max(0f, knockdownMinimumDuration);
         knockdownUprightAngle = Mathf.Clamp(knockdownUprightAngle, 1f, fallenTiltAngle);
         knockdownRecoveryAngularSpeed = Mathf.Max(0f, knockdownRecoveryAngularSpeed);
-        turnTorque = Mathf.Max(0f, turnTorque);
         turnDamping = Mathf.Max(0f, turnDamping);
         maxAngularVelocity = Mathf.Max(1f, maxAngularVelocity);
         groundedOffset = Mathf.Max(0.01f, groundedOffset);
@@ -404,10 +408,12 @@ public partial class PlayerController : NetworkBehaviour
 
         if (physicsCollider == null)
         {
+            // Quirky 동물 캐릭터(키 ~0.5–1.0m, 4족 체형) 기준 공통 캡슐.
+            // (과거 오뚝이 시절 1.75m 인간형 캡슐은 동물 머리 위 허공에 판정이 뜨는 문제가 있었음)
             physicsCollider = gameObject.AddComponent<CapsuleCollider>();
-            physicsCollider.height = 1.75f;
-            physicsCollider.radius = 0.2f;
-            physicsCollider.center = new Vector3(0f, 0.9f, 0f);
+            physicsCollider.height = 0.9f;
+            physicsCollider.radius = 0.35f;
+            physicsCollider.center = new Vector3(0f, 0.45f, 0f);
             physicsCollider.direction = 1;
         }
 

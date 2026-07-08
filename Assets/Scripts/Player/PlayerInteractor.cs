@@ -12,8 +12,8 @@ public class PlayerInteractor : MonoBehaviour
     public LayerMask interactLayerMask = ~0;
 
     [Header("상호작용 기준 설정")]
-    [Tooltip("상호작용 레이저가 시작될 높이 오프셋입니다.")]
-    public float raycastHeightOffset = 1.0f;
+    [Tooltip("상호작용 레이저가 시작될 높이 오프셋입니다. 동물 캐릭터 눈높이(~0.5m) 기준.")]
+    public float raycastHeightOffset = 0.5f;
 
     [Header("상호작용 하이라이트 설정")]
     [SerializeField] private bool useInteractableOutline = true;
