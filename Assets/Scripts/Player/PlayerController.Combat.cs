@@ -73,6 +73,31 @@ public partial class PlayerController
     // 피해자 중심 좌표 비교/충격점 계산용.
     public Vector3 BodyCenter => physicsBody != null ? physicsBody.worldCenterOfMass : transform.position;
 
+    // ───── 킬 크레딧용 최근 공격자 기록(서버 전용 상태) ─────
+    private ulong serverLastAttackerClientId = ulong.MaxValue;
+    private float serverLastAttackTime = -999f;
+
+    // 서버가 피해 판정을 확정할 때 호출해 "마지막으로 나를 때린 사람"을 기록한다.
+    public void ServerRegisterAttacker(ulong attackerClientId)
+    {
+        if (!IsServer || attackerClientId == OwnerClientId || attackerClientId == ulong.MaxValue)
+        {
+            return;
+        }
+
+        serverLastAttackerClientId = attackerClientId;
+        serverLastAttackTime = Time.time;
+    }
+
+    // 최근 window초 안에 맞은 기록이 있으면 그 공격자를 반환(탈락 크레딧 판정, 서버 전용).
+    public bool TryGetRecentAttacker(float window, out ulong attackerClientId)
+    {
+        attackerClientId = serverLastAttackerClientId;
+        return IsServer
+            && serverLastAttackerClientId != ulong.MaxValue
+            && Time.time - serverLastAttackTime <= window;
+    }
+
     // 현재 찌부(스턴) 상태인지. 네트워크면 동기화 변수, 오프라인이면 로컬 타이머.
     public bool IsStunned =>
         (networkObject != null && networkObject.IsSpawned) ? isSquashed.Value : Time.time < localSquashUntil;
@@ -259,6 +284,9 @@ public partial class PlayerController
         {
             victim.ServerBeginSquash(stunDuration);
         }
+
+        // 킬 크레딧: 이 히트의 공격자(이 컴포넌트의 소유자)를 기록.
+        victim.ServerRegisterAttacker(OwnerClientId);
 
         // 임펄스/넉다운은 피해자 소유자만 로컬로 적용(그 머신에서만 dynamic).
         ClientRpcParams target = new ClientRpcParams

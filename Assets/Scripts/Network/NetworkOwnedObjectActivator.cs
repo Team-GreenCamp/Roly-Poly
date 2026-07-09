@@ -62,6 +62,14 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private bool showNameLabelOnlyInLobby = true;
     [SerializeField] private Vector3 nameLabelOffset = new Vector3(0f, 2.2f, 0f);
     [SerializeField] private float nameLabelFontSize = 4f;
+    [Tooltip("이름표/승수 라벨에 사용할 TMP 폰트(선택). 비우면 TMP 기본 폰트를 사용합니다.")]
+    [SerializeField] private TMP_FontAsset nameLabelFont;
+
+    [Header("Wins Label (이름 위 ★승수)")]
+    [Tooltip("이름표 기준 승수 라벨의 로컬 오프셋.")]
+    [SerializeField] private Vector3 winsLabelOffset = new Vector3(0f, 0.35f, 0f);
+    [SerializeField] private float winsLabelFontSize = 3f;
+    [SerializeField] private Color winsLabelColor = new Color(1f, 0.85f, 0.2f, 1f);
 
     [Header("Ready Check Indicator")]
     [SerializeField] private Sprite readyCheckSprite;
@@ -83,6 +91,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     private CinemachineCamera boundCamera;
     private Camera cachedFacingCamera; // 이름표/Ready 표시가 카메라를 바라보게 할 때 쓰는 캐시(매 프레임 씬 검색 방지)
     private TextMeshPro nameLabel;
+    private TextMeshPro winsLabel; // 이름 위 ★승수 (nameLabel의 자식이라 표시/방향을 따라감)
     private SpriteRenderer readyCheckRenderer;
     private Coroutine spawnPresentationCoroutine;
     private Outline lobbyCharacterOutline;
@@ -1040,6 +1049,43 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         nameLabel.outlineWidth = 0.2f;
     }
 
+    // 이름 위에 붙는 ★승수 라벨. nameLabel의 자식이라 표시 여부/카메라 방향을 자동으로 따라간다.
+    private void EnsureWinsLabel()
+    {
+        if (winsLabel != null || nameLabel == null)
+        {
+            return;
+        }
+
+        Transform existing = nameLabel.transform.Find("PlayerWinsLabel");
+        if (existing != null)
+        {
+            winsLabel = existing.GetComponent<TextMeshPro>();
+        }
+
+        if (winsLabel != null)
+        {
+            return;
+        }
+
+        GameObject winsObject = new GameObject("PlayerWinsLabel");
+        winsObject.transform.SetParent(nameLabel.transform, false);
+        winsObject.transform.localRotation = Quaternion.identity;
+
+        winsLabel = winsObject.AddComponent<TextMeshPro>();
+        winsLabel.alignment = TextAlignmentOptions.Center;
+        winsLabel.text = string.Empty;
+        winsLabel.outlineWidth = 0.2f;
+    }
+
+    private void ApplyNameLabelFont(TextMeshPro label)
+    {
+        if (label != null && nameLabelFont != null && label.font != nameLabelFont)
+        {
+            label.font = nameLabelFont;
+        }
+    }
+
     private void UpdateNameLabel()
     {
         if (!showNameLabel)
@@ -1062,8 +1108,40 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         nameLabel.transform.localPosition = nameLabelOffset;
+        nameLabel.fontSize = nameLabelFontSize;
+        ApplyNameLabelFont(nameLabel);
         nameLabel.text = $"Player {OwnerClientId + 1}";
         SetNameLabelVisible(true);
+
+        // 세션 승수는 이름과 분리해 이름 위에 별도 라벨(★N)로 표시.
+        UpdateWinsLabel();
+    }
+
+    private void UpdateWinsLabel()
+    {
+        int wins = SurvivalWinTracker.GetWins(OwnerClientId);
+
+        if (wins <= 0)
+        {
+            if (winsLabel != null)
+            {
+                winsLabel.gameObject.SetActive(false);
+            }
+            return;
+        }
+
+        EnsureWinsLabel();
+        if (winsLabel == null)
+        {
+            return;
+        }
+
+        winsLabel.transform.localPosition = winsLabelOffset;
+        winsLabel.fontSize = winsLabelFontSize;
+        winsLabel.color = winsLabelColor;
+        ApplyNameLabelFont(winsLabel);
+        winsLabel.text = $"★{wins}";
+        winsLabel.gameObject.SetActive(true);
     }
 
     // 이름표/Ready 표시용 카메라를 캐시한다. 파괴/씬전환 시 자동으로 다시 찾는다.

@@ -27,10 +27,21 @@ public class SurvivalHudController : MonoBehaviour
     [SerializeField] private GameObject winnerPanel;
     [SerializeField] private TMP_Text winnerText;
 
+    [Header("서든데스 경고 (선택)")]
+    [SerializeField] private TMP_Text suddenDeathText;
+    [Tooltip("서든데스 몇 초 전부터 경고를 표시할지.")]
+    [SerializeField] private float suddenDeathWarnSeconds = 10f;
+
+    [Header("킬 피드 (선택)")]
+    [SerializeField] private TMP_Text killFeedText;
+    [Tooltip("킬 피드 한 줄이 표시되는 시간(초).")]
+    [SerializeField] private float killFeedDuration = 4f;
+
     private SurvivalGameManager gameManager;
     private SpectatorController spectator;
     private string spectateTargetName = string.Empty;
     private float hideGoAtTime = -1f;
+    private float killFeedHideAt = -1f;
 
     private void Start()
     {
@@ -38,6 +49,8 @@ public class SurvivalHudController : MonoBehaviour
         SetActiveSafe(countdownPanel, false);
         SetActiveSafe(eliminatedPanel, false);
         SetActiveSafe(winnerPanel, false);
+        if (suddenDeathText != null) SetActiveSafe(suddenDeathText.gameObject, false);
+        if (killFeedText != null) SetActiveSafe(killFeedText.gameObject, false);
     }
 
     private void OnDisable()
@@ -58,6 +71,65 @@ public class SurvivalHudController : MonoBehaviour
         UpdateCountdownPanel(state);
         UpdateEliminatedPanel(state);
         UpdateWinnerPanel(state);
+        UpdateSuddenDeathText(state);
+        UpdateKillFeed();
+    }
+
+    private void UpdateSuddenDeathText(SurvivalGameManager.MatchState state)
+    {
+        if (suddenDeathText == null)
+        {
+            return;
+        }
+
+        if (state != SurvivalGameManager.MatchState.Playing)
+        {
+            SetActiveSafe(suddenDeathText.gameObject, false);
+            return;
+        }
+
+        if (gameManager.IsSuddenDeath)
+        {
+            suddenDeathText.text = "⚠ SUDDEN DEATH! 발판이 무너집니다!";
+            SetActiveSafe(suddenDeathText.gameObject, true);
+            return;
+        }
+
+        double remaining = gameManager.SuddenDeathRemaining;
+        if (remaining <= suddenDeathWarnSeconds)
+        {
+            suddenDeathText.text = $"서든데스까지 {Mathf.CeilToInt((float)remaining)}초";
+            SetActiveSafe(suddenDeathText.gameObject, true);
+        }
+        else
+        {
+            SetActiveSafe(suddenDeathText.gameObject, false);
+        }
+    }
+
+    private void UpdateKillFeed()
+    {
+        if (killFeedText != null && killFeedHideAt >= 0f && Time.time >= killFeedHideAt)
+        {
+            SetActiveSafe(killFeedText.gameObject, false);
+            killFeedHideAt = -1f;
+        }
+    }
+
+    private void HandlePlayerEliminated(ulong victimClientId, ulong killerClientId)
+    {
+        if (killFeedText == null)
+        {
+            return;
+        }
+
+        string victimName = $"Player {victimClientId + 1}";
+        killFeedText.text = killerClientId != ulong.MaxValue
+            ? $"Player {killerClientId + 1} ▶ {victimName} 떨어뜨림!"
+            : $"{victimName} 추락...";
+
+        SetActiveSafe(killFeedText.gameObject, true);
+        killFeedHideAt = Time.time + Mathf.Max(1f, killFeedDuration);
     }
 
     private bool TryResolveGameManager()
@@ -73,6 +145,8 @@ public class SurvivalHudController : MonoBehaviour
             return false;
         }
 
+        gameManager.OnPlayerEliminated += HandlePlayerEliminated;
+
         spectator = gameManager.GetComponent<SpectatorController>();
         if (spectator != null)
         {
@@ -84,6 +158,11 @@ public class SurvivalHudController : MonoBehaviour
 
     private void UnhookEvents()
     {
+        if (gameManager != null)
+        {
+            gameManager.OnPlayerEliminated -= HandlePlayerEliminated;
+        }
+
         if (spectator != null)
         {
             spectator.OnSpectateTargetChanged -= HandleSpectateTargetChanged;
@@ -170,7 +249,9 @@ public class SurvivalHudController : MonoBehaviour
         ulong winner = gameManager.WinnerClientId;
         bool localWon = NetworkManager.Singleton != null && winner == NetworkManager.Singleton.LocalClientId;
         string winnerName = localWon ? "YOU WIN!" : $"Player {winner + 1} WINS!";
-        winnerText.text = $"{winnerName}\n잠시 후 로비로 돌아갑니다...";
+        int wins = SurvivalWinTracker.GetWins(winner);
+        string winsSuffix = wins > 1 ? $"  (통산 {wins}승)" : string.Empty;
+        winnerText.text = $"{winnerName}{winsSuffix}\n잠시 후 로비로 돌아갑니다...";
     }
 
     private static void SetActiveSafe(GameObject target, bool active)

@@ -21,6 +21,9 @@ public class FallingPlatform : NetworkBehaviour
     [Tooltip("복귀하지 않는 발판(respawnDelay=0)이 낙하 후 제거될 때까지의 시간(초). 영원히 떨어지며 동기화 트래픽을 만드는 것을 막습니다.")]
     public float despawnAfterFallSeconds = 4f;
 
+    [Tooltip("체크 해제하면 밟아도 떨어지지 않고, ServerForceFall() 호출로만 무너집니다(서든데스용 바닥 타일).")]
+    public bool triggerByStepping = true;
+
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private Rigidbody rb;
@@ -46,8 +49,21 @@ public class FallingPlatform : NetworkBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
     }
 
+    // 서든데스 등 외부(서버)에서 강제로 무너뜨릴 때 호출. 오프라인에서는 로컬로 처리.
+    public void ServerForceFall()
+    {
+        if (!IsNetworkActive)
+        {
+            if (!localFalling) StartCoroutine(FallRoutineLocal());
+            return;
+        }
+
+        if (IsServer) BeginFallOnServer();
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
+        if (!triggerByStepping) return;
         if (!collision.gameObject.CompareTag("Player")) return;
         // 위에서 밟았을 때만 떨어집니다.
         if (collision.transform.position.y <= transform.position.y) return;

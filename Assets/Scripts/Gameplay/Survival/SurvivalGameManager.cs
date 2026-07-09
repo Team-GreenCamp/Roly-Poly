@@ -33,6 +33,14 @@ public class SurvivalGameManager : NetworkBehaviour
     [Tooltip("서버 안전망: 이 높이(y) 아래의 생존자는 소유자 보고가 유실돼도 서버가 직접 탈락 처리합니다.")]
     [SerializeField] private float killY = -30f;
     [SerializeField] private float killSweepInterval = 0.5f;
+    [Tooltip("이 시간(초) 안에 맞은 공격이 있으면 탈락 크레딧(킬)을 그 공격자에게 줍니다.")]
+    [SerializeField] private float killCreditWindowSeconds = 5f;
+
+    [Header("Sudden Death (정체 방지)")]
+    [Tooltip("매치 시작 후 이 시간(초)이 지나면 서든데스 — 발판이 바깥쪽부터 순차적으로 무너집니다.")]
+    [SerializeField] private float suddenDeathStartSeconds = 60f;
+    [Tooltip("발판이 하나씩 무너지는 간격(초).")]
+    [SerializeField] private float suddenDeathTileInterval = 0.8f;
 
     // ───── 동기화 상태 (서버 쓰기, 전원 읽기) ─────
     private readonly NetworkVariable<byte> matchState = new NetworkVariable<byte>((byte)MatchState.Waiting);
@@ -40,6 +48,8 @@ public class SurvivalGameManager : NetworkBehaviour
     private readonly NetworkVariable<int> totalPlayerCount = new NetworkVariable<int>(0);
     private readonly NetworkVariable<double> countdownEndTime = new NetworkVariable<double>(0);
     private readonly NetworkVariable<ulong> winnerClientId = new NetworkVariable<ulong>(ulong.MaxValue);
+    // 서든데스가 시작되는 서버 시각(HUD 카운트다운용). 0이면 미정.
+    private readonly NetworkVariable<double> suddenDeathStartTime = new NetworkVariable<double>(0);
 
     // ───── 서버 로컬 ─────
     private readonly HashSet<ulong> aliveClients = new HashSet<ulong>();
@@ -63,6 +73,8 @@ public class SurvivalGameManager : NetworkBehaviour
     // HUD 연출 트리거용 이벤트(상태 표시는 아래 프로퍼티 폴링 권장 — 초기값 콜백 미발화 문제 회피).
     public event Action OnLocalEliminated;
     public event Action<ulong> OnWinnerDecided;
+    // 킬 피드용: (피해자 clientId, 킬러 clientId — 없으면 ulong.MaxValue)
+    public event Action<ulong, ulong> OnPlayerEliminated;
 
     public MatchState State => (MatchState)matchState.Value;
     public int AliveCount => aliveCount.Value;
@@ -71,6 +83,14 @@ public class SurvivalGameManager : NetworkBehaviour
     public bool LocalEliminated => localEliminated;
     public double CountdownRemaining =>
         NetworkManager != null ? countdownEndTime.Value - NetworkManager.ServerTime.Time : 0.0;
+    // 서든데스까지 남은 시간(초). 음수면 이미 시작됨, 0 반환이면 미정(Waiting 등).
+    public double SuddenDeathRemaining =>
+        NetworkManager != null && suddenDeathStartTime.Value > 0
+            ? suddenDeathStartTime.Value - NetworkManager.ServerTime.Time
+            : double.MaxValue;
+    public bool IsSuddenDeath =>
+        NetworkManager != null && suddenDeathStartTime.Value > 0
+        && NetworkManager.ServerTime.Time >= suddenDeathStartTime.Value;
 
     public bool IsEliminated(ulong clientId) => eliminatedClients.Contains(clientId);
 
@@ -160,6 +180,50 @@ public class SurvivalGameManager : NetworkBehaviour
         }
 
         matchState.Value = (byte)MatchState.Playing;
+
+        // 서든데스 예약: 정체(둘 다 싸움을 피함) 방지. 시간이 되면 발판을 바깥쪽부터 무너뜨린다.
+        if (suddenDeathStartSeconds > 0f)
+        {
+            suddenDeathStartTime.Value = NetworkManager.ServerTime.Time + suddenDeathStartSeconds;
+            StartCoroutine(ServerSuddenDeathFlow());
+        }
+    }
+
+    // 서든데스(서버): 남은 발판/바닥 타일을 중심에서 먼 순서대로 하나씩 강제로 무너뜨린다.
+    private IEnumerator ServerSuddenDeathFlow()
+    {
+        while (State == MatchState.Playing && NetworkManager.ServerTime.Time < suddenDeathStartTime.Value)
+        {
+            yield return null;
+        }
+
+        if (State != MatchState.Playing)
+        {
+            yield break;
+        }
+
+        FallingPlatform[] platforms = FindObjectsByType<FallingPlatform>(FindObjectsSortMode.None);
+        System.Array.Sort(platforms, (a, b) =>
+        {
+            float da = a != null ? (a.transform.position - transform.position).sqrMagnitude : 0f;
+            float db = b != null ? (b.transform.position - transform.position).sqrMagnitude : 0f;
+            return db.CompareTo(da); // 바깥쪽(먼 것)부터
+        });
+
+        for (int i = 0; i < platforms.Length; i++)
+        {
+            if (State != MatchState.Playing)
+            {
+                yield break;
+            }
+
+            if (platforms[i] != null)
+            {
+                platforms[i].ServerForceFall();
+            }
+
+            yield return new WaitForSeconds(Mathf.Max(0.2f, suddenDeathTileInterval));
+        }
     }
 
     private bool AllPlayersSpawned()
@@ -251,9 +315,21 @@ public class SurvivalGameManager : NetworkBehaviour
             return;
         }
 
+        // 킬 크레딧: 최근에 이 플레이어를 때린 공격자가 있으면 킬로 인정.
+        ulong killerClientId = ulong.MaxValue;
+        if (NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient victimClient)
+            && victimClient.PlayerObject != null)
+        {
+            PlayerController victimPlayer = victimClient.PlayerObject.GetComponent<PlayerController>();
+            if (victimPlayer != null && !victimPlayer.TryGetRecentAttacker(killCreditWindowSeconds, out killerClientId))
+            {
+                killerClientId = ulong.MaxValue; // 스스로 떨어짐
+            }
+        }
+
         lastEliminatedClientId = clientId;
         aliveCount.Value = aliveClients.Count;
-        EliminatePlayerClientRpc(clientId);
+        EliminatePlayerClientRpc(clientId, killerClientId);
         CheckWinnerOnServer();
     }
 
@@ -290,7 +366,19 @@ public class SurvivalGameManager : NetworkBehaviour
     {
         winnerClientId.Value = winner;
         matchState.Value = (byte)MatchState.Finished;
+
+        // 세션 승수 갱신 + 전 클라이언트 동기화(로비 이름표 ★ 표시용).
+        int totalWins = SurvivalWinTracker.AddWin(winner);
+        AnnounceWinnerClientRpc(winner, totalWins);
+
         StartCoroutine(ReturnToLobbyAfterDelay());
+    }
+
+    [ClientRpc]
+    private void AnnounceWinnerClientRpc(ulong winner, int totalWins)
+    {
+        // 호스트에서도 실행되지만 SetWins는 멱등이라 무해하다.
+        SurvivalWinTracker.SetWins(winner, totalWins);
     }
 
     private IEnumerator ReturnToLobbyAfterDelay()
@@ -342,7 +430,7 @@ public class SurvivalGameManager : NetworkBehaviour
     // 클라: 탈락 연출(유령화) + 관전 진입
     // ─────────────────────────────────────────────────────────────
     [ClientRpc]
-    private void EliminatePlayerClientRpc(ulong clientId)
+    private void EliminatePlayerClientRpc(ulong clientId, ulong killerClientId)
     {
         if (!eliminatedClients.Add(clientId))
         {
@@ -355,6 +443,9 @@ public class SurvivalGameManager : NetworkBehaviour
         {
             BeginLocalElimination();
         }
+
+        // 킬 피드(HUD)용 알림. killer가 없으면(스스로 낙사) ulong.MaxValue.
+        OnPlayerEliminated?.Invoke(clientId, killerClientId);
 
         // 관전 중이던 대상이 탈락했으면 다음 생존자로 넘긴다.
         if (spectator != null)

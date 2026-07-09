@@ -1,4 +1,9 @@
 ﻿<Solution>
+  <Project Path="Boxophobic.Utils.Editor.csproj" />
+  <Project Path="Boxophobic.Utils.Scripts.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="Boxophobic.PolyverseSkies.Editor.csproj" />
+  <Project Path="Boxophobic.PolyverseSkies.Runtime.csproj" />
+  <Project Path="Boxophobic.PolyverseSkies.Scripts.csproj" />
 </Solution>

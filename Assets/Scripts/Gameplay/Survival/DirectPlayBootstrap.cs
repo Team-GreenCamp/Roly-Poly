@@ -61,7 +61,12 @@ public static class DirectPlayBootstrap
             return;
         }
 
-        Debug.Log("[DirectPlay] 세션이 없어 로컬 호스트를 시작합니다 (로비 건너뛰기).");
+        // 고정 포트(7777)는 MPPM 가상 플레이어/다른 에디터 인스턴스/직전 플레이의 소켓과 충돌할 수 있다.
+        // 직접 실행은 혼자 하는 테스트라 아무도 join하지 않으므로 매번 랜덤 포트를 쓴다.
+        int port = Random.Range(7800, 7999);
+        sessionManager.SetLocalPort(port);
+
+        Debug.Log($"[DirectPlay] 세션이 없어 로컬 호스트를 시작합니다 (로비 건너뛰기, port={port}).");
         await sessionManager.StartLocalHostAsync();
     }
 #endif

@@ -129,6 +129,7 @@ public class NetworkSessionManager : MonoBehaviour
             unityTransport.SetRelayServerData(allocation.ToRelayServerData(GetRelayConnectionType()));
             isShuttingDown = false;
             ResetReadyState();
+            SurvivalWinTracker.ResetAll(); // 새 세션: 이전 방의 승수 초기화(클라이언트 ID 재사용 대비)
 
             if (!networkManager.StartHost())
             {
@@ -171,6 +172,7 @@ public class NetworkSessionManager : MonoBehaviour
             CurrentJoinCode = LocalConnectionValue;
             isShuttingDown = false;
             ResetReadyState();
+            SurvivalWinTracker.ResetAll(); // 새 세션: 이전 방의 승수 초기화(클라이언트 ID 재사용 대비)
 
             if (!networkManager.StartHost())
             {
@@ -507,6 +509,16 @@ public class NetworkSessionManager : MonoBehaviour
 
         SetStatus($"로비 씬으로 전환 중입니다: {lobbySceneName}");
         return true;
+    }
+
+    // 개발용(DirectPlayBootstrap): 로컬 호스트 포트를 바꾼다.
+    // 아레나 직접 실행은 혼자 하는 테스트라 고정 포트(7777)가 다른 인스턴스와 충돌하지 않게 랜덤 포트를 쓴다.
+    public void SetLocalPort(int port)
+    {
+        if (port > 0 && port <= ushort.MaxValue)
+        {
+            localPort = port;
+        }
     }
 
     public void SetGameSceneName(string sceneName)

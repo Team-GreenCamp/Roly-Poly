@@ -343,6 +343,9 @@ public partial class PlayerController
 
         Vector3 launch = forward * grappleThrowForce + Vector3.up * grappleThrowUp;
 
+        // 킬 크레딧: 던진 사람(이 컴포넌트의 소유자)을 기록.
+        victim.ServerRegisterAttacker(OwnerClientId);
+
         // 던지기는 전용 ClientRpc를 쓴다. 일반 전투 릴레이를 쓰면 grabbedByClientId 해제(NetworkVariable)가
         // 임펄스보다 늦게 도착했을 때 UpdateGrabbedVictimMotion이 속도를 0으로 덮어 던지기가 씹힌다.
         ClientRpcParams target = new ClientRpcParams

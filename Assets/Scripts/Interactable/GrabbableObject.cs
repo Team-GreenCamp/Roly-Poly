@@ -61,6 +61,10 @@ public class GrabbableObject : NetworkBehaviour
     private Vector3 localMeshOffset = Vector3.zero;
     private float meshExtentsY = 0f;
 
+    // 킬 크레딧용: 마지막으로 이 물체를 던진 클라이언트(권한 측 기록).
+    private ulong lastThrowerClientId = ulong.MaxValue;
+    private float lastThrowTime = -999f;
+
     private void Awake()
     {
         TryGetComponent(out cachedNetworkObject);
@@ -217,6 +221,13 @@ public class GrabbableObject : NetworkBehaviour
 
     private void ApplyThrow(PlayerInteractor interactor, Vector3 linearVelocity, Vector3 angularVelocity)
     {
+        // 킬 크레딧: 던진 사람을 기록해 두었다가 이 물체가 플레이어를 맞히면 공격자로 등록한다.
+        if (interactor != null)
+        {
+            lastThrowerClientId = interactor.OwnerClientId;
+            lastThrowTime = Time.time;
+        }
+
         // 던지기는 스냅 없이 즉시 손에서 떼고 전방 속도를 부여합니다.
         RemoveInteractor(interactor, isSnapping: true); // isSnapping=true: 아래에서 물리 직접 세팅
         interactors.Clear();
@@ -293,6 +304,12 @@ public class GrabbableObject : NetworkBehaviour
 
         PlayerController victim = collision.collider.GetComponentInParent<PlayerController>();
         if (victim == null) return;
+
+        // 최근(6초 내) 던져진 물체라면 던진 사람을 공격자로 등록(킬 크레딧).
+        if (lastThrowerClientId != ulong.MaxValue && Time.time - lastThrowTime <= 6f)
+        {
+            victim.ServerRegisterAttacker(lastThrowerClientId);
+        }
 
         victim.ServerHandleObjectImpact(rb, true, collision.relativeVelocity.magnitude, collision.GetContact(0).point);
     }
