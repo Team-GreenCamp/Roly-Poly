@@ -3,6 +3,11 @@ using UnityEngine;
 
 public partial class PlayerController
 {
+    // 씬(모드)마다 넉백 세기를 바꾸는 전역 배율. 스모 링아웃처럼 "튕김이 쎈" 맵에서 크게 준다.
+    // SurvivalGameManager가 씬 스폰 시 자신의 직렬화 값으로 설정한다(각 클라 동일 → 네트워킹 불필요).
+    // 기본 1(변화 없음). 씬 언로드 후 다른 씬에 잔존하지 않도록 SGM이 매번 세팅.
+    public static float ArenaKnockbackMultiplier = 1f;
+
     public void ApplyWobbleImpulse(Vector3 worldDirection, float strength)
     {
         Vector3 direction = worldDirection.sqrMagnitude > 0.0001f
@@ -22,10 +27,10 @@ public partial class PlayerController
             return;
         }
 
-        physicsBody.AddForce(force * externalImpactForceMultiplier, ForceMode.Impulse);
+        physicsBody.AddForce(force * (externalImpactForceMultiplier * ArenaKnockbackMultiplier), ForceMode.Impulse);
 
         Vector3 lever = hitPoint - physicsBody.worldCenterOfMass;
-        Vector3 torque = Vector3.Cross(lever, force) * externalImpactTorqueMultiplier;
+        Vector3 torque = Vector3.Cross(lever, force) * (externalImpactTorqueMultiplier * ArenaKnockbackMultiplier);
         physicsBody.AddTorque(torque, ForceMode.Impulse);
     }
 

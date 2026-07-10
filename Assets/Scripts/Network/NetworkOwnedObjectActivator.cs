@@ -92,6 +92,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     private Camera cachedFacingCamera; // 이름표/Ready 표시가 카메라를 바라보게 할 때 쓰는 캐시(매 프레임 씬 검색 방지)
     private TextMeshPro nameLabel;
     private TextMeshPro winsLabel; // 이름 위 ★승수 (nameLabel의 자식이라 표시/방향을 따라감)
+    private bool podiumLabelOverride; // 시상식: 게임 씬이어도 이름표를 강제로 표시
     private SpriteRenderer readyCheckRenderer;
     private Coroutine spawnPresentationCoroutine;
     private Outline lobbyCharacterOutline;
@@ -580,6 +581,23 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         CommitOwnerTransformSync(targetPosition, targetRotation);
     }
 
+    // 시상대(승자 발표) 배치: 캐릭터를 지정 위치에 세우고 물리를 정지시킨다.
+    // 소유자에서 호출하면 syncedPosition으로 전 클라에 전파되고, 비소유자는 자동으로 따라온다.
+    // 렌더러는 SGM이 별도로 켜므로(고스트 해제) 여기서는 위치/물리만 다룬다.
+    public void PlaceForPodium(Vector3 position, Quaternion rotation)
+    {
+        transform.SetPositionAndRotation(position, rotation);
+
+        if (TryGetComponent(out Rigidbody body))
+        {
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            body.isKinematic = true; // 시상대에서 미끄러지지 않도록 고정(씬 언로드까지 유지)
+        }
+
+        CommitOwnerTransformSync(position, rotation);
+    }
+
     // 스폰/리스폰 텔레포트를 owner-write 동기화 변수에 즉시 반영한다(소유자에서만 유효).
     private void CommitOwnerTransformSync(Vector3 position, Quaternion rotation)
     {
@@ -831,7 +849,9 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        if (IsSceneSpawnPointName(root.name))
+        // 그룹 컨테이너("Spawn Points" 등, LobbySpawnPointGroup 부착)는 스폰 위치가 아니므로 제외.
+        // (이름이 "Spawn Point"로 시작해 오탐되면 clientId 0이 원점의 그룹 위치에 스폰되는 버그가 있었음)
+        if (IsSceneSpawnPointName(root.name) && root.GetComponent<LobbySpawnPointGroup>() == null)
         {
             spawnPoints.Add(root);
         }
@@ -1094,9 +1114,9 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        if (showNameLabelOnlyInLobby && !IsInLobbyScene())
+        if (showNameLabelOnlyInLobby && !IsInLobbyScene() && !podiumLabelOverride)
         {
-            // 게임 씬에서는 화면을 가리지 않도록 플레이어 닉네임 라벨을 숨긴다.
+            // 게임 씬에서는 화면을 가리지 않도록 플레이어 닉네임 라벨을 숨긴다(시상식 제외).
             SetNameLabelVisible(false);
             return;
         }
@@ -1252,6 +1272,13 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         {
             nameLabel.gameObject.SetActive(visible);
         }
+    }
+
+    // 시상식: 게임 씬에서도 머리 위 닉네임을 강제로 표시/숨김한다(SGM이 상위 3인에게 호출).
+    public void SetPodiumNameLabel(bool on)
+    {
+        podiumLabelOverride = on;
+        UpdateNameLabel();
     }
 
     private void UpdateTransformSync()

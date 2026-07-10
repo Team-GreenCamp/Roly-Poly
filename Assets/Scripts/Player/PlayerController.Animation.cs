@@ -176,9 +176,31 @@ public partial class PlayerController
             return;
         }
 
+        byte previousState = (byte)(lastAppliedAnimState < 0 ? AnimIdle : lastAppliedAnimState);
         lastAppliedAnimator = anim;
         lastAppliedAnimState = state;
         anim.CrossFadeInFixedTime(AnimStateName(state), Mathf.Max(0f, animCrossFadeDuration), 0);
+
+        // 상태 '진입' 시 SFX/VFX. animState는 동기화 변수라 이 지점은 모든 클라이언트에서
+        // 정확히 한 번씩 실행된다 — 추가 네트워킹 없이 전원에게 연출이 재생되는 훅.
+        if (previousState != state)
+        {
+            switch (state)
+            {
+                case AnimHit:
+                    GameFeedback.HitAt(BodyCenter);
+                    break;
+                case AnimRoll:
+                    GameFeedback.DashAt(transform.position);
+                    break;
+                case AnimAttack:
+                    GameFeedback.SwingAt(BodyCenter);
+                    break;
+                case AnimSpin:
+                    GameFeedback.WinnerAt(transform.position);
+                    break;
+            }
+        }
     }
 
     // 눈(Shapekey) 레이어 구동:

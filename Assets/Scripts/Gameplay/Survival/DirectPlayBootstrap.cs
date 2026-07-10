@@ -16,13 +16,14 @@ using UnityEngine.SceneManagement;
 public static class DirectPlayBootstrap
 {
 #if UNITY_EDITOR
-    private const string ArenaSceneName = "Survival Arena";
+    // 바로 플레이를 허용하는 모드 씬들(로비 없이 Play 시 자동 호스트).
+    private static readonly string[] ArenaSceneNames = { "Survival Arena", "Sumo Arena", "Falling Floors" };
     private const string NetworkManagerPrefabPath = "Assets/Prefab/Network Manager.prefab";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static async void AutoHostIfArenaDirectPlay()
     {
-        if (SceneManager.GetActiveScene().name != ArenaSceneName)
+        if (System.Array.IndexOf(ArenaSceneNames, SceneManager.GetActiveScene().name) < 0)
         {
             return;
         }

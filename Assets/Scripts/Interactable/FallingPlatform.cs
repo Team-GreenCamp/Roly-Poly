@@ -35,6 +35,25 @@ public class FallingPlatform : NetworkBehaviour
     private NetworkObject cachedNetworkObject;
     private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
 
+    public override void OnNetworkSpawn()
+    {
+        networkFalling.OnValueChanged += HandleFallingChanged;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        networkFalling.OnValueChanged -= HandleFallingChanged;
+    }
+
+    private void HandleFallingChanged(bool previousValue, bool newValue)
+    {
+        if (newValue)
+        {
+            // 낙하 시작 연출(모든 클라이언트에서 동기화 변수로 1회 실행).
+            GameFeedback.PlatformFallAt(transform.position + Vector3.up * 0.3f);
+        }
+    }
+
     private void Awake()
     {
         TryGetComponent(out cachedNetworkObject);

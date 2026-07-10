@@ -334,7 +334,7 @@ MonoBehaviour:
   - Network Test
   showNameLabel: 1
   showNameLabelOnlyInLobby: 1
-  nameLabelOffset: {x: 0, y: 1.1, z: 0}
+  nameLabelOffset: {x: 0, y: 1.8, z: 0}
   nameLabelFontSize: 2.5
   nameLabelFont: {fileID: 11400000, guid: 306e3d1a41ce2445c8a34c0976610a2a, type: 2}
   winsLabelOffset: {x: 0, y: 0.35, z: 0}

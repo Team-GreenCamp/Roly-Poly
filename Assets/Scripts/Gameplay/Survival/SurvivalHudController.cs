@@ -28,20 +28,29 @@ public class SurvivalHudController : MonoBehaviour
     [SerializeField] private TMP_Text winnerText;
 
     [Header("서든데스 경고 (선택)")]
+    [SerializeField] private GameObject suddenDeathPanel; // 배경 포함 루트(비우면 텍스트 자체를 토글)
     [SerializeField] private TMP_Text suddenDeathText;
     [Tooltip("서든데스 몇 초 전부터 경고를 표시할지.")]
     [SerializeField] private float suddenDeathWarnSeconds = 10f;
 
     [Header("킬 피드 (선택)")]
+    [SerializeField] private GameObject killFeedPanel; // 배경 포함 루트(비우면 텍스트 자체를 토글)
     [SerializeField] private TMP_Text killFeedText;
     [Tooltip("킬 피드 한 줄이 표시되는 시간(초).")]
     [SerializeField] private float killFeedDuration = 4f;
+
+    private GameObject SuddenDeathRoot =>
+        suddenDeathPanel != null ? suddenDeathPanel : (suddenDeathText != null ? suddenDeathText.gameObject : null);
+    private GameObject KillFeedRoot =>
+        killFeedPanel != null ? killFeedPanel : (killFeedText != null ? killFeedText.gameObject : null);
 
     private SurvivalGameManager gameManager;
     private SpectatorController spectator;
     private string spectateTargetName = string.Empty;
     private float hideGoAtTime = -1f;
     private float killFeedHideAt = -1f;
+    private int lastCountdownNumber = -1;   // 카운트다운 틱 사운드용
+    private bool suddenDeathAnnounced;      // 서든데스 보이스 1회 재생용
 
     private void Start()
     {
@@ -49,8 +58,8 @@ public class SurvivalHudController : MonoBehaviour
         SetActiveSafe(countdownPanel, false);
         SetActiveSafe(eliminatedPanel, false);
         SetActiveSafe(winnerPanel, false);
-        if (suddenDeathText != null) SetActiveSafe(suddenDeathText.gameObject, false);
-        if (killFeedText != null) SetActiveSafe(killFeedText.gameObject, false);
+        if (SuddenDeathRoot != null) SetActiveSafe(SuddenDeathRoot, false);
+        if (KillFeedRoot != null) SetActiveSafe(KillFeedRoot, false);
     }
 
     private void OnDisable()
@@ -84,14 +93,20 @@ public class SurvivalHudController : MonoBehaviour
 
         if (state != SurvivalGameManager.MatchState.Playing)
         {
-            SetActiveSafe(suddenDeathText.gameObject, false);
+            SetActiveSafe(SuddenDeathRoot, false);
             return;
         }
 
         if (gameManager.IsSuddenDeath)
         {
+            if (!suddenDeathAnnounced)
+            {
+                suddenDeathAnnounced = true;
+                GameFeedback.SuddenDeath();
+            }
+
             suddenDeathText.text = "⚠ SUDDEN DEATH! 발판이 무너집니다!";
-            SetActiveSafe(suddenDeathText.gameObject, true);
+            SetActiveSafe(SuddenDeathRoot, true);
             return;
         }
 
@@ -99,11 +114,11 @@ public class SurvivalHudController : MonoBehaviour
         if (remaining <= suddenDeathWarnSeconds)
         {
             suddenDeathText.text = $"서든데스까지 {Mathf.CeilToInt((float)remaining)}초";
-            SetActiveSafe(suddenDeathText.gameObject, true);
+            SetActiveSafe(SuddenDeathRoot, true);
         }
         else
         {
-            SetActiveSafe(suddenDeathText.gameObject, false);
+            SetActiveSafe(SuddenDeathRoot, false);
         }
     }
 
@@ -111,7 +126,7 @@ public class SurvivalHudController : MonoBehaviour
     {
         if (killFeedText != null && killFeedHideAt >= 0f && Time.time >= killFeedHideAt)
         {
-            SetActiveSafe(killFeedText.gameObject, false);
+            SetActiveSafe(KillFeedRoot, false);
             killFeedHideAt = -1f;
         }
     }
@@ -128,7 +143,7 @@ public class SurvivalHudController : MonoBehaviour
             ? $"Player {killerClientId + 1} ▶ {victimName} 떨어뜨림!"
             : $"{victimName} 추락...";
 
-        SetActiveSafe(killFeedText.gameObject, true);
+        SetActiveSafe(KillFeedRoot, true);
         killFeedHideAt = Time.time + Mathf.Max(1f, killFeedDuration);
     }
 
@@ -194,10 +209,17 @@ public class SurvivalHudController : MonoBehaviour
         {
             SetActiveSafe(countdownPanel, true);
 
+            int remaining = Mathf.Max(1, Mathf.CeilToInt((float)gameManager.CountdownRemaining));
             if (countdownText != null)
             {
-                int remaining = Mathf.Max(1, Mathf.CeilToInt((float)gameManager.CountdownRemaining));
                 countdownText.text = remaining.ToString();
+            }
+
+            // 숫자가 바뀔 때마다 틱 사운드.
+            if (remaining != lastCountdownNumber)
+            {
+                lastCountdownNumber = remaining;
+                GameFeedback.CountdownTick();
             }
 
             hideGoAtTime = -1f;
@@ -214,6 +236,7 @@ public class SurvivalHudController : MonoBehaviour
                 {
                     countdownText.text = "GO!";
                 }
+                GameFeedback.MatchStart();
             }
 
             SetActiveSafe(countdownPanel, Time.time < hideGoAtTime);
@@ -238,7 +261,8 @@ public class SurvivalHudController : MonoBehaviour
 
     private void UpdateWinnerPanel(SurvivalGameManager.MatchState state)
     {
-        bool show = state == SurvivalGameManager.MatchState.Finished;
+        // 종료 직후엔 winner 패널을 보여주고, 시상식이 시작되면(PodiumActive) 끈다.
+        bool show = state == SurvivalGameManager.MatchState.Finished && !gameManager.PodiumActive;
         SetActiveSafe(winnerPanel, show);
 
         if (!show || winnerText == null)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -18,6 +19,12 @@ using UnityEngine;
 public class SurvivalGameManager : NetworkBehaviour
 {
     public enum MatchState : byte { Waiting = 0, Countdown = 1, Playing = 2, Finished = 3 }
+
+    [Header("Mode (씬마다 다르게)")]
+    [Tooltip("HUD 등에 쓸 모드 이름(예: 서바이벌, 스모 링아웃, 떨어지는 바닥).")]
+    [SerializeField] private string modeName = "서바이벌";
+    [Tooltip("이 씬의 넉백 세기 배율. 스모 링아웃처럼 서로 밀어내는 맵은 크게(예: 2~3).")]
+    [SerializeField] private float knockbackMultiplier = 1f;
 
     [Header("Match")]
     [Tooltip("시작 카운트다운 길이(초).")]
@@ -42,6 +49,22 @@ public class SurvivalGameManager : NetworkBehaviour
     [Tooltip("발판이 하나씩 무너지는 간격(초).")]
     [SerializeField] private float suddenDeathTileInterval = 0.8f;
 
+    [Header("시상대 (승자 발표)")]
+    [Tooltip("시상대 발판/장식 루트. 평소엔 꺼두고 매치 종료 시 켠다(비워도 동작).")]
+    [SerializeField] private GameObject podiumRoot;
+    [Tooltip("1·2·3등이 설 위치. [0]=가운데(1등), [1]=왼쪽(2등), [2]=오른쪽(3등).")]
+    [SerializeField] private Transform[] podiumStands;
+    [Tooltip("시상대 고정 카메라(있으면 종료 시 이 카메라로 전환). 비우면 기존 승자 추적 카메라 유지.")]
+    [SerializeField] private GameObject podiumCamera;
+    [Tooltip("게임플레이 카메라(FreeLook). 시상대 전환 시 끈다. 비우면 이름으로 자동 탐색.")]
+    [SerializeField] private GameObject gameplayCamera;
+    [Tooltip("화면 페이드용 검은 오버레이(CanvasGroup). 비우면 페이드 없이 즉시 전환.")]
+    [SerializeField] private CanvasGroup fadeOverlay;
+    [Tooltip("페이드 인/아웃 각각의 시간(초).")]
+    [SerializeField] private float fadeDuration = 0.45f;
+    [Tooltip("승자 확정 후 winner 패널을 보여주는 시간(초). 이 시간이 지나면 시상식으로 전환한다.")]
+    [SerializeField] private float winnerPanelSeconds = 3f;
+
     // ───── 동기화 상태 (서버 쓰기, 전원 읽기) ─────
     private readonly NetworkVariable<byte> matchState = new NetworkVariable<byte>((byte)MatchState.Waiting);
     private readonly NetworkVariable<int> aliveCount = new NetworkVariable<int>(0);
@@ -53,6 +76,7 @@ public class SurvivalGameManager : NetworkBehaviour
 
     // ───── 서버 로컬 ─────
     private readonly HashSet<ulong> aliveClients = new HashSet<ulong>();
+    private readonly List<ulong> eliminationOrder = new List<ulong>(); // 탈락 순서(빠른 순). 시상대 2·3등 산출용.
     private bool soloMode;
     private ulong lastEliminatedClientId = ulong.MaxValue;
     private float nextKillSweepTime;
@@ -76,6 +100,10 @@ public class SurvivalGameManager : NetworkBehaviour
     // 킬 피드용: (피해자 clientId, 킬러 clientId — 없으면 ulong.MaxValue)
     public event Action<ulong, ulong> OnPlayerEliminated;
 
+    // 시상식 진행 중 여부(로컬). HUD가 이 값을 보고 winner 패널을 끈다.
+    private bool podiumActive;
+    public bool PodiumActive => podiumActive;
+
     public MatchState State => (MatchState)matchState.Value;
     public int AliveCount => aliveCount.Value;
     public int TotalPlayerCount => totalPlayerCount.Value;
@@ -98,6 +126,10 @@ public class SurvivalGameManager : NetworkBehaviour
     {
         Instance = this;
         spectator = GetComponent<SpectatorController>();
+
+        // 씬(모드)마다 넉백 세기를 전역에 반영. 직렬화 값이라 각 클라 동일 → 네트워킹 불필요.
+        // 씬 언로드 후 다른 씬(로비 등)에 잔존하지 않도록 OnDestroy에서 1로 복귀.
+        PlayerController.ArenaKnockbackMultiplier = Mathf.Max(0.1f, knockbackMultiplier);
     }
 
     public override void OnNetworkSpawn()
@@ -138,6 +170,9 @@ public class SurvivalGameManager : NetworkBehaviour
             Instance = null;
         }
 
+        // 넉백 배율을 기본으로 복귀(로비/다른 모드에 잔존 방지).
+        PlayerController.ArenaKnockbackMultiplier = 1f;
+
         base.OnDestroy();
     }
 
@@ -163,6 +198,7 @@ public class SurvivalGameManager : NetworkBehaviour
 
         // Countdown: 생존자 스냅샷 확정.
         aliveClients.Clear();
+        eliminationOrder.Clear();
         foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
         {
             aliveClients.Add(clientId);
@@ -328,6 +364,7 @@ public class SurvivalGameManager : NetworkBehaviour
         }
 
         lastEliminatedClientId = clientId;
+        eliminationOrder.Add(clientId); // 시상대 순위 산출용(나중에 탈락할수록 높은 등수)
         aliveCount.Value = aliveClients.Count;
         EliminatePlayerClientRpc(clientId, killerClientId);
         CheckWinnerOnServer();
@@ -371,6 +408,18 @@ public class SurvivalGameManager : NetworkBehaviour
         int totalWins = SurvivalWinTracker.AddWin(winner);
         AnnounceWinnerClientRpc(winner, totalWins);
 
+        // 시상대: 1등=승자, 2등=가장 늦게 탈락, 3등=그 다음. 없으면 ulong.MaxValue.
+        ulong second = ulong.MaxValue, third = ulong.MaxValue;
+        int found = 0;
+        for (int i = eliminationOrder.Count - 1; i >= 0 && found < 2; i--)
+        {
+            if (eliminationOrder[i] == winner) continue;
+            if (found == 0) second = eliminationOrder[i];
+            else third = eliminationOrder[i];
+            found++;
+        }
+        ShowPodiumClientRpc(winner, second, third);
+
         StartCoroutine(ReturnToLobbyAfterDelay());
     }
 
@@ -381,9 +430,144 @@ public class SurvivalGameManager : NetworkBehaviour
         SurvivalWinTracker.SetWins(winner, totalWins);
     }
 
+    // 상위 3인을 시상대에 세운다(전 클라이언트). 각 캐릭터는 소유 클라에서 위치가 확정되고,
+    // 렌더러(고스트 해제)는 모든 클라에서 켠다. 카메라는 기존대로 승자를 따라가므로 별도 전환 없음.
+    [ClientRpc]
+    private void ShowPodiumClientRpc(ulong first, ulong second, ulong third)
+    {
+        StartCoroutine(PodiumSequence(first, second, third));
+    }
+
+    // winner 패널 표시 → 페이드아웃(검게) → 시상대로 전환/배치(패널 끔) → 페이드인.
+    private IEnumerator PodiumSequence(ulong first, ulong second, ulong third)
+    {
+        // 먼저 winner 패널을 잠시 보여준다(matchState=Finished라 HUD가 자동 표시).
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, winnerPanelSeconds));
+
+        // 시상식 진입 — HUD가 winner 패널을 끄도록 플래그 설정.
+        podiumActive = true;
+
+        yield return FadeOverlayTo(1f); // 검게
+
+        if (podiumRoot != null)
+        {
+            podiumRoot.SetActive(true);
+        }
+
+        SwitchToPodiumCamera();
+
+        PlacePodiumWinner(first, 0, celebrate: true);
+        PlacePodiumWinner(second, 1, celebrate: false);
+        PlacePodiumWinner(third, 2, celebrate: false);
+
+        // 배치/카메라 블렌드가 자리잡을 짧은 여유(검은 화면 동안).
+        yield return new WaitForSecondsRealtime(0.15f);
+
+        yield return FadeOverlayTo(0f); // 밝게
+    }
+
+    private void SwitchToPodiumCamera()
+    {
+        if (podiumCamera == null)
+        {
+            return; // 전용 카메라 없으면 기존 승자 추적 카메라 유지
+        }
+
+        // 관전 카메라가 FreeLook을 계속 재조준하지 않도록 멈춘다.
+        if (spectator != null)
+        {
+            spectator.enabled = false;
+        }
+
+        // 브레인 기본 블렌드가 EaseInOut 2초라 전환이 눈에 보인다 → 컷(즉시)으로 바꿔
+        // 검은 화면 뒤에서 순간 이동하게 한다. 매치 후 로비 재로드로 초기화되므로 복원 불필요.
+        CinemachineBrain brain = FindFirstObjectByType<CinemachineBrain>();
+        if (brain != null)
+        {
+            brain.DefaultBlend.Style = CinemachineBlendDefinition.Styles.Cut;
+        }
+
+        if (gameplayCamera == null)
+        {
+            gameplayCamera = GameObject.Find("FreeLook Camera");
+        }
+        if (gameplayCamera != null)
+        {
+            gameplayCamera.SetActive(false);
+        }
+
+        podiumCamera.SetActive(true);
+    }
+
+    private IEnumerator FadeOverlayTo(float targetAlpha)
+    {
+        if (fadeOverlay == null)
+        {
+            yield break;
+        }
+
+        fadeOverlay.gameObject.SetActive(true);
+        fadeOverlay.blocksRaycasts = targetAlpha > 0.5f;
+
+        float start = fadeOverlay.alpha;
+        float dur = Mathf.Max(0.05f, fadeDuration);
+        float t = 0f;
+        while (t < dur)
+        {
+            t += Time.unscaledDeltaTime;
+            fadeOverlay.alpha = Mathf.Lerp(start, targetAlpha, t / dur);
+            yield return null;
+        }
+        fadeOverlay.alpha = targetAlpha;
+    }
+
+    private void PlacePodiumWinner(ulong clientId, int standIndex, bool celebrate)
+    {
+        if (clientId == ulong.MaxValue || podiumStands == null
+            || standIndex >= podiumStands.Length || podiumStands[standIndex] == null)
+        {
+            return;
+        }
+
+        NetworkOwnedObjectActivator activator = FindPlayerActivator(clientId);
+        if (activator == null)
+        {
+            return;
+        }
+
+        // 고스트 해제: 탈락자(2·3등)의 렌더러를 다시 켠다(모든 클라).
+        Renderer[] renderers = activator.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null) renderers[i].enabled = true;
+        }
+
+        // 머리 위 닉네임 표시(모든 클라에서 — 각자 로컬 카메라를 향해 빌보드됨).
+        activator.SetPodiumNameLabel(true);
+
+        // 위치/물리 고정은 소유 클라에서만(그래야 syncedPosition으로 전 클라에 전파).
+        if (NetworkManager != null && clientId == NetworkManager.LocalClientId)
+        {
+            Transform stand = podiumStands[standIndex];
+            activator.PlaceForPodium(stand.position, stand.rotation);
+
+            PlayerController pc = activator.GetComponent<PlayerController>();
+            if (pc != null)
+            {
+                pc.SetGameplayInputEnabled(false);
+                pc.SetCelebrating(celebrate); // 1등만 Spin, 2·3등은 idle
+            }
+        }
+    }
+
     private IEnumerator ReturnToLobbyAfterDelay()
     {
-        yield return new WaitForSecondsRealtime(Mathf.Max(1f, returnToLobbyDelaySeconds));
+        // winner 패널(winnerPanelSeconds) + 시상식(returnToLobbyDelaySeconds)만큼 머문 뒤 복귀.
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, winnerPanelSeconds) + Mathf.Max(1f, returnToLobbyDelaySeconds));
+
+        // 로비 로드 직전 전 클라이언트를 검게 페이드아웃(씬 전환을 가린다).
+        FadeOutBeforeLobbyClientRpc();
+        yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, fadeDuration) + 0.1f);
 
         NetworkSessionManager sessionManager = FindFirstObjectByType<NetworkSessionManager>();
         if (sessionManager != null && sessionManager.ReturnToLobby())
@@ -396,6 +580,12 @@ public class SurvivalGameManager : NetworkBehaviour
         {
             NetworkManager.SceneManager.LoadScene(lobbySceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
         }
+    }
+
+    [ClientRpc]
+    private void FadeOutBeforeLobbyClientRpc()
+    {
+        StartCoroutine(FadeOverlayTo(1f));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -446,6 +636,9 @@ public class SurvivalGameManager : NetworkBehaviour
 
         // 킬 피드(HUD)용 알림. killer가 없으면(스스로 낙사) ulong.MaxValue.
         OnPlayerEliminated?.Invoke(clientId, killerClientId);
+
+        // 탈락 연출(비명 + UI 팝).
+        GameFeedback.Elimination();
 
         // 관전 중이던 대상이 탈락했으면 다음 생존자로 넘긴다.
         if (spectator != null)

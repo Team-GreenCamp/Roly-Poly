@@ -11,7 +11,9 @@ public class LobbySpawnPointGroup : MonoBehaviour
         position = Vector3.zero;
         rotation = Quaternion.identity;
 
-        if (spawnPoints == null || spawnPoints.Length == 0)
+        // 배열이 비어 있으면 자식 Transform들을 순서대로 사용한다(인스펙터 배선 불필요).
+        int count = spawnPoints != null && spawnPoints.Length > 0 ? spawnPoints.Length : transform.childCount;
+        if (count == 0)
         {
             return false;
         }
@@ -20,14 +22,16 @@ public class LobbySpawnPointGroup : MonoBehaviour
         int index = (int)ownerClientId;
         if (wrapWhenFull)
         {
-            index %= spawnPoints.Length;
+            index %= count;
         }
-        else if (index >= spawnPoints.Length)
+        else if (index >= count)
         {
-            index = spawnPoints.Length - 1;
+            index = count - 1;
         }
 
-        Transform spawnPoint = spawnPoints[index];
+        Transform spawnPoint = spawnPoints != null && spawnPoints.Length > 0
+            ? spawnPoints[index]
+            : transform.GetChild(index);
         if (spawnPoint == null)
         {
             return false;
