@@ -65636,6 +65636,7 @@ MonoBehaviour:
   countdownSeconds: 3
   returnToLobbyDelaySeconds: 5
   maxWaitForSpawnSeconds: 10
+  minPlayersToStart: 2
   lobbySceneName: Lobby Scene
   killY: -27
   killSweepInterval: 0.5
