@@ -41,6 +41,10 @@ public class GameFeedback : MonoBehaviour
     [Header("발판 붕괴")]
     [SerializeField] private GameObject[] floorFallVfx;
 
+    [Header("코인 획득")]
+    [SerializeField] private GameObject[] coinVfx;
+    [SerializeField] private AudioClip[] coinSfx;
+
     [Header("볼륨")]
     [SerializeField, Range(0f, 1f)] private float sfxVolume = 0.9f;
     [SerializeField, Range(0f, 1f)] private float voiceVolume = 1f;
@@ -123,6 +127,14 @@ public class GameFeedback : MonoBehaviour
         if (Instance == null) return;
         Instance.SpawnVfx(Instance.winnerVfx, position);
         Instance.PlayUi(Instance.winnerVoice, Instance.voiceVolume);
+    }
+
+    // 코인 획득 지점 연출(모든 클라이언트에서 호출됨 — 획득자가 아니어도 반짝임/사운드가 보인다).
+    public static void CoinPickupAt(Vector3 position)
+    {
+        if (Instance == null) return;
+        Instance.SpawnVfx(Instance.coinVfx, position);
+        Instance.PlayAt(Instance.coinSfx, position, Instance.sfxVolume);
     }
 
     public static void PlatformFallAt(Vector3 position)

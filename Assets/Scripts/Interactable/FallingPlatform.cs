@@ -35,6 +35,9 @@ public class FallingPlatform : NetworkBehaviour
     private NetworkObject cachedNetworkObject;
     private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
 
+    // 낙하 중이거나 이미 떨어진 발판인지(코인 스폰 등 외부에서 온전한 발판만 고를 때 사용).
+    public bool IsFalling => IsNetworkActive ? networkFalling.Value : localFalling;
+
     public override void OnNetworkSpawn()
     {
         networkFalling.OnValueChanged += HandleFallingChanged;

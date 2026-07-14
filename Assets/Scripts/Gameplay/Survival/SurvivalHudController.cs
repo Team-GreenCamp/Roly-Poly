@@ -30,8 +30,12 @@ public class SurvivalHudController : MonoBehaviour
     [Header("서든데스 경고 (선택)")]
     [SerializeField] private GameObject suddenDeathPanel; // 배경 포함 루트(비우면 텍스트 자체를 토글)
     [SerializeField] private TMP_Text suddenDeathText;
-    [Tooltip("서든데스 몇 초 전부터 경고를 표시할지.")]
-    [SerializeField] private float suddenDeathWarnSeconds = 10f;
+    [Tooltip("서든데스(붕괴 시작) 몇 초 전부터 경고 타이머를 표시할지.")]
+    [SerializeField] private float suddenDeathWarnSeconds = 15f;
+
+    [Header("코인 점수 (선택 — 비우면 생존자 텍스트를 복제해 자동 생성)")]
+    [SerializeField] private TMP_Text coinText;
+    [SerializeField] private Color coinTextColor = new Color(1f, 0.82f, 0.2f, 1f);
 
     [Header("킬 피드 (선택)")]
     [SerializeField] private GameObject killFeedPanel; // 배경 포함 루트(비우면 텍스트 자체를 토글)
@@ -51,9 +55,15 @@ public class SurvivalHudController : MonoBehaviour
     private float killFeedHideAt = -1f;
     private int lastCountdownNumber = -1;   // 카운트다운 틱 사운드용
     private bool suddenDeathAnnounced;      // 서든데스 보이스 1회 재생용
+    private float countdownBaseFontSize;    // 카운트다운 숫자용 원래 크기(대기 문구는 축소 표시)
 
     private void Start()
     {
+        if (countdownText != null)
+        {
+            countdownBaseFontSize = countdownText.fontSize;
+        }
+
         SetActiveSafe(alivePanel, false);
         SetActiveSafe(countdownPanel, false);
         SetActiveSafe(eliminatedPanel, false);
@@ -105,7 +115,7 @@ public class SurvivalHudController : MonoBehaviour
                 GameFeedback.SuddenDeath();
             }
 
-            suddenDeathText.text = "⚠ SUDDEN DEATH! 발판이 무너집니다!";
+            suddenDeathText.text = "⚠ 바닥 붕괴 중! 중앙 안전구역으로!";
             SetActiveSafe(SuddenDeathRoot, true);
             return;
         }
@@ -113,7 +123,7 @@ public class SurvivalHudController : MonoBehaviour
         double remaining = gameManager.SuddenDeathRemaining;
         if (remaining <= suddenDeathWarnSeconds)
         {
-            suddenDeathText.text = $"서든데스까지 {Mathf.CeilToInt((float)remaining)}초";
+            suddenDeathText.text = $"⚠ {Mathf.CeilToInt((float)remaining)}초 후 외곽부터 붕괴 시작!";
             SetActiveSafe(SuddenDeathRoot, true);
         }
         else
@@ -201,10 +211,75 @@ public class SurvivalHudController : MonoBehaviour
         {
             aliveCountText.text = $"생존 {gameManager.AliveCount}/{gameManager.TotalPlayerCount}";
         }
+
+        UpdateCoinText(show);
+    }
+
+    // 코인 점수(우상단, 생존자 수 아래). 코인 시스템이 없는 씬(스모 등)에서는 아무것도 표시하지 않는다.
+    private void UpdateCoinText(bool alivePanelShown)
+    {
+        SurvivalCoinManager coinManager = SurvivalCoinManager.Instance;
+        bool show = alivePanelShown && coinManager != null;
+
+        if (show && coinText == null)
+        {
+            EnsureCoinText();
+        }
+
+        if (coinText == null)
+        {
+            return;
+        }
+
+        SetActiveSafe(coinText.gameObject, show);
+        if (show)
+        {
+            coinText.text = $"코인 {coinManager.LocalScore}";
+        }
+    }
+
+    // 인스펙터에 연결이 없으면 생존자 카운트 텍스트를 복제해 폰트/앵커를 그대로 물려받는다.
+    private void EnsureCoinText()
+    {
+        if (aliveCountText == null)
+        {
+            return;
+        }
+
+        coinText = Instantiate(aliveCountText, aliveCountText.transform.parent);
+        coinText.name = "Coin Count Text";
+        coinText.text = string.Empty;
+        coinText.color = coinTextColor;
+        coinText.fontSize = aliveCountText.fontSize * 0.85f;
+
+        RectTransform rect = coinText.rectTransform;
+        RectTransform aliveRect = aliveCountText.rectTransform;
+        rect.anchoredPosition = aliveRect.anchoredPosition
+            + new Vector2(0f, -aliveRect.rect.height * 1.1f);
     }
 
     private void UpdateCountdownPanel(SurvivalGameManager.MatchState state)
     {
+        // 데디케이티드 서버 대기실: 인원이 모일 때까지 중앙에 대기 안내를 띄운다.
+        if (state == SurvivalGameManager.MatchState.Waiting && gameManager.WaitingRequired > 0)
+        {
+            SetActiveSafe(countdownPanel, true);
+            if (countdownText != null)
+            {
+                countdownText.fontSize = countdownBaseFontSize > 0f ? countdownBaseFontSize * 0.4f : 48f;
+                countdownText.text = $"플레이어 대기 중 {gameManager.WaitingConnected}/{gameManager.WaitingRequired}";
+            }
+
+            hideGoAtTime = -1f;
+            return;
+        }
+
+        // 대기 표시가 끝났으면 카운트다운 숫자용 원래 크기로 복원.
+        if (countdownText != null && countdownBaseFontSize > 0f && countdownText.fontSize != countdownBaseFontSize)
+        {
+            countdownText.fontSize = countdownBaseFontSize;
+        }
+
         if (state == SurvivalGameManager.MatchState.Countdown)
         {
             SetActiveSafe(countdownPanel, true);

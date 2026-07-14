@@ -30,6 +30,7 @@ public static class GameFeedbackAutoWire
         SetClips(so, "swingSfx", LoadClips($"{SfxRoot}/UI/Swipes", 6));
         SetClips(so, "eliminationVoice", LoadClips($"{SfxRoot}/Voices/Emotions/DeathPain", 8));
         SetClips(so, "uiPop", LoadClips($"{SfxRoot}/UI/Bubless", 4));
+        SetClips(so, "coinSfx", LoadClips($"{SfxRoot}/UI/Collectible", 7));
         SetClips(so, "countdownTick", LoadClips($"{SfxRoot}/UI/Clicks", 3));
         SetClips(so, "goVoice", LoadClips($"{SfxRoot}/Voices/Phrases/Fight", 5));
         SetClips(so, "suddenDeathVoice", LoadClips($"{SfxRoot}/Voices/Phrases/FinishHim", 5));
@@ -44,6 +45,12 @@ public static class GameFeedbackAutoWire
         });
         SetPrefabs(so, "dashVfx", new[] { $"{VfxRoot}/HCFX_Dust_Dash_01.prefab" });
         SetPrefabs(so, "winnerVfx", new[] { $"{VfxRoot}/HCFX_Conffeti.prefab" });
+        SetPrefabs(so, "coinVfx", new[]
+        {
+            $"{VfxRoot}/HCFX_Shine_01.prefab",
+            $"{VfxRoot}/HCFX_Shine_02.prefab",
+            $"{VfxRoot}/HCFX_Shine_03.prefab",
+        });
         SetPrefabs(so, "floorFallVfx", new[]
         {
             $"{VfxRoot}/HCFX_Dust_FloorHit_01.prefab",

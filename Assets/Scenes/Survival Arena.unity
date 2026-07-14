@@ -9458,10 +9458,22 @@ MonoBehaviour:
   floorFallVfx:
   - {fileID: 5862328161722201066, guid: 0fccd39ae46226e4084c40f7f8f2cc0d, type: 3}
   - {fileID: 4181101764326029096, guid: 9430365d95bc1aa458a9168bf9c29c74, type: 3}
+  coinVfx:
+  - {fileID: 3083726464446560820, guid: da6a811c29e698e4d854e1477664e8e6, type: 3}
+  - {fileID: 8089031658145368973, guid: 7ae611719d10a5b489337fcd4622030a, type: 3}
+  - {fileID: 3844823984038792598, guid: e02c6870c263c954f8f5c8c4f7a9c55b, type: 3}
+  coinSfx:
+  - {fileID: 8300000, guid: 2eb3dadce8177471996f94d099823504, type: 3}
+  - {fileID: 8300000, guid: 31b730a644fea41cd97918b37d76a2dc, type: 3}
+  - {fileID: 8300000, guid: 43c5510cc7b6045719430c9fb52a89d3, type: 3}
+  - {fileID: 8300000, guid: 532fdddeacfcf4322955a33ccc18a41b, type: 3}
+  - {fileID: 8300000, guid: 601c6d982a38c415ab70e744df5a65c1, type: 3}
+  - {fileID: 8300000, guid: 69d6090c980c140fabc1144404f4af75, type: 3}
+  - {fileID: 8300000, guid: dcf0c3cc51ee24c48b3dc514997c97a5, type: 3}
   sfxVolume: 0.9
   voiceVolume: 1
   uiVolume: 0.7
-  vfxScale: 0.45
+  vfxScale: 0.35
 --- !u!4 &331633544
 Transform:
   m_ObjectHideFlags: 0
@@ -20422,6 +20434,7 @@ GameObject:
   - component: {fileID: 745085370}
   - component: {fileID: 745085373}
   - component: {fileID: 745085372}
+  - component: {fileID: 745085374}
   m_Layer: 0
   m_Name: Survival Game Manager
   m_TagString: Untagged
@@ -20499,12 +20512,13 @@ MonoBehaviour:
   countdownSeconds: 3
   returnToLobbyDelaySeconds: 5
   maxWaitForSpawnSeconds: 10
+  minPlayersToStart: 2
   lobbySceneName: Lobby Scene
   killY: -30
   killSweepInterval: 0.5
   killCreditWindowSeconds: 5
   suddenDeathStartSeconds: 60
-  suddenDeathTileInterval: 1.5
+  suddenDeathCollapseSeconds: 12
   podiumRoot: {fileID: 112224980}
   podiumStands:
   - {fileID: 234478027}
@@ -20515,6 +20529,32 @@ MonoBehaviour:
   fadeOverlay: {fileID: 1530385164}
   fadeDuration: 0.45
   winnerPanelSeconds: 3
+--- !u!114 &745085374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 745085369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93b20706277e64538bb3eb6375434e77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurvivalCoinManager
+  ShowTopMostFoldoutHeaderGroup: 1
+  maxActiveCoins: 24
+  respawnInterval: 12
+  coinHeightOffset: 0.9
+  minCoinSpacing: 1.5
+  innerCoinValue: 1
+  outerCoinValue: 3
+  outerDistanceThreshold: 0.6
+  pickupRadius: 1.1
+  serverValidationRadius: 4
+  coinSpinSpeed: 140
+  coinBobAmplitude: 0.15
+  coinBobFrequency: 1.6
+  coinColor: {r: 1, g: 0.82, b: 0.2, a: 1}
 --- !u!1 &762508204
 GameObject:
   m_ObjectHideFlags: 0
@@ -42026,94 +42066,11 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
---- !u!1 &1530385162
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1530385163}
-  - component: {fileID: 1530385166}
-  - component: {fileID: 1530385165}
-  - component: {fileID: 1530385164}
-  m_Layer: 0
-  m_Name: Fade Overlay
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1530385163
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1530385162}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2052649769234426080}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!225 &1530385164
+--- !u!225 &1530385164 stripped
 CanvasGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 6030746814695404601, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+  m_PrefabInstance: {fileID: 2052649769234426079}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1530385162}
-  m_Enabled: 1
-  m_Alpha: 0
-  m_Interactable: 0
-  m_BlocksRaycasts: 0
-  m_IgnoreParentGroups: 0
---- !u!114 &1530385165
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1530385162}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &1530385166
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1530385162}
-  m_CullTransparentMesh: 1
 --- !u!1 &1543233992
 GameObject:
   m_ObjectHideFlags: 0
@@ -61775,17 +61732,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 7267221784227807329, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1530385163}
+    m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
---- !u!224 &2052649769234426080 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 7267221784227807329, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
-  m_PrefabInstance: {fileID: 2052649769234426079}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
