@@ -33,6 +33,8 @@ public class SurvivalGameManager : NetworkBehaviour
     [SerializeField] private float returnToLobbyDelaySeconds = 5f;
     [Tooltip("전원 스폰을 기다리는 최대 시간(초). 초과하면 스폰된 인원만으로 시작합니다.")]
     [SerializeField] private float maxWaitForSpawnSeconds = 10f;
+    [Tooltip("데디케이티드 서버 전용: 이 인원 이상 접속할 때까지 매치를 시작하지 않습니다(호스트/로컬 플레이엔 영향 없음).")]
+    [SerializeField] private int minPlayersToStart = 2;
     [Tooltip("로비 복귀 실패 시 폴백으로 로드할 씬 이름.")]
     [SerializeField] private string lobbySceneName = "Lobby Scene";
 
@@ -44,10 +46,10 @@ public class SurvivalGameManager : NetworkBehaviour
     [SerializeField] private float killCreditWindowSeconds = 5f;
 
     [Header("Sudden Death (정체 방지)")]
-    [Tooltip("매치 시작 후 이 시간(초)이 지나면 서든데스 — 발판이 바깥쪽부터 순차적으로 무너집니다.")]
+    [Tooltip("매치 시작 후 이 시간(초)이 지나면 서든데스 — 가장 바깥 발판부터 중앙 안전구역까지 빠르게 무너집니다.")]
     [SerializeField] private float suddenDeathStartSeconds = 60f;
-    [Tooltip("발판이 하나씩 무너지는 간격(초).")]
-    [SerializeField] private float suddenDeathTileInterval = 0.8f;
+    [Tooltip("서든데스 시작 후 가장 바깥 발판부터 안쪽 끝(안전구역 경계)까지 전부 무너지는 데 걸리는 총 시간(초).")]
+    [SerializeField] private float suddenDeathCollapseSeconds = 12f;
 
     [Header("시상대 (승자 발표)")]
     [Tooltip("시상대 발판/장식 루트. 평소엔 꺼두고 매치 종료 시 켠다(비워도 동작).")]
@@ -70,6 +72,9 @@ public class SurvivalGameManager : NetworkBehaviour
     private readonly NetworkVariable<int> aliveCount = new NetworkVariable<int>(0);
     private readonly NetworkVariable<int> totalPlayerCount = new NetworkVariable<int>(0);
     private readonly NetworkVariable<double> countdownEndTime = new NetworkVariable<double>(0);
+    // 데디케이티드 서버 대기실: 필요 인원(>0이면 대기 중)과 현재 접속 인원. HUD 표시용.
+    private readonly NetworkVariable<int> waitingRequired = new NetworkVariable<int>(0);
+    private readonly NetworkVariable<int> waitingConnected = new NetworkVariable<int>(0);
     private readonly NetworkVariable<ulong> winnerClientId = new NetworkVariable<ulong>(ulong.MaxValue);
     // 서든데스가 시작되는 서버 시각(HUD 카운트다운용). 0이면 미정.
     private readonly NetworkVariable<double> suddenDeathStartTime = new NetworkVariable<double>(0);
@@ -105,6 +110,8 @@ public class SurvivalGameManager : NetworkBehaviour
     public bool PodiumActive => podiumActive;
 
     public MatchState State => (MatchState)matchState.Value;
+    public int WaitingRequired => waitingRequired.Value;   // >0이면 인원 대기 중(데디케이티드)
+    public int WaitingConnected => waitingConnected.Value;
     public int AliveCount => aliveCount.Value;
     public int TotalPlayerCount => totalPlayerCount.Value;
     public ulong WinnerClientId => winnerClientId.Value;
@@ -187,6 +194,23 @@ public class SurvivalGameManager : NetworkBehaviour
     // ─────────────────────────────────────────────────────────────
     private IEnumerator ServerMatchFlow()
     {
+        // 데디케이티드 서버: 최소 인원이 접속할 때까지 매치를 시작하지 않는다(빈/1인 매치 방지).
+        // 이 동안 아레나가 대기실 역할을 하고, HUD가 "플레이어 대기 중 n/m"을 표시한다.
+        // 호스트/로컬 플레이는 이 블록을 건너뛰므로 기존 동작에 영향 없음.
+        if (DedicatedServerBootstrap.IsDedicatedServer)
+        {
+            int need = Mathf.Max(1, minPlayersToStart);
+            waitingRequired.Value = need;
+            while (NetworkManager.ConnectedClientsIds.Count < need)
+            {
+                waitingConnected.Value = NetworkManager.ConnectedClientsIds.Count;
+                yield return new WaitForSeconds(0.5f);
+            }
+
+            waitingConnected.Value = NetworkManager.ConnectedClientsIds.Count;
+            waitingRequired.Value = 0; // 대기 종료 → HUD 표시 해제
+        }
+
         // Waiting: NGO 씬 전환으로 유지 스폰되는 플레이어 오브젝트들이 전부 준비될 때까지 대기.
         float waitDeadline = Time.realtimeSinceStartup + Mathf.Max(1f, maxWaitForSpawnSeconds);
         while (!AllPlayersSpawned() && Time.realtimeSinceStartup < waitDeadline)
@@ -225,7 +249,9 @@ public class SurvivalGameManager : NetworkBehaviour
         }
     }
 
-    // 서든데스(서버): 남은 발판/바닥 타일을 중심에서 먼 순서대로 하나씩 강제로 무너뜨린다.
+    // 서든데스(서버): 붕괴 전선(반경)이 가장 바깥 발판에서 안쪽 끝까지 suddenDeathCollapseSeconds에 걸쳐
+    // 이동하며, 전선이 지나간 발판을 전부 무너뜨린다. 발판 수와 무관하게 총 붕괴 시간이 일정하다.
+    // (이전의 '한 장씩 간격' 방식은 발판이 수백 장인 맵에서 붕괴가 수 분씩 걸렸음)
     private IEnumerator ServerSuddenDeathFlow()
     {
         while (State == MatchState.Playing && NetworkManager.ServerTime.Time < suddenDeathStartTime.Value)
@@ -239,26 +265,49 @@ public class SurvivalGameManager : NetworkBehaviour
         }
 
         FallingPlatform[] platforms = FindObjectsByType<FallingPlatform>(FindObjectsSortMode.None);
-        System.Array.Sort(platforms, (a, b) =>
+        if (platforms.Length == 0)
         {
-            float da = a != null ? (a.transform.position - transform.position).sqrMagnitude : 0f;
-            float db = b != null ? (b.transform.position - transform.position).sqrMagnitude : 0f;
-            return db.CompareTo(da); // 바깥쪽(먼 것)부터
-        });
+            yield break;
+        }
 
+        float[] distances = new float[platforms.Length];
         for (int i = 0; i < platforms.Length; i++)
+        {
+            distances[i] = platforms[i] != null
+                ? Vector3.Distance(platforms[i].transform.position, transform.position)
+                : 0f;
+        }
+        System.Array.Sort(distances, platforms);
+        System.Array.Reverse(distances);
+        System.Array.Reverse(platforms); // 바깥쪽(먼 것)부터
+
+        float maxDistance = distances[0];
+        float minDistance = distances[distances.Length - 1];
+        float sweepRange = Mathf.Max(0.01f, maxDistance - minDistance);
+        float duration = Mathf.Max(1f, suddenDeathCollapseSeconds);
+        float sweepStartTime = Time.time;
+        int nextIndex = 0;
+
+        while (nextIndex < platforms.Length)
         {
             if (State != MatchState.Playing)
             {
                 yield break;
             }
 
-            if (platforms[i] != null)
+            float progress = Mathf.Clamp01((Time.time - sweepStartTime) / duration);
+            float frontRadius = maxDistance - progress * sweepRange;
+
+            while (nextIndex < platforms.Length && distances[nextIndex] >= frontRadius)
             {
-                platforms[i].ServerForceFall();
+                if (platforms[nextIndex] != null)
+                {
+                    platforms[nextIndex].ServerForceFall();
+                }
+                nextIndex++;
             }
 
-            yield return new WaitForSeconds(Mathf.Max(0.2f, suddenDeathTileInterval));
+            yield return null;
         }
     }
 
@@ -551,6 +600,14 @@ public class SurvivalGameManager : NetworkBehaviour
             Transform stand = podiumStands[standIndex];
             activator.PlaceForPodium(stand.position, stand.rotation);
 
+            // 시상대 고정으로 kinematic이 된 로컬 몸은 씬 언로드(OnDestroy) 때 반드시 해제한다.
+            // (해제 없이 로비로 가면 몸이 얼어붙어 입력이 안 먹는 버그가 있었음)
+            if (localPlayerBody == null)
+            {
+                localPlayerBody = activator.GetComponent<Rigidbody>();
+            }
+            localBodyMadeKinematic = true;
+
             PlayerController pc = activator.GetComponent<PlayerController>();
             if (pc != null)
             {
@@ -568,6 +625,16 @@ public class SurvivalGameManager : NetworkBehaviour
         // 로비 로드 직전 전 클라이언트를 검게 페이드아웃(씬 전환을 가린다).
         FadeOutBeforeLobbyClientRpc();
         yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, fadeDuration) + 0.1f);
+
+        // 데디케이티드 서버: 로비로 나가지 않고 같은 아레나를 다시 로드해 다음 라운드를 돈다.
+        if (DedicatedServerBootstrap.IsDedicatedServer && NetworkManager != null && NetworkManager.SceneManager != null)
+        {
+            string arena = string.IsNullOrWhiteSpace(DedicatedServerBootstrap.ServerGameScene)
+                ? UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+                : DedicatedServerBootstrap.ServerGameScene;
+            NetworkManager.SceneManager.LoadScene(arena, UnityEngine.SceneManagement.LoadSceneMode.Single);
+            yield break;
+        }
 
         NetworkSessionManager sessionManager = FindFirstObjectByType<NetworkSessionManager>();
         if (sessionManager != null && sessionManager.ReturnToLobby())
