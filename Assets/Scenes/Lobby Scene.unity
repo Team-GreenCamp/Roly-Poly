@@ -24253,7 +24253,7 @@ MonoBehaviour:
   - {fileID: 1387800909}
   - {fileID: 434066332}
   roomListPanelToCloseOnRoomClick: {fileID: 434066332}
-  backendBaseUrl: http://localhost:3000
+  backendBaseUrl: http://34.232.227.78:3000
   backendAuthToken: 
   defaultRoomName: Room
   defaultMapId: local-test

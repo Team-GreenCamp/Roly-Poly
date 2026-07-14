@@ -590,9 +590,14 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         if (TryGetComponent(out Rigidbody body))
         {
-            body.linearVelocity = Vector3.zero;
-            body.angularVelocity = Vector3.zero;
-            body.isKinematic = true; // 시상대에서 미끄러지지 않도록 고정(씬 언로드까지 유지)
+            // 이미 kinematic(탈락 고정)이면 속도 설정이 에러를 내므로 비-kinematic일 때만 정지시킨다.
+            if (!body.isKinematic)
+            {
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+
+            body.isKinematic = true; // 시상대에서 미끄러지지 않도록 고정(SGM이 씬 언로드 시 해제)
         }
 
         CommitOwnerTransformSync(position, rotation);

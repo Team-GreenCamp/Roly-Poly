@@ -18,7 +18,7 @@ public static class DirectPlayBootstrap
 #if UNITY_EDITOR
     // 바로 플레이를 허용하는 모드 씬들(로비 없이 Play 시 자동 호스트).
     private static readonly string[] ArenaSceneNames = { "Survival Arena", "Sumo Arena", "Falling Floors" };
-    private const string NetworkManagerPrefabPath = "Assets/Prefab/Network Manager.prefab";
+    private const string NetworkManagerPrefabPath = "Assets/Resources/Network Manager.prefab";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static async void AutoHostIfArenaDirectPlay()

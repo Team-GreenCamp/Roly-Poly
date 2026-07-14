@@ -155,6 +155,43 @@ public class NetworkSessionManager : MonoBehaviour
         }
     }
 
+    // 데디케이티드 서버(헤드리스, AWS 등) 시작: 플레이어 없는 순수 서버로 열고 게임 씬을 로드한다.
+    // Relay 없이 지정 포트를 모든 인터페이스(0.0.0.0)에서 listen → 클라는 공인 IP:포트로 직접 접속.
+    public bool StartDedicatedServer(int port, string gameScene)
+    {
+        CacheReferences();
+        if (networkManager == null || unityTransport == null)
+        {
+            Debug.LogError("[Dedicated] NetworkManager/UnityTransport를 찾지 못했습니다.");
+            return false;
+        }
+        if (networkManager.IsListening)
+        {
+            return false;
+        }
+
+        // 모든 인터페이스에서 listen(외부 클라 접속 허용).
+        unityTransport.SetConnectionData("0.0.0.0", (ushort)port, "0.0.0.0");
+        isShuttingDown = false;
+        ResetReadyState();
+        SurvivalWinTracker.ResetAll();
+
+        if (!networkManager.StartServer())
+        {
+            Debug.LogError("[Dedicated] StartServer 실패.");
+            return false;
+        }
+
+        RegisterSceneCallbacks();
+        RegisterNamedMessageHandlers();
+        gameSceneName = string.IsNullOrWhiteSpace(gameScene) ? gameSceneName : gameScene.Trim();
+
+        // NGO 네트워크 씬 로드(접속하는 클라는 자동으로 이 씬으로 동기화됨).
+        networkManager.SceneManager.LoadScene(gameSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+        Debug.Log($"[Dedicated] 서버 시작: 포트 {port}, 씬 '{gameSceneName}'. 클라 접속 대기 중.");
+        return true;
+    }
+
     public Task StartLocalHostAsync()
     {
         if (!CanStartSession())

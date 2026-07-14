@@ -64,6 +64,12 @@ sysinfo.txt
 *.unitypackage.meta
 *.app
 
+# 데디케이티드/스탠드얼론 빌드 출력 (프로젝트 루트에 둔 경우)
+/rolypoly-server/
+/*-server/
+/Builds/
+*.x86_64
+
 # Crashlytics generated file
 crashlytics-build.properties
 
