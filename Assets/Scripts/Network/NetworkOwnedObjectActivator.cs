@@ -64,6 +64,10 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private float nameLabelFontSize = 4f;
     [Tooltip("이름표/승수 라벨에 사용할 TMP 폰트(선택). 비우면 TMP 기본 폰트를 사용합니다.")]
     [SerializeField] private TMP_FontAsset nameLabelFont;
+    [Tooltip("이름표 뒤 가독성용 배경 박스 색. 알파를 0으로 두면 배경을 만들지 않습니다.")]
+    [SerializeField] private Color nameLabelBackgroundColor = new Color(0f, 0f, 0f, 0.6f);
+    [Tooltip("배경 박스가 글자 크기보다 더 커지는 여유(로컬 단위, x=가로 y=세로).")]
+    [SerializeField] private Vector2 nameLabelBackgroundPadding = new Vector2(0.25f, 0.02f);
 
     [Header("Wins Label (이름 위 ★승수)")]
     [Tooltip("이름표 기준 승수 라벨의 로컬 오프셋.")]
@@ -87,11 +91,16 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private readonly NetworkVariable<bool> syncedReadyState =
         new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    // 닉네임(소유자 요청 → 서버 검증·확정, 캐릭터 선택과 동일 패턴). 비어 있으면 이름표는 "Player N" 폴백.
+    private readonly NetworkVariable<FixedString64Bytes> syncedNickname =
+        new NetworkVariable<FixedString64Bytes>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private CinemachineCamera boundCamera;
     private Camera cachedFacingCamera; // 이름표/Ready 표시가 카메라를 바라보게 할 때 쓰는 캐시(매 프레임 씬 검색 방지)
     private TextMeshPro nameLabel;
     private TextMeshPro winsLabel; // 이름 위 ★승수 (nameLabel의 자식이라 표시/방향을 따라감)
+    private SpriteRenderer nameLabelBackground; // 이름표 뒤 가독성용 배경 박스(nameLabel의 자식)
+    private static Sprite solidBackgroundSprite; // Texture2D.whiteTexture 기반 1x1 유닛 공유 스프라이트
     private bool podiumLabelOverride; // 시상식: 게임 씬이어도 이름표를 강제로 표시
     private SpriteRenderer readyCheckRenderer;
     private Coroutine spawnPresentationCoroutine;
@@ -127,6 +136,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         ConfigureOwnershipAuthority();
         syncedCharacterIndex.OnValueChanged += HandleCharacterIndexChanged;
         syncedReadyState.OnValueChanged += HandleReadyStateChanged;
+        syncedNickname.OnValueChanged += HandleNicknameChanged;
         SceneManager.sceneLoaded += HandleSceneLoaded;
 
         UpdateNameLabel();
@@ -147,6 +157,13 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         if (IsOwner)
         {
             BindLocalCamera();
+
+            // 저장된 닉네임을 세션에 반영. 로비 UI에서 변경할 때도 같은 SubmitNickname 경로를 쓴다.
+            string savedNickname = PlayerPrefs.GetString(NicknamePrefKey, string.Empty);
+            if (!string.IsNullOrWhiteSpace(savedNickname))
+            {
+                SubmitNickname(savedNickname);
+            }
         }
     }
 
@@ -211,6 +228,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     {
         syncedCharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
         syncedReadyState.OnValueChanged -= HandleReadyStateChanged;
+        syncedNickname.OnValueChanged -= HandleNicknameChanged;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         ClearLocalCameraBinding();
         ClearLobbyCharacterOutline();
@@ -439,6 +457,88 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     private void HandleReadyStateChanged(bool previousValue, bool newValue)
     {
         UpdateReadyCheckIndicator();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 닉네임 (소유자 요청 → 서버 검증·확정 → 이름표/HUD 표시)
+    // ─────────────────────────────────────────────────────────────
+    public const string NicknamePrefKey = "PlayerNickname";
+    public const int NicknameMaxLength = 12;
+
+    // 이름표/HUD 등 표시용 이름. 닉네임이 없으면 기존 "Player N" 폴백을 유지한다.
+    public string DisplayName
+    {
+        get
+        {
+            string nickname = syncedNickname.Value.ToString();
+            return string.IsNullOrEmpty(nickname) ? $"Player {OwnerClientId + 1}" : nickname;
+        }
+    }
+
+    // 소유자가 닉네임 변경을 요청한다(로비 UI/스폰 시 저장값 반영에서 호출).
+    public void SubmitNickname(string nickname)
+    {
+        if (!IsSpawned || !IsOwner)
+        {
+            return;
+        }
+
+        string sanitized = SanitizeNickname(nickname);
+        if (IsServer)
+        {
+            SetNicknameOnServer(sanitized);
+        }
+        else
+        {
+            RequestSetNicknameServerRpc(sanitized);
+        }
+    }
+
+    [ServerRpc]
+    private void RequestSetNicknameServerRpc(FixedString64Bytes nickname)
+    {
+        SetNicknameOnServer(nickname.ToString());
+    }
+
+    private void SetNicknameOnServer(string nickname)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        // 서버가 재검증하고 확정한다(조작 클라이언트의 길이 초과/제어문자 방어).
+        syncedNickname.Value = SanitizeNickname(nickname);
+    }
+
+    // 공백 정리 + 제어문자 제거 + 길이 제한. 결과가 비면 빈 문자열(= "Player N" 폴백).
+    private static string SanitizeNickname(string nickname)
+    {
+        if (string.IsNullOrWhiteSpace(nickname))
+        {
+            return string.Empty;
+        }
+
+        System.Text.StringBuilder builder = new System.Text.StringBuilder(nickname.Length);
+        foreach (char c in nickname.Trim())
+        {
+            if (!char.IsControl(c))
+            {
+                builder.Append(c);
+            }
+
+            if (builder.Length >= NicknameMaxLength)
+            {
+                break;
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    private void HandleNicknameChanged(FixedString64Bytes previousValue, FixedString64Bytes newValue)
+    {
+        UpdateNameLabel();
     }
 
     private void ApplyCharacterIndex(int characterIndex)
@@ -1135,11 +1235,70 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         nameLabel.transform.localPosition = nameLabelOffset;
         nameLabel.fontSize = nameLabelFontSize;
         ApplyNameLabelFont(nameLabel);
-        nameLabel.text = $"Player {OwnerClientId + 1}";
+        nameLabel.text = DisplayName;
         SetNameLabelVisible(true);
+        UpdateNameLabelBackground();
 
         // 세션 승수는 이름과 분리해 이름 위에 별도 라벨(★N)로 표시.
         UpdateWinsLabel();
+    }
+
+    // 이름표 뒤 가독성용 배경 박스. 글자 크기(GetPreferredValues)에 패딩을 더해 자동으로 맞춘다.
+    private void UpdateNameLabelBackground()
+    {
+        if (nameLabel == null || nameLabelBackgroundColor.a <= 0f)
+        {
+            if (nameLabelBackground != null)
+            {
+                nameLabelBackground.gameObject.SetActive(false);
+            }
+            return;
+        }
+
+        EnsureNameLabelBackground();
+        if (nameLabelBackground == null)
+        {
+            return;
+        }
+
+        Vector2 textSize = nameLabel.GetPreferredValues(nameLabel.text);
+        nameLabelBackground.transform.localScale = new Vector3(
+            textSize.x + nameLabelBackgroundPadding.x * 2f,
+            textSize.y + nameLabelBackgroundPadding.y * 2f,
+            1f);
+        nameLabelBackground.color = nameLabelBackgroundColor;
+        nameLabelBackground.gameObject.SetActive(true);
+    }
+
+    private void EnsureNameLabelBackground()
+    {
+        if (nameLabelBackground != null || nameLabel == null)
+        {
+            return;
+        }
+
+        Transform existing = nameLabel.transform.Find("PlayerNameLabelBackground");
+        GameObject backgroundObject = existing != null ? existing.gameObject : new GameObject("PlayerNameLabelBackground");
+        backgroundObject.transform.SetParent(nameLabel.transform, false);
+        // 라벨은 카메라 회전을 그대로 복사하므로 로컬 +Z가 카메라 반대(뒤쪽)이다. 글자 뒤에 살짝 민다.
+        backgroundObject.transform.localPosition = new Vector3(0f, 0f, 0.02f);
+        backgroundObject.transform.localRotation = Quaternion.identity;
+
+        nameLabelBackground = backgroundObject.GetComponent<SpriteRenderer>();
+        if (nameLabelBackground == null)
+        {
+            nameLabelBackground = backgroundObject.AddComponent<SpriteRenderer>();
+        }
+
+        if (solidBackgroundSprite == null)
+        {
+            // 4x4 흰색 내장 텍스처를 4ppu로 잘라 1x1 유닛 스프라이트를 만든다(에셋 불필요, 전 인스턴스 공유).
+            solidBackgroundSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 4f, 4f), new Vector2(0.5f, 0.5f), 4f);
+            solidBackgroundSprite.name = "SolidNameLabelBackground";
+        }
+
+        nameLabelBackground.sprite = solidBackgroundSprite;
+        nameLabelBackground.sortingOrder = -1; // 같은 거리에서도 글자(0)보다 뒤에 그리도록
     }
 
     private void UpdateWinsLabel()

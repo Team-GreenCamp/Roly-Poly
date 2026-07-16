@@ -90,16 +90,17 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnDisable()
     {
+        // 콜백만 해제하고 액션 자체는 끄지 않는다. InputActionReference는 공유 에셋이라
+        // 여기서 Disable()하면 같은 액션을 쓰는 다른 인스턴스(로컬 플레이어 포함)의 입력까지
+        // 전역으로 꺼진다 — 원격 플레이어 오브젝트 파괴나 리스폰 토글(RespawnAtCheckpoint)이
+        // 로컬 상호작용 키를 죽이는 버그의 원인이었다. (콜백은 HasInputAuthority로 이미 걸러짐)
         if (interactAction != null)
         {
             interactAction.action.started -= OnInteractStarted;
-            interactAction.action.Disable();
         }
-        if (grabAction != null) grabAction.action.Disable();
         if (throwAction != null)
         {
             throwAction.action.started -= OnThrowStarted;
-            throwAction.action.Disable();
         }
         ForceDropHeldObject();
         ClearCurrentOutlineHighlight();

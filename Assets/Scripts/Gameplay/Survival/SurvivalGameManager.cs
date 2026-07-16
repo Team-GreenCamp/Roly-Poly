@@ -357,6 +357,10 @@ public class SurvivalGameManager : NetworkBehaviour
         ulong[] aliveSnapshot = new ulong[aliveClients.Count];
         aliveClients.CopyTo(aliveSnapshot);
 
+        // 같은 스윕에서 여러 명이 killY 아래면 전원을 먼저 탈락 확정한 뒤 승자를 판정한다.
+        // (한 명씩 판정하면 첫 탈락 직후 "생존 1명"이 되어, 아직 처리 전인 — 이미 맵 밖인 —
+        //  나머지 낙사자가 순회 순서에 따라 승자가 되는 오판이 있었음.)
+        bool anyEliminated = false;
         for (int i = 0; i < aliveSnapshot.Length; i++)
         {
             if (!NetworkManager.ConnectedClients.TryGetValue(aliveSnapshot[i], out NetworkClient client)
@@ -367,8 +371,14 @@ public class SurvivalGameManager : NetworkBehaviour
 
             if (client.PlayerObject.transform.position.y < killY)
             {
-                EliminateOnServer(aliveSnapshot[i]);
+                EliminateOnServer(aliveSnapshot[i], checkWinner: false);
+                anyEliminated = true;
             }
+        }
+
+        if (anyEliminated)
+        {
+            CheckWinnerOnServer();
         }
     }
 
@@ -382,7 +392,8 @@ public class SurvivalGameManager : NetworkBehaviour
     }
 
     // 탈락 확정(서버 전용). aliveClients에서 제거 성공했을 때만 진행하므로 중복 보고는 자연 무시된다.
-    private void EliminateOnServer(ulong clientId)
+    // checkWinner=false는 동시 탈락 일괄 처리용 — 호출자가 전원 제거 후 CheckWinnerOnServer를 직접 부른다.
+    private void EliminateOnServer(ulong clientId, bool checkWinner = true)
     {
         if (!IsServer)
         {
@@ -416,7 +427,10 @@ public class SurvivalGameManager : NetworkBehaviour
         eliminationOrder.Add(clientId); // 시상대 순위 산출용(나중에 탈락할수록 높은 등수)
         aliveCount.Value = aliveClients.Count;
         EliminatePlayerClientRpc(clientId, killerClientId);
-        CheckWinnerOnServer();
+        if (checkWinner)
+        {
+            CheckWinnerOnServer();
+        }
     }
 
     private void CheckWinnerOnServer()

@@ -131,12 +131,16 @@ public class SurvivalCoinManager : NetworkBehaviour
 
     // 서버: 코인이 놓인 발판이 무너지기 시작했거나 despawn되면 코인도 즉시 회수한다(공중 부양 방지).
     private static readonly List<int> reclaimBuffer = new List<int>();
+    // 줍기 후보 임시 버퍼(순회 중 RPC로 activeCoins가 수정되는 것을 피하기 위해 후보를 먼저 모은다).
+    private static readonly List<int> pickupBuffer = new List<int>();
     private void ReclaimCoinsOnFallenPlatforms()
     {
         reclaimBuffer.Clear();
         foreach (KeyValuePair<int, CoinData> entry in activeCoins)
         {
-            if (entry.Value.platform == null || entry.Value.platform.IsFalling)
+            // IsFalling(밟는 즉시 true)이 아니라 HasPhysicallyDropped(fallDelay 이후 실제 낙하)로 판정한다.
+            // 밟은 뒤 유예 동안에는 코인을 남겨 둬야 플레이어가 정상적으로 주울 수 있다(조기 회수 → 점수 미획득 방지).
+            if (entry.Value.platform == null || entry.Value.platform.HasPhysicallyDropped)
             {
                 reclaimBuffer.Add(entry.Key);
             }
@@ -247,6 +251,9 @@ public class SurvivalCoinManager : NetworkBehaviour
         Vector3 playerPosition = playerObject.transform.position;
         float sqrRadius = pickupRadius * pickupRadius;
 
+        // 후보를 먼저 모은다. 순회 도중 RequestPickupServerRpc를 보내면 호스트에서는 ServerRpc가
+        // 동기 실행되어 RemoveCoinLocal이 activeCoins를 수정하고, 열거 중 수정 예외가 난다.
+        pickupBuffer.Clear();
         foreach (KeyValuePair<int, CoinData> entry in activeCoins)
         {
             if (pendingPickups.Contains(entry.Key))
@@ -261,8 +268,21 @@ public class SurvivalCoinManager : NetworkBehaviour
                 continue;
             }
 
-            pendingPickups.Add(entry.Key);
-            RequestPickupServerRpc(entry.Key);
+            pickupBuffer.Add(entry.Key);
+        }
+
+        // 순회가 끝난 뒤에 요청을 보낸다(호스트 동기 실행이 activeCoins를 수정해도 안전).
+        for (int i = 0; i < pickupBuffer.Count; i++)
+        {
+            int coinId = pickupBuffer[i];
+            // 앞선 요청의 동기 처리로 이미 제거/중복 등록됐을 수 있으니 재확인.
+            if (pendingPickups.Contains(coinId) || !activeCoins.ContainsKey(coinId))
+            {
+                continue;
+            }
+
+            pendingPickups.Add(coinId);
+            RequestPickupServerRpc(coinId);
         }
     }
 

@@ -111,32 +111,36 @@ public class GrabbableObject : NetworkBehaviour
     {
         if (!IsNetworkActive) { AddInteractor(interactor); return; }
         if (IsServer) AddInteractorByClient(interactor.OwnerClientId);
-        else AddInteractorServerRpc(interactor.OwnerClientId);
+        else AddInteractorServerRpc();
     }
 
     public void RequestRemoveInteractor(PlayerInteractor interactor, bool isSnapping)
     {
         if (!IsNetworkActive) { RemoveInteractor(interactor, isSnapping); return; }
         if (IsServer) RemoveInteractorByClient(interactor.OwnerClientId, isSnapping);
-        else RemoveInteractorServerRpc(interactor.OwnerClientId, isSnapping);
+        else RemoveInteractorServerRpc(isSnapping);
     }
 
     public void RequestThrow(PlayerInteractor interactor, Vector3 linearVelocity, Vector3 angularVelocity)
     {
         if (!IsNetworkActive) { ApplyThrow(interactor, linearVelocity, angularVelocity); return; }
         if (IsServer) ApplyThrowByClient(interactor.OwnerClientId, linearVelocity, angularVelocity);
-        else ThrowServerRpc(interactor.OwnerClientId, linearVelocity, angularVelocity);
+        else ThrowServerRpc(linearVelocity, angularVelocity);
     }
 
+    // 요청자 신원은 클라이언트가 보낸 인자가 아니라 SenderClientId로 판별한다.
+    // (인자로 받으면 타인의 clientId를 넣어 남을 대신 잡기/놓기/던지기 조작이 가능했음)
     [ServerRpc(RequireOwnership = false)]
-    private void AddInteractorServerRpc(ulong clientId) => AddInteractorByClient(clientId);
+    private void AddInteractorServerRpc(ServerRpcParams rpcParams = default)
+        => AddInteractorByClient(rpcParams.Receive.SenderClientId);
 
     [ServerRpc(RequireOwnership = false)]
-    private void RemoveInteractorServerRpc(ulong clientId, bool isSnapping) => RemoveInteractorByClient(clientId, isSnapping);
+    private void RemoveInteractorServerRpc(bool isSnapping, ServerRpcParams rpcParams = default)
+        => RemoveInteractorByClient(rpcParams.Receive.SenderClientId, isSnapping);
 
     [ServerRpc(RequireOwnership = false)]
-    private void ThrowServerRpc(ulong clientId, Vector3 linearVelocity, Vector3 angularVelocity)
-        => ApplyThrowByClient(clientId, linearVelocity, angularVelocity);
+    private void ThrowServerRpc(Vector3 linearVelocity, Vector3 angularVelocity, ServerRpcParams rpcParams = default)
+        => ApplyThrowByClient(rpcParams.Receive.SenderClientId, linearVelocity, angularVelocity);
 
     private void AddInteractorByClient(ulong clientId)
     {

@@ -36,7 +36,12 @@ public class FallingPlatform : NetworkBehaviour
     private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
 
     // 낙하 중이거나 이미 떨어진 발판인지(코인 스폰 등 외부에서 온전한 발판만 고를 때 사용).
+    // 밟는 즉시 true가 되며, 실제 물리 낙하(fallDelay 이후)보다 앞선다.
     public bool IsFalling => IsNetworkActive ? networkFalling.Value : localFalling;
+
+    // 실제로 물리 낙하가 시작됐는지(fallDelay 유예 이후 rb.isKinematic이 풀린 시점).
+    // 서버/오프라인 로컬 판정용 — 밟은 뒤 유예 동안에는 코인을 조기 회수하지 않도록 IsFalling과 구분한다.
+    public bool HasPhysicallyDropped => rb != null && !rb.isKinematic;
 
     public override void OnNetworkSpawn()
     {
@@ -46,6 +51,12 @@ public class FallingPlatform : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         networkFalling.OnValueChanged -= HandleFallingChanged;
+
+        // 복귀하지 않는 발판이 낙하 후 Despawn(false)로 네트워크에서 내려가면, 실제 숨김은 여기서
+        // 전 인스턴스(서버·클라)가 처리한다. 인씬 NetworkObject를 Despawn(true)로 파괴하면 NGO가
+        // 경고를 내므로(씬 재동기화 desync 소지) 파괴 대신 비활성화한다.
+        // 매치 종료(씬 언로드)로 despawn되는 경우엔 곧 오브젝트가 사라지므로 무해하다.
+        gameObject.SetActive(false);
     }
 
     private void HandleFallingChanged(bool previousValue, bool newValue)
@@ -146,12 +157,14 @@ public class FallingPlatform : NetworkBehaviour
         }
         else
         {
-            // 복귀하지 않는 발판: 잠시 후 서버가 제거해 전 클라이언트에서 사라진다.
+            // 복귀하지 않는 발판: 잠시 후 서버가 네트워크에서 내려 전 클라이언트에서 사라진다.
             yield return new WaitForSeconds(Mathf.Max(0.5f, despawnAfterFallSeconds));
 
             if (cachedNetworkObject != null && cachedNetworkObject.IsSpawned)
             {
-                cachedNetworkObject.Despawn(true);
+                // 인씬 NetworkObject라 Despawn(true) 파괴는 NGO 경고 대상 → Despawn(false)로 내리고
+                // 실제 숨김은 OnNetworkDespawn(서버·클라 공통)에서 SetActive(false)로 처리한다.
+                cachedNetworkObject.Despawn(false);
             }
             else
             {

@@ -16,6 +16,12 @@ public partial class PlayerController
     private const byte CombatEffectStun = 1;       // 찌부(머리 밟기)
     private const byte CombatEffectKnockdown = 2;  // 넘어짐(돌진/밀치기)
 
+    // 서버 검증 상한: 스톰프/돌진은 전부 접촉 판정이므로 서버가 보는 두 위치가 이 거리 안이어야 한다.
+    // (위치 동기화 지연·보간을 감안해 넉넉히 둔 값 — 정상 플레이는 접촉 거리라 걸릴 일이 없다.)
+    private const float ServerHitMaxDistance = 5f;
+    private const float ServerHitMaxForceMagnitude = 40f;
+    private const float ServerHitMaxStunSeconds = 3f;
+
     [Header("Stomp (머리 밟기)")]
     [Tooltip("이 속도 이상으로 하강 중일 때만 머리 밟기로 인정합니다(m/s).")]
     [SerializeField] private float stompMinDownSpeed = 3f;
@@ -279,6 +285,18 @@ public partial class PlayerController
         {
             return;
         }
+
+        // 클라이언트가 보고한 히트를 서버가 재검증한다. 조작된 클라이언트가 임의 대상에게
+        // 원격 넉백/스턴을 거는 것을 막는다(정상 히트는 전부 접촉 거리라 영향 없음).
+        if ((victim.BodyCenter - BodyCenter).sqrMagnitude > ServerHitMaxDistance * ServerHitMaxDistance)
+        {
+            return;
+        }
+        if (force.sqrMagnitude > ServerHitMaxForceMagnitude * ServerHitMaxForceMagnitude)
+        {
+            force = force.normalized * ServerHitMaxForceMagnitude;
+        }
+        stunDuration = Mathf.Min(stunDuration, ServerHitMaxStunSeconds);
 
         if (effect == CombatEffectStun)
         {

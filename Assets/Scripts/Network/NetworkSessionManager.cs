@@ -1249,6 +1249,18 @@ public class NetworkSessionManager : MonoBehaviour
         NetworkManager.ConnectionApprovalRequest request,
         NetworkManager.ConnectionApprovalResponse response)
     {
+        // 매치 진행 중 난입 차단: 카운트다운에서 생존자 스냅샷이 확정된 뒤 들어온 클라이언트는
+        // 승리 후보도, 탈락/유령화 대상도 아닌 채 맵을 돌아다니게 되므로 접속 자체를 거부한다.
+        // (Waiting 동안의 입장은 허용 — 스냅샷 확정 전이라 정상 합류된다.)
+        SurvivalGameManager arena = SurvivalGameManager.Instance;
+        if (arena != null && arena.State != SurvivalGameManager.MatchState.Waiting)
+        {
+            response.Approved = false;
+            response.CreatePlayerObject = false;
+            response.Reason = "매치가 이미 진행 중입니다.";
+            return;
+        }
+
         // 정원 검사는 실제 접속 인원 기준으로만 한다.
         // (캐릭터는 중복 허용 직접 선택제라 초기 인덱스는 0으로 시작하고 로비에서 각자 선택한다.)
         int connectedCount = networkManager != null ? networkManager.ConnectedClientsIds.Count : 0;
