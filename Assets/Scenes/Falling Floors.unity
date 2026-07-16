@@ -29658,6 +29658,8 @@ MonoBehaviour:
   floorFallVfx:
   - {fileID: 5862328161722201066, guid: 0fccd39ae46226e4084c40f7f8f2cc0d, type: 3}
   - {fileID: 4181101764326029096, guid: 9430365d95bc1aa458a9168bf9c29c74, type: 3}
+  coinVfx: []
+  coinSfx: []
   sfxVolume: 0.9
   voiceVolume: 1
   uiVolume: 0.7
@@ -65642,7 +65644,7 @@ MonoBehaviour:
   killSweepInterval: 0.5
   killCreditWindowSeconds: 5
   suddenDeathStartSeconds: 0
-  suddenDeathTileInterval: 1.5
+  suddenDeathCollapseSeconds: 12
   podiumRoot: {fileID: 1925042701}
   podiumStands:
   - {fileID: 277417988}
