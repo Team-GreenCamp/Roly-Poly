@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 4081297831180302518}
   - component: {fileID: 5112920333155259829}
   - component: {fileID: 2462443946215769529}
+  - component: {fileID: 7490023543529397197}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -481,6 +482,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMount
   isMounted: 0
+--- !u!114 &7490023543529397197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2383615707599059421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 842a8fe66820845e89165c1b53578555, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFootsteps
+  footstepClips:
+  - {fileID: 8300000, guid: 53e2c695ba3f644ad913da2ec7a7431a, type: 3}
+  - {fileID: 8300000, guid: dafda26b9a3cc4f5a91b32517e2152c3, type: 3}
+  - {fileID: 8300000, guid: 2c9fefe00a4f04846a5998eb055ab38a, type: 3}
+  - {fileID: 8300000, guid: 156a45244abb145e3b16aace2905903e, type: 3}
+  - {fileID: 8300000, guid: 0dc05ad3023cc4154ad83a5db608fdbe, type: 3}
+  - {fileID: 8300000, guid: 70b85224d1bbe4eceb756efb9fd32a55, type: 3}
+  - {fileID: 8300000, guid: 9f1fd1e4334094c44b45a24bc9b1d527, type: 3}
+  - {fileID: 8300000, guid: f45c26b8c34c140fab490c90f967016c, type: 3}
+  strideLength: 1.9
+  minSpeed: 0.8
+  teleportDistanceThreshold: 3
+  volume: 0.55
+  pitchRange: {x: 0.92, y: 1.08}
+  minDistance: 2
+  maxDistance: 18
+  groundCheckRadius: 0.25
+  groundCheckOffset: 0.1
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &2790217993094878390
 GameObject:
   m_ObjectHideFlags: 0

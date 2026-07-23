@@ -24,6 +24,14 @@ public class FallingPlatform : NetworkBehaviour
     [Tooltip("체크 해제하면 밟아도 떨어지지 않고, ServerForceFall() 호출로만 무너집니다(서든데스용 바닥 타일).")]
     public bool triggerByStepping = true;
 
+    [Header("밟힘 표시")]
+    [Tooltip("밟혀서 낙하가 예약된 발판을 이 색으로 물들입니다(낙하 유예 동안의 경고). 복귀하면 원래 색으로 돌아옵니다.")]
+    public Color steppedTintColor = Color.white;
+    [Tooltip("밟힘 색으로 물드는 보간 시간(초). 0이면 즉시 변합니다. 복귀 시에도 같은 속도로 되돌아옵니다.")]
+    public float steppedTintFadeSeconds = 0.15f;
+    [Tooltip("체크하면 낙하 시작 시 기존 VFX도 재생합니다. 기본은 색 변화만(발판이 많은 맵에서 화면이 정신없는 것 방지).")]
+    public bool playFallVfx = false;
+
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private Rigidbody rb;
@@ -34,6 +42,15 @@ public class FallingPlatform : NetworkBehaviour
 
     private NetworkObject cachedNetworkObject;
     private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+
+    // 밟힘 틴트용. 발판 수백 장이 머티리얼을 공유하므로 material 복제 대신 PropertyBlock을 쓴다.
+    private Renderer[] tintRenderers;
+    private Color[] tintOriginalColors; // 렌더러별 원래 색(보간 시작점). Awake에서 공유 머티리얼로부터 캐시.
+    private MaterialPropertyBlock tintBlock;
+    private Coroutine tintRoutine;
+    private float tintWeight; // 0=원래 색, 1=밟힘 색
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"); // URP Lit
+    private static readonly int LegacyColorId = Shader.PropertyToID("_Color");   // 빌트인/기타 셰이더 폴백
 
     // 낙하 중이거나 이미 떨어진 발판인지(코인 스폰 등 외부에서 온전한 발판만 고를 때 사용).
     // 밟는 즉시 true가 되며, 실제 물리 낙하(fallDelay 이후)보다 앞선다.
@@ -46,6 +63,8 @@ public class FallingPlatform : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         networkFalling.OnValueChanged += HandleFallingChanged;
+        // 스폰 시점에 이미 낙하 상태면(늦은 동기화 등) 틴트를 맞춰 둔다.
+        SetSteppedTint(networkFalling.Value);
     }
 
     public override void OnNetworkDespawn()
@@ -61,16 +80,109 @@ public class FallingPlatform : NetworkBehaviour
 
     private void HandleFallingChanged(bool previousValue, bool newValue)
     {
-        if (newValue)
+        // 밟힘 표시: 낙하 유예 동안 발판을 하얗게(steppedTintColor) 물들여 "이미 밟힌 발판"임을 알린다.
+        // 복귀형 발판은 networkFalling=false로 되돌아올 때 원래 색으로 복원된다.
+        SetSteppedTint(newValue);
+
+        if (newValue && playFallVfx)
         {
-            // 낙하 시작 연출(모든 클라이언트에서 동기화 변수로 1회 실행).
+            // 낙하 시작 연출(모든 클라이언트에서 동기화 변수로 1회 실행). 기본 꺼짐 — 색 변화가 주 신호.
             GameFeedback.PlatformFallAt(transform.position + Vector3.up * 0.3f);
+        }
+    }
+
+    // 밟힘 틴트 적용/해제(모든 클라이언트 공통). 짧은 보간으로 물들며, PropertyBlock이라 공유 머티리얼을 건드리지 않는다.
+    private void SetSteppedTint(bool stepped)
+    {
+        float targetWeight = stepped ? 1f : 0f;
+
+        if (tintRoutine != null)
+        {
+            StopCoroutine(tintRoutine);
+            tintRoutine = null;
+        }
+
+        // 보간 0초이거나 비활성(코루틴 불가) 상태면 즉시 적용.
+        if (steppedTintFadeSeconds <= 0f || !isActiveAndEnabled)
+        {
+            tintWeight = targetWeight;
+            ApplyTintWeight();
+            return;
+        }
+
+        tintRoutine = StartCoroutine(TintFadeRoutine(targetWeight));
+    }
+
+    private IEnumerator TintFadeRoutine(float targetWeight)
+    {
+        float speed = 1f / Mathf.Max(0.01f, steppedTintFadeSeconds);
+        while (!Mathf.Approximately(tintWeight, targetWeight))
+        {
+            tintWeight = Mathf.MoveTowards(tintWeight, targetWeight, speed * Time.deltaTime);
+            ApplyTintWeight();
+            yield return null;
+        }
+
+        tintRoutine = null;
+    }
+
+    private void ApplyTintWeight()
+    {
+        if (tintRenderers == null)
+        {
+            return;
+        }
+
+        if (tintBlock == null)
+        {
+            tintBlock = new MaterialPropertyBlock();
+        }
+
+        for (int i = 0; i < tintRenderers.Length; i++)
+        {
+            Renderer tintRenderer = tintRenderers[i];
+            if (tintRenderer == null)
+            {
+                continue;
+            }
+
+            if (tintWeight <= 0f)
+            {
+                tintRenderer.SetPropertyBlock(null); // 블록 제거 → 머티리얼 원래 색 복원
+                continue;
+            }
+
+            Color tinted = Color.Lerp(tintOriginalColors[i], steppedTintColor, tintWeight);
+            tintBlock.Clear();
+            tintBlock.SetColor(BaseColorId, tinted);
+            tintBlock.SetColor(LegacyColorId, tinted);
+            tintRenderer.SetPropertyBlock(tintBlock);
         }
     }
 
     private void Awake()
     {
         TryGetComponent(out cachedNetworkObject);
+        tintRenderers = GetComponentsInChildren<Renderer>(true);
+
+        // 보간 시작점이 될 원래 색을 공유 머티리얼에서 캐시(런타임 인스턴스 생성 없음).
+        tintOriginalColors = new Color[tintRenderers.Length];
+        for (int i = 0; i < tintRenderers.Length; i++)
+        {
+            Material sharedMaterial = tintRenderers[i] != null ? tintRenderers[i].sharedMaterial : null;
+            if (sharedMaterial != null && sharedMaterial.HasProperty(BaseColorId))
+            {
+                tintOriginalColors[i] = sharedMaterial.GetColor(BaseColorId);
+            }
+            else if (sharedMaterial != null && sharedMaterial.HasProperty(LegacyColorId))
+            {
+                tintOriginalColors[i] = sharedMaterial.GetColor(LegacyColorId);
+            }
+            else
+            {
+                tintOriginalColors[i] = Color.white;
+            }
+        }
 
         initialPosition = transform.position;
         initialRotation = transform.rotation;
@@ -177,6 +289,11 @@ public class FallingPlatform : NetworkBehaviour
     private IEnumerator FallRoutineLocal()
     {
         localFalling = true;
+        SetSteppedTint(true);
+        if (playFallVfx)
+        {
+            GameFeedback.PlatformFallAt(transform.position + Vector3.up * 0.3f);
+        }
         yield return new WaitForSeconds(fallDelay);
 
         rb.isKinematic = false;
@@ -197,6 +314,7 @@ public class FallingPlatform : NetworkBehaviour
             transform.rotation = initialRotation;
 
             localFalling = false;
+            SetSteppedTint(false);
         }
         else
         {

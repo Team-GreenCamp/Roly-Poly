@@ -11,7 +11,12 @@ public class SurvivalHudController : MonoBehaviour
 {
     [Header("생존자 수 (우상단)")]
     [SerializeField] private GameObject alivePanel;
+    [Tooltip("한 줄 합침형(\"생존 N/M\"). 아래 분리형 텍스트를 쓰는 씬에서는 비워도 됩니다.")]
     [SerializeField] private TMP_Text aliveCountText;
+    [Tooltip("분리형: 생존 인원 숫자만 표시(선택). Alive/Total 텍스트가 나뉜 패널용.")]
+    [SerializeField] private TMP_Text aliveNumberText;
+    [Tooltip("분리형: 전체 인원 숫자만 표시(선택).")]
+    [SerializeField] private TMP_Text totalNumberText;
 
     [Header("시작 카운트다운 (중앙)")]
     [SerializeField] private GameObject countdownPanel;
@@ -207,9 +212,24 @@ public class SurvivalHudController : MonoBehaviour
 
         SetActiveSafe(alivePanel, show);
 
-        if (show && aliveCountText != null)
+        if (show)
         {
-            aliveCountText.text = $"생존 {gameManager.AliveCount}/{gameManager.TotalPlayerCount}";
+            int alive = gameManager.AliveCount;
+            int total = gameManager.TotalPlayerCount;
+
+            // 연결된 텍스트만 갱신 — 합침형(구형 씬)과 분리형(Alive/Total 나뉜 패널) 모두 지원.
+            if (aliveCountText != null)
+            {
+                aliveCountText.text = $"생존 {alive}/{total}";
+            }
+            if (aliveNumberText != null)
+            {
+                aliveNumberText.text = alive.ToString();
+            }
+            if (totalNumberText != null)
+            {
+                totalNumberText.text = total.ToString();
+            }
         }
 
         UpdateCoinText(show);
