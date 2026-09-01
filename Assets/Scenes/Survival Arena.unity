@@ -94,7 +94,7 @@ LightmapSettings:
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
   m_LightingDataAsset: {fileID: 20201, guid: 0000000000000000f000000000000000, type: 0}
-  m_LightingSettings: {fileID: 0}
+  m_LightingSettings: {fileID: 4890085278179872738, guid: edee7bd6a1b953e4d9b87442559fc42d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -276,6 +276,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &7714392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -479,6 +484,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &10044206
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -682,6 +692,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &10756171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -885,6 +900,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &16184869
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1088,6 +1108,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &40386570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1291,6 +1316,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &41821395
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1494,6 +1524,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &46696293
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1697,6 +1732,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &53421777
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1900,6 +1940,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &57095281
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2103,6 +2148,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &71966092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2306,6 +2356,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &77746435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2509,6 +2564,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &88619922
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2712,6 +2772,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &91632004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2953,6 +3018,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &113619431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3156,6 +3226,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &118707859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3359,6 +3434,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &120247527
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3562,6 +3642,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &120402336
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3765,6 +3850,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &121499975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3968,6 +4058,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &136473381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4171,6 +4266,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &138209645
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4374,6 +4474,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &138872309
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4577,6 +4682,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &151031126
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4780,6 +4890,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &169189084
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4983,6 +5098,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &173689815
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5186,6 +5306,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &188835266
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5470,6 +5595,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &210963737
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5673,6 +5803,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &215166708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5876,6 +6011,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &215861007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6079,6 +6219,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &228349183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6584,6 +6729,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &236545480
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6787,6 +6937,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &238195633
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6990,6 +7145,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &245306037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7193,6 +7353,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &249023040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7396,6 +7561,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &258449701
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7599,6 +7769,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &264875474
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7802,6 +7977,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &279078188
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7848,6 +8028,11 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!224 &297940448 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 7267221784227807329, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+  m_PrefabInstance: {fileID: 2052649769234426079}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &302694458
 GameObject:
   m_ObjectHideFlags: 0
@@ -8005,6 +8190,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &302694465
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8208,6 +8398,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &303242749
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8411,6 +8606,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &309181059
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8614,6 +8814,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &309247069
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8898,6 +9103,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &323697435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9101,6 +9311,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &324514983
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9304,6 +9519,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &328326880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9507,6 +9727,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &331897345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9710,6 +9935,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &337155628
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9913,6 +10143,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &344342910
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10116,6 +10351,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &346405882
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10319,6 +10559,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &354577468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10522,6 +10767,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &379887916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10725,6 +10975,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &380562085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10928,6 +11183,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &381779941
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11131,6 +11391,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &385020216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11334,6 +11599,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &388004163
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11537,6 +11807,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &399859895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11740,6 +12015,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &408998645
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11943,6 +12223,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &417152888
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12146,6 +12431,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &420330801
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12349,6 +12639,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &435918923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12552,6 +12847,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &450248950
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12755,6 +13055,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &453557366
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12958,6 +13263,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &454843065
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13161,6 +13471,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &464794244
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13364,6 +13679,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &466022590
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13567,6 +13887,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &467145518
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13770,6 +14095,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &467384518
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13973,6 +14303,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &483204252
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14176,6 +14511,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &484118867
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14379,6 +14719,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &489480232
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14582,6 +14927,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &494943208
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14785,6 +15135,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &503905871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14988,6 +15343,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &513501115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15191,6 +15551,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &514876368
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15394,6 +15759,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &521327517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15597,6 +15967,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &527027071
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15881,6 +16256,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &563192709
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16084,6 +16464,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &566058174
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16287,6 +16672,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &569596736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16490,6 +16880,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &578256874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16693,6 +17088,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &590045290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16958,6 +17358,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &628435040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17161,6 +17566,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &635850064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17364,6 +17774,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &646565841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17567,6 +17982,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &650026058
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17770,6 +18190,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &659209238
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18004,6 +18429,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &675599183
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18207,6 +18637,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &691865076
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18410,6 +18845,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &696918129
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18613,6 +19053,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &697072928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18816,6 +19261,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &697378173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19019,6 +19469,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &705740791
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19222,6 +19677,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &710891300
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19425,6 +19885,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &716171751
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19628,6 +20093,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &720933058
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19831,6 +20301,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &724930378
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20034,6 +20509,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &732453050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20237,6 +20717,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &742152306
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20573,6 +21058,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &762508211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20776,6 +21266,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &764379269
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20979,6 +21474,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &766160714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21182,6 +21682,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &766532919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21385,6 +21890,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &767145811
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21588,6 +22098,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &789565945
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21791,6 +22306,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &792290664
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21994,6 +22514,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &797216687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22197,6 +22722,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &800222634
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22400,6 +22930,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &804080382
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22603,6 +23138,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &814394660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22887,6 +23427,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &828063607
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23090,6 +23635,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &829729304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23293,6 +23843,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &842834036
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23496,6 +24051,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &858822152
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23699,6 +24259,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &878818355
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23902,6 +24467,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &905872451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24105,6 +24675,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &909351352
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24308,6 +24883,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &909673012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24601,6 +25181,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &931353491
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24804,6 +25389,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &935462912
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25007,6 +25597,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &946324198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25210,6 +25805,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &949829344
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25413,6 +26013,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &964410409
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25488,19 +26093,19 @@ Light:
   serializedVersion: 12
   m_Type: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 1.2
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 0
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
     m_Bias: 0.05
     m_NormalBias: 0.4
-    m_NearPlane: 0.2
+    m_NearPlane: 0.1
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -25824,6 +26429,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &990146684
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26027,6 +26637,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &991499193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26230,6 +26845,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &992742108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26433,6 +27053,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &995950477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26636,6 +27261,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &996418210
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26839,6 +27469,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &999412497
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27042,6 +27677,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1003376272
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27245,6 +27885,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1006773912
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27448,6 +28093,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1008063377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27651,6 +28301,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1019615980
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27854,6 +28509,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1022011724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28057,6 +28717,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1032576720
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28103,6 +28768,117 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!1001 &1042694342
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 297940448}
+    m_Modifications:
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 261
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197751, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_Name
+      value: ActionText_Win
+      objectReference: {fileID: 0}
+    - target: {fileID: 2405720348900197751, guid: cee0661be589e4388b28ec78976109be, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cee0661be589e4388b28ec78976109be, type: 3}
+--- !u!224 &1042694343 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2405720348900197750, guid: cee0661be589e4388b28ec78976109be, type: 3}
+  m_PrefabInstance: {fileID: 1042694342}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1042694344 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2405720348900197751, guid: cee0661be589e4388b28ec78976109be, type: 3}
+  m_PrefabInstance: {fileID: 1042694342}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1044967504
 GameObject:
   m_ObjectHideFlags: 0
@@ -28260,6 +29036,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1044967511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28463,6 +29244,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1048838216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28666,6 +29452,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1055305857
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28869,6 +29660,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1060520471
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29072,6 +29868,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1069912868
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29356,6 +30157,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1079915620
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29559,6 +30365,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1088367928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29762,6 +30573,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1089582588
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29965,6 +30781,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1091356377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30011,6 +30832,81 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!1 &1104967326
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1104967327}
+  - component: {fileID: 1104967329}
+  - component: {fileID: 1104967328}
+  m_Layer: 0
+  m_Name: Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1104967327
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104967326}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1298720568}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -38, y: 0}
+  m_SizeDelta: {x: 50, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1104967328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104967326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 5c601765e711949ab90711bc2d7e363e, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1104967329
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104967326}
+  m_CullTransparentMesh: 1
 --- !u!1 &1106216308
 GameObject:
   m_ObjectHideFlags: 0
@@ -30168,6 +31064,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1106216315
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30371,6 +31272,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1111329504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30574,6 +31480,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1112519256
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30777,6 +31688,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1120927095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30980,6 +31896,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1135134231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31232,6 +32153,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1141534778
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31435,6 +32361,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1147378489
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31693,6 +32624,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1170688406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31896,6 +32832,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1182892838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32099,6 +33040,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1186173470
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32302,6 +33248,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1188413984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32505,6 +33456,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1188615790
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32708,6 +33664,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1189885057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32911,6 +33872,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1193627979
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33114,6 +34080,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1198722693
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33317,6 +34288,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1204390061
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33520,6 +34496,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1210198817
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33723,6 +34704,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1253642236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33926,6 +34912,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1256750482
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34129,6 +35120,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1257256986
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34332,6 +35328,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1258727199
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34535,6 +35536,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1267140838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34738,6 +35744,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1274236677
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -34941,6 +35952,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1293020334
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35144,6 +36160,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1294710911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35190,6 +36211,11 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!224 &1298720568 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4057930393200208089, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+  m_PrefabInstance: {fileID: 2052649769234426079}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1299198930
 GameObject:
   m_ObjectHideFlags: 0
@@ -35698,6 +36724,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1320395515
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35901,6 +36932,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1325413726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36179,6 +37215,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1327884014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36382,6 +37423,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1342164343
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36585,6 +37631,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1352755889
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36788,6 +37839,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1355694036
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36991,6 +38047,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1357691680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37194,6 +38255,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1362360633
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37397,6 +38463,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1363962235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37600,6 +38671,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1375745320
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37803,6 +38879,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1378833158
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38006,6 +39087,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1383544233
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38209,6 +39295,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1386046654
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38412,6 +39503,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1395174135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38615,6 +39711,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1401198137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38818,6 +39919,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1417940550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39021,6 +40127,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1423389362
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39224,6 +40335,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1436949365
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39427,6 +40543,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1440158236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39630,6 +40751,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1440234287
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39833,6 +40959,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1440648223
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40036,6 +41167,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1452397370
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40239,6 +41375,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1454053387
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40523,6 +41664,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1483538319
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40726,6 +41872,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1488586023
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41069,6 +42220,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1490698634
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41272,6 +42428,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1505625906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41475,6 +42636,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1509088350
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41678,6 +42844,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1522380802
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41881,6 +43052,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1526628148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42089,6 +43265,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1543233999
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42292,6 +43473,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1549035415
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42495,6 +43681,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1557164903
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42698,6 +43889,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1562645885
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43069,6 +44265,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1564745708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43272,6 +44473,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1565494109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43475,6 +44681,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1573494113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43678,6 +44889,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1583685113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -43881,6 +45097,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1586773774
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44084,6 +45305,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1589488269
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44287,6 +45513,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1589678633
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44490,6 +45721,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1592390492
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44693,6 +45929,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1600997075
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -44896,6 +46137,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1614895289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -45099,6 +46345,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1615585969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -45392,6 +46643,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1616629453
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -45595,6 +46851,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1618410856
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -45798,6 +47059,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1631475879
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46001,6 +47267,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1632341023
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46204,6 +47475,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1633945330
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46407,6 +47683,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1638648679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46610,6 +47891,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1642649105
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -46813,6 +48099,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1657257769
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -47016,6 +48307,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1666334371
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -47219,6 +48515,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1674757153
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -47422,6 +48723,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1682725432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -47691,6 +48997,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1687106472
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -47894,6 +49205,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1689487190
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48097,6 +49413,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1689676495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48300,6 +49621,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1695937871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48503,6 +49829,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1707313130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48706,6 +50037,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1729692303
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48909,6 +50245,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1730274017
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49112,6 +50453,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1732912187
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49315,6 +50661,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1735016614
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49518,6 +50869,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1735257909
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49721,6 +51077,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1735750241
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49924,6 +51285,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1756944476
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50127,6 +51493,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1762813008
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50330,6 +51701,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1764022878
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50533,6 +51909,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1767826974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50736,6 +52117,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1774287580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -50939,6 +52325,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1775362180
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -51142,6 +52533,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1791834374
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -51345,6 +52741,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1794113360
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -51629,6 +53030,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1812735053
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -51675,6 +53081,117 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!1001 &1813580956
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 297940448}
+    m_Modifications:
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 315
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 92
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733757, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_Name
+      value: ActionText_Lose
+      objectReference: {fileID: 0}
+    - target: {fileID: 5860451407516733757, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+--- !u!224 &1813580957 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5860451407516733754, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+  m_PrefabInstance: {fileID: 1813580956}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1813580958 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5860451407516733757, guid: ed7f15d79c045409aa84ae9a15bb93c2, type: 3}
+  m_PrefabInstance: {fileID: 1813580956}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1813912269
 GameObject:
   m_ObjectHideFlags: 0
@@ -51832,6 +53349,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1813912276
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52035,6 +53557,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1814168257
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52238,6 +53765,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1814961007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52441,6 +53973,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1824709231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52644,6 +54181,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1835012001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52847,6 +54389,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1837632827
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53050,6 +54597,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1843721298
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53253,6 +54805,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1866238312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53456,6 +55013,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1874418163
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53659,6 +55221,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1881314453
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53862,6 +55429,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1883368231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54065,6 +55637,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1904718674
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54268,6 +55845,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1908257736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54471,6 +56053,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1923231399
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54674,6 +56261,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1929546935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54877,6 +56469,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1930411458
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -55192,6 +56789,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1947318046
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -55395,6 +56997,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1950379972
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -55598,6 +57205,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1957258238
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -55801,6 +57413,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1959881592
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -56004,6 +57621,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1964000784
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -56207,6 +57829,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1970682615
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -56410,6 +58037,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1973401863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -56613,6 +58245,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1976247734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -56816,6 +58453,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1979047819
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -57019,6 +58661,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1980923283
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -57312,6 +58959,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &1995996150
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -57515,6 +59167,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2000201746
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -57718,6 +59375,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2000372287
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -57921,6 +59583,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2003715266
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58124,6 +59791,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2007383194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58327,6 +59999,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2034891293
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58530,6 +60207,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2035037338
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58733,6 +60415,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2041048890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -58936,6 +60623,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2043680410
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59139,6 +60831,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2049264197
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59423,6 +61120,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2055146584
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59626,6 +61328,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2057136889
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59829,6 +61536,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2058766539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60032,6 +61744,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2073878438
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60235,6 +61952,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2082915305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60438,6 +62160,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2086520814
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60641,6 +62368,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2111713220
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60844,6 +62576,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2129061771
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61047,6 +62784,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 0
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2137174145
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61250,6 +62992,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2141950114
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61453,6 +63200,11 @@ MonoBehaviour:
   respawnDelay: 0
   despawnAfterFallSeconds: 4
   triggerByStepping: 1
+  steppedTintColor: {r: 1, g: 1, b: 1, a: 1}
+  steppedTintFadeSeconds: 0.15
+  steppedAlpha: 0.55
+  steppedTransparencyFadeSeconds: 0.6
+  playFallVfx: 0
 --- !u!114 &2145046141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61510,6 +63262,226 @@ PrefabInstance:
     - target: {fileID: 508978840782585352, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
       propertyPath: m_Name
       value: HUD Canvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 666538096330266188, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 666538096330266188, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: ffa3747042fd544e0b172edda22f8eae, type: 3}
+    - target: {fileID: 666538096330266188, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Color.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 666538096330266188, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 666538096330266188, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 666538096330266188, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 673034662598621574, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 673034662598621574, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: af645301dc175476fb2f9dc2b7a74a1d, type: 3}
+    - target: {fileID: 673034662598621574, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 673034662598621574, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 673034662598621574, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 893907419624400906, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: actionTextWin
+      value: 
+      objectReference: {fileID: 1042694344}
+    - target: {fileID: 893907419624400906, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: actionTextLose
+      value: 
+      objectReference: {fileID: 1813580958}
+    - target: {fileID: 1862844672385319729, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1862844672385319729, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1862844672385319729, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1862844672385319729, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1862844672385319729, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1862844672385319729, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975389615432518205, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975389615432518205, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975389615432518205, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975389615432518205, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975389615432518205, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975389615432518205, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975389615650686951, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2975389615650686951, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4057930393200208089, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 4057930393200208089, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -100
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745403170051, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745403170051, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745403170051, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 29.62
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745403170051, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745403170051, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 149.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745403170051, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -22.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745560731087, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745560731087, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745560731087, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 29.62
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745560731087, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745560731087, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 98.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745560731087, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -22.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421745698340151, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746317998788, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746317998788, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746317998788, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 59.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746317998788, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746317998788, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 43.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746317998788, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -22.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746661353553, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746661353553, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746661353553, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746661353553, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746661353553, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4798421746661353553, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7040627237212613046, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 7267221784227807329, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
       propertyPath: m_Pivot.x
@@ -61591,9 +63563,74 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_text
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontSize
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_margin.x
+      value: 52.78589
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 8e8f97682e668e94cb30d2e6b8e13d84, type: 2}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 40
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: -7304394381272760782, guid: 8e8f97682e668e94cb30d2e6b8e13d84, type: 2}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 8345860179314082815, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641429815065291254, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontSize
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641429815065291254, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 60
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 7267221784227807329, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      insertIndex: 5
+      addedObject: {fileID: 1042694343}
+    - targetCorrespondingSourceObject: {fileID: 7267221784227807329, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      insertIndex: 6
+      addedObject: {fileID: 1813580957}
+    - targetCorrespondingSourceObject: {fileID: 4057930393200208089, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
+      insertIndex: 0
+      addedObject: {fileID: 1104967327}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e3bb46ee5d53e4fb1aa3a1afce4c42a9, type: 3}
 --- !u!1001 &7947220545492189305

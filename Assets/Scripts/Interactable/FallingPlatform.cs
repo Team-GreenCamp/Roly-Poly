@@ -29,6 +29,10 @@ public class FallingPlatform : NetworkBehaviour
     public Color steppedTintColor = Color.white;
     [Tooltip("밟힘 색으로 물드는 보간 시간(초). 0이면 즉시 변합니다. 복귀 시에도 같은 속도로 되돌아옵니다.")]
     public float steppedTintFadeSeconds = 0.15f;
+    [Tooltip("밟힌 발판의 불투명도. 낮을수록 바닥이 더 비쳐 낙하 예정 상태가 잘 보입니다.")]
+    [Range(0.1f, 1f)] public float steppedAlpha = 0.55f;
+    [Tooltip("원래 불투명 상태에서 목표 불투명도까지 서서히 변하는 시간(초). 기본값은 낙하 유예 시간과 같다.")]
+    public float steppedTransparencyFadeSeconds = 0.6f;
     [Tooltip("체크하면 낙하 시작 시 기존 VFX도 재생합니다. 기본은 색 변화만(발판이 많은 맵에서 화면이 정신없는 것 방지).")]
     public bool playFallVfx = false;
 
@@ -49,6 +53,9 @@ public class FallingPlatform : NetworkBehaviour
     private MaterialPropertyBlock tintBlock;
     private Coroutine tintRoutine;
     private float tintWeight; // 0=원래 색, 1=밟힘 색
+    private Material[][] originalSharedMaterials;
+    private Material[][] transparentMaterials;
+    private float transparencyWeight; // 0=원래 불투명, 1=목표 불투명도
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"); // URP Lit
     private static readonly int LegacyColorId = Shader.PropertyToID("_Color");   // 빌트인/기타 셰이더 폴백
 
@@ -70,6 +77,7 @@ public class FallingPlatform : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         networkFalling.OnValueChanged -= HandleFallingChanged;
+        RestoreOriginalMaterials();
 
         // 복귀하지 않는 발판이 낙하 후 Despawn(false)로 네트워크에서 내려가면, 실제 숨김은 여기서
         // 전 인스턴스(서버·클라)가 처리한다. 인씬 NetworkObject를 Despawn(true)로 파괴하면 NGO가
@@ -102,10 +110,11 @@ public class FallingPlatform : NetworkBehaviour
             tintRoutine = null;
         }
 
-        // 보간 0초이거나 비활성(코루틴 불가) 상태면 즉시 적용.
-        if (steppedTintFadeSeconds <= 0f || !isActiveAndEnabled)
+        // 두 연출 모두 보간이 없거나 비활성(코루틴 불가) 상태면 즉시 적용.
+        if ((steppedTintFadeSeconds <= 0f && steppedTransparencyFadeSeconds <= 0f) || !isActiveAndEnabled)
         {
             tintWeight = targetWeight;
+            transparencyWeight = targetWeight;
             ApplyTintWeight();
             return;
         }
@@ -115,10 +124,19 @@ public class FallingPlatform : NetworkBehaviour
 
     private IEnumerator TintFadeRoutine(float targetWeight)
     {
-        float speed = 1f / Mathf.Max(0.01f, steppedTintFadeSeconds);
-        while (!Mathf.Approximately(tintWeight, targetWeight))
+        float tintSpeed = steppedTintFadeSeconds <= 0f
+            ? float.PositiveInfinity
+            : 1f / steppedTintFadeSeconds;
+        float transparencySpeed = steppedTransparencyFadeSeconds <= 0f
+            ? float.PositiveInfinity
+            : 1f / steppedTransparencyFadeSeconds;
+
+        while (!Mathf.Approximately(tintWeight, targetWeight)
+            || !Mathf.Approximately(transparencyWeight, targetWeight))
         {
-            tintWeight = Mathf.MoveTowards(tintWeight, targetWeight, speed * Time.deltaTime);
+            tintWeight = Mathf.MoveTowards(tintWeight, targetWeight, tintSpeed * Time.deltaTime);
+            transparencyWeight = Mathf.MoveTowards(
+                transparencyWeight, targetWeight, transparencySpeed * Time.deltaTime);
             ApplyTintWeight();
             yield return null;
         }
@@ -138,6 +156,11 @@ public class FallingPlatform : NetworkBehaviour
             tintBlock = new MaterialPropertyBlock();
         }
 
+        if (tintWeight > 0f || transparencyWeight > 0f)
+        {
+            EnsureTransparentMaterials();
+        }
+
         for (int i = 0; i < tintRenderers.Length; i++)
         {
             Renderer tintRenderer = tintRenderers[i];
@@ -146,18 +169,119 @@ public class FallingPlatform : NetworkBehaviour
                 continue;
             }
 
-            if (tintWeight <= 0f)
+            if (tintWeight <= 0f && transparencyWeight <= 0f)
             {
                 tintRenderer.SetPropertyBlock(null); // 블록 제거 → 머티리얼 원래 색 복원
                 continue;
             }
 
             Color tinted = Color.Lerp(tintOriginalColors[i], steppedTintColor, tintWeight);
+            // 색 경고와 별개로 원래 불투명 상태에서 천천히 반투명 상태로 전환한다.
+            tinted.a = Mathf.Lerp(tintOriginalColors[i].a, steppedAlpha, transparencyWeight);
             tintBlock.Clear();
             tintBlock.SetColor(BaseColorId, tinted);
             tintBlock.SetColor(LegacyColorId, tinted);
             tintRenderer.SetPropertyBlock(tintBlock);
         }
+
+        if (tintWeight <= 0f && transparencyWeight <= 0f)
+        {
+            RestoreOriginalMaterials();
+        }
+    }
+
+    // URP Lit의 불투명 머티리얼은 색의 알파만 낮춰도 투명해지지 않으므로,
+    // 밟힌 발판에만 머티리얼을 복제해 투명 렌더 상태로 전환한다.
+    private void EnsureTransparentMaterials()
+    {
+        if (transparentMaterials != null)
+        {
+            return;
+        }
+
+        // 화면을 그리지 않는 데디케이티드 서버에서는 시각용 머티리얼을 만들지 않는다.
+        if (NetworkManager != null && NetworkManager.IsServer && !NetworkManager.IsClient)
+        {
+            return;
+        }
+
+        originalSharedMaterials = new Material[tintRenderers.Length][];
+        transparentMaterials = new Material[tintRenderers.Length][];
+
+        for (int i = 0; i < tintRenderers.Length; i++)
+        {
+            Renderer tintRenderer = tintRenderers[i];
+            if (tintRenderer == null)
+            {
+                continue;
+            }
+
+            Material[] originals = tintRenderer.sharedMaterials;
+            Material[] instances = new Material[originals.Length];
+            originalSharedMaterials[i] = originals;
+            transparentMaterials[i] = instances;
+
+            for (int j = 0; j < originals.Length; j++)
+            {
+                if (originals[j] == null)
+                {
+                    continue;
+                }
+
+                Material instance = new Material(originals[j]);
+                ConfigureTransparentMaterial(instance);
+                instances[j] = instance;
+            }
+
+            tintRenderer.sharedMaterials = instances;
+        }
+    }
+
+    private static void ConfigureTransparentMaterial(Material material)
+    {
+        if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
+        if (material.HasProperty("_Blend")) material.SetFloat("_Blend", 0f);
+        if (material.HasProperty("_SrcBlend")) material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        if (material.HasProperty("_DstBlend")) material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        if (material.HasProperty("_ZWrite")) material.SetFloat("_ZWrite", 0f);
+
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+    }
+
+    private void RestoreOriginalMaterials()
+    {
+        if (transparentMaterials == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < tintRenderers.Length; i++)
+        {
+            if (tintRenderers[i] != null && originalSharedMaterials?[i] != null)
+            {
+                tintRenderers[i].sharedMaterials = originalSharedMaterials[i];
+            }
+
+            Material[] instances = transparentMaterials[i];
+            if (instances == null)
+            {
+                continue;
+            }
+
+            for (int j = 0; j < instances.Length; j++)
+            {
+                if (instances[j] != null)
+                {
+                    Destroy(instances[j]);
+                }
+            }
+        }
+
+        originalSharedMaterials = null;
+        transparentMaterials = null;
     }
 
     private void Awake()
@@ -192,6 +316,12 @@ public class FallingPlatform : NetworkBehaviour
         rb.isKinematic = true;
         rb.useGravity = false;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
+    }
+
+    public override void OnDestroy()
+    {
+        RestoreOriginalMaterials();
+        base.OnDestroy();
     }
 
     // 서든데스 등 외부(서버)에서 강제로 무너뜨릴 때 호출. 오프라인에서는 로컬로 처리.
@@ -320,6 +450,7 @@ public class FallingPlatform : NetworkBehaviour
         {
             // 복귀하지 않는 발판(오프라인): 잠시 후 비활성화해 무한 낙하를 막는다.
             yield return new WaitForSeconds(Mathf.Max(0.5f, despawnAfterFallSeconds));
+            RestoreOriginalMaterials();
             gameObject.SetActive(false);
         }
     }

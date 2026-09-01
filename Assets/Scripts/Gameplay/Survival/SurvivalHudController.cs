@@ -31,6 +31,10 @@ public class SurvivalHudController : MonoBehaviour
     [Header("승자 패널")]
     [SerializeField] private GameObject winnerPanel;
     [SerializeField] private TMP_Text winnerText;
+    [Tooltip("로컬 플레이어 승리 시 winner 패널과 함께 표시할 연출 오브젝트.")]
+    [SerializeField] private GameObject actionTextWin;
+    [Tooltip("로컬 플레이어 패배 시 winner 패널과 함께 표시할 연출 오브젝트.")]
+    [SerializeField] private GameObject actionTextLose;
 
     [Header("서든데스 경고 (선택)")]
     [SerializeField] private GameObject suddenDeathPanel; // 배경 포함 루트(비우면 텍스트 자체를 토글)
@@ -38,9 +42,9 @@ public class SurvivalHudController : MonoBehaviour
     [Tooltip("서든데스(붕괴 시작) 몇 초 전부터 경고 타이머를 표시할지.")]
     [SerializeField] private float suddenDeathWarnSeconds = 15f;
 
-    [Header("코인 점수 (선택 — 비우면 생존자 텍스트를 복제해 자동 생성)")]
+    [Header("코인 점수 (우상단 고정 UI)")]
+    [SerializeField] private GameObject coinPanel;
     [SerializeField] private TMP_Text coinText;
-    [SerializeField] private Color coinTextColor = new Color(1f, 0.82f, 0.2f, 1f);
 
     [Header("킬 피드 (선택)")]
     [SerializeField] private GameObject killFeedPanel; // 배경 포함 루트(비우면 텍스트 자체를 토글)
@@ -70,9 +74,12 @@ public class SurvivalHudController : MonoBehaviour
         }
 
         SetActiveSafe(alivePanel, false);
+        SetActiveSafe(coinPanel, false);
         SetActiveSafe(countdownPanel, false);
         SetActiveSafe(eliminatedPanel, false);
         SetActiveSafe(winnerPanel, false);
+        SetActiveSafe(actionTextWin, false);
+        SetActiveSafe(actionTextLose, false);
         if (SuddenDeathRoot != null) SetActiveSafe(SuddenDeathRoot, false);
         if (KillFeedRoot != null) SetActiveSafe(KillFeedRoot, false);
     }
@@ -241,41 +248,12 @@ public class SurvivalHudController : MonoBehaviour
         SurvivalCoinManager coinManager = SurvivalCoinManager.Instance;
         bool show = alivePanelShown && coinManager != null;
 
-        if (show && coinText == null)
+        // 프리팹에 마련된 코인 칸만 표시하며 런타임에는 UI를 생성하지 않는다.
+        SetActiveSafe(coinPanel, show);
+        if (show && coinText != null)
         {
-            EnsureCoinText();
+            coinText.text = $"{coinManager.LocalScore}";
         }
-
-        if (coinText == null)
-        {
-            return;
-        }
-
-        SetActiveSafe(coinText.gameObject, show);
-        if (show)
-        {
-            coinText.text = $"코인 {coinManager.LocalScore}";
-        }
-    }
-
-    // 인스펙터에 연결이 없으면 생존자 카운트 텍스트를 복제해 폰트/앵커를 그대로 물려받는다.
-    private void EnsureCoinText()
-    {
-        if (aliveCountText == null)
-        {
-            return;
-        }
-
-        coinText = Instantiate(aliveCountText, aliveCountText.transform.parent);
-        coinText.name = "Coin Count Text";
-        coinText.text = string.Empty;
-        coinText.color = coinTextColor;
-        coinText.fontSize = aliveCountText.fontSize * 0.85f;
-
-        RectTransform rect = coinText.rectTransform;
-        RectTransform aliveRect = aliveCountText.rectTransform;
-        rect.anchoredPosition = aliveRect.anchoredPosition
-            + new Vector2(0f, -aliveRect.rect.height * 1.1f);
     }
 
     private void UpdateCountdownPanel(SurvivalGameManager.MatchState state)
@@ -358,15 +336,19 @@ public class SurvivalHudController : MonoBehaviour
     {
         // 종료 직후엔 winner 패널을 보여주고, 시상식이 시작되면(PodiumActive) 끈다.
         bool show = state == SurvivalGameManager.MatchState.Finished && !gameManager.PodiumActive;
+        ulong winner = gameManager.WinnerClientId;
+        bool localWon = NetworkManager.Singleton != null && winner == NetworkManager.Singleton.LocalClientId;
+
         SetActiveSafe(winnerPanel, show);
+        // 승패 결과에 맞는 ActionText만 winner 패널과 같은 시간 동안 표시한다.
+        SetActiveSafe(actionTextWin, show && localWon);
+        SetActiveSafe(actionTextLose, show && !localWon);
 
         if (!show || winnerText == null)
         {
             return;
         }
 
-        ulong winner = gameManager.WinnerClientId;
-        bool localWon = NetworkManager.Singleton != null && winner == NetworkManager.Singleton.LocalClientId;
         string winnerName = localWon ? "YOU WIN!" : $"Player {winner + 1} WINS!";
         int wins = SurvivalWinTracker.GetWins(winner);
         string winsSuffix = wins > 1 ? $"  (통산 {wins}승)" : string.Empty;
