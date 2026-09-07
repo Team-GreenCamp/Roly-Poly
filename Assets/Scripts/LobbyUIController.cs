@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,12 +9,21 @@ using HeatBoxButtonManager = Michsky.UI.Heat.BoxButtonManager;
 using HeatButtonManager = Michsky.UI.Heat.ButtonManager;
 using HeatChapterManager = Michsky.UI.Heat.ChapterManager;
 using HeatPanelManager = Michsky.UI.Heat.PanelManager;
+using HeatPanelButton = Michsky.UI.Heat.PanelButton;
 
 [DisallowMultipleComponent]
 public class LobbyUIController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private NetworkSessionManager sessionManager;
+
+    [Header("Title Transition")]
+    [SerializeField] private string titleSceneName = "Title Scene";
+    [SerializeField] private string backToTitleButtonObjectName = "Back Button";
+    [SerializeField] private CanvasButton backToTitleButton;
+    [SerializeField] private HeatPanelButton backToTitlePanelButton;
+    [SerializeField] private float titleFadeOutDuration = 0.4f;
+    [SerializeField] private float titleFadeInDuration = 0.4f;
 
     [Header("External UI Controls")]
     [SerializeField] private TMP_InputField addressInputField;
@@ -56,6 +66,9 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private float roomJoinConnectionTimeout = 8f;
     [SerializeField] private float roomHeartbeatInterval = 10f;
 
+    private bool isTransitioningToTitle;
+    private bool backButtonRuntimeListenerRegistered;
+    private GameObject backToTitleButtonRoot;
     private bool listenersRegistered;
     private bool isRefreshingRooms;
     private bool isJoiningRoom;
@@ -113,6 +126,7 @@ public class LobbyUIController : MonoBehaviour
 
         ApplyDefaultValues();
         ResolveLobbyActionButtons();
+        ResolveBackToTitleButton();
         ResolveMapPanelReferences();
         EnsureDefaultMapSelection();
         HideChaptersPanelForLobbyStart();
@@ -264,6 +278,7 @@ public class LobbyUIController : MonoBehaviour
         }
 
         RegisterMapPanelListeners();
+        RegisterBackToTitleListener();
         listenersRegistered = true;
     }
 
@@ -286,6 +301,7 @@ public class LobbyUIController : MonoBehaviour
         }
 
         UnregisterMapPanelListeners();
+        UnregisterBackToTitleListener();
         listenersRegistered = false;
     }
 
@@ -391,6 +407,81 @@ public class LobbyUIController : MonoBehaviour
         {
             startButtonRoot = startButton.gameObject;
         }
+    }
+
+    private void ResolveBackToTitleButton()
+    {
+        if (backToTitleButtonRoot == null)
+        {
+            backToTitleButtonRoot = FindSceneGameObjectByName(backToTitleButtonObjectName);
+        }
+
+        if (backToTitleButtonRoot != null)
+        {
+            if (backToTitlePanelButton == null)
+            {
+                backToTitlePanelButton = backToTitleButtonRoot.GetComponent<HeatPanelButton>();
+            }
+
+            if (backToTitleButton == null)
+            {
+                backToTitleButton = backToTitleButtonRoot.GetComponent<CanvasButton>();
+            }
+        }
+        else
+        {
+            if (backToTitlePanelButton != null)
+            {
+                backToTitleButtonRoot = backToTitlePanelButton.gameObject;
+            }
+            else if (backToTitleButton != null)
+            {
+                backToTitleButtonRoot = backToTitleButton.gameObject;
+            }
+        }
+    }
+
+    private void RegisterBackToTitleListener()
+    {
+        ResolveBackToTitleButton();
+
+        if (backButtonRuntimeListenerRegistered)
+        {
+            return;
+        }
+
+        if (backToTitlePanelButton != null)
+        {
+            backToTitlePanelButton.onClick.RemoveListener(HandleBackToTitleClicked);
+            backToTitlePanelButton.onClick.AddListener(HandleBackToTitleClicked);
+            backButtonRuntimeListenerRegistered = true;
+        }
+        else if (backToTitleButton != null)
+        {
+            backToTitleButton.onClick.RemoveListener(HandleBackToTitleClicked);
+            backToTitleButton.onClick.AddListener(HandleBackToTitleClicked);
+            backButtonRuntimeListenerRegistered = true;
+        }
+    }
+
+    private void UnregisterBackToTitleListener()
+    {
+        if (!backButtonRuntimeListenerRegistered)
+        {
+            return;
+        }
+
+        if (backToTitlePanelButton != null)
+        {
+            backToTitlePanelButton.onClick.RemoveListener(HandleBackToTitleClicked);
+        }
+
+        if (backToTitleButton != null)
+        {
+            backToTitleButton.onClick.RemoveListener(HandleBackToTitleClicked);
+        }
+
+        backButtonRuntimeListenerRegistered = false;
     }
 
     private void RegisterMapPanelListeners()
@@ -1050,6 +1141,37 @@ public class LobbyUIController : MonoBehaviour
         }
 
         return joined;
+    }
+
+    public async void HandleBackToTitleClicked()
+    {
+        if (isTransitioningToTitle)
+        {
+            return;
+        }
+
+        isTransitioningToTitle = true;
+
+        if (backToTitleButton != null)
+        {
+            backToTitleButton.interactable = false;
+        }
+
+        try
+        {
+            if (sessionManager != null && sessionManager.IsOnline)
+            {
+                await ReleaseBackendRoomAsync();
+                sessionManager.Shutdown();
+            }
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning($"[Lobby] 타이틀 이동 중 세션 정리 예외: {exception.Message}");
+        }
+
+        string targetScene = string.IsNullOrWhiteSpace(titleSceneName) ? "Title Scene" : titleSceneName.Trim();
+        SceneFader.LoadSceneWithFade(targetScene, titleFadeOutDuration, titleFadeInDuration);
     }
 
     public async void HandleLeaveClicked()

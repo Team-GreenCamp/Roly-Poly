@@ -239,7 +239,8 @@ public class DoorController : NetworkBehaviour, IInteractable
     {
         if (lockedSound != null)
         {
-            AudioSource.PlayClipAtPoint(lockedSound, transform.position);
+            // 설정 패널의 SFX 음량을 잠긴 문 효과음에도 반영합니다.
+            AudioSource.PlayClipAtPoint(lockedSound, transform.position, GameSettings.SfxVolume);
         }
     }
 

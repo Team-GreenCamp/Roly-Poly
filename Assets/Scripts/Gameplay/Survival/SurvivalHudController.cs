@@ -326,6 +326,8 @@ public class SurvivalHudController : MonoBehaviour
 
         if (show && spectateHintText != null)
         {
+            // 힌트 표시 설정에 따라 관전 조작 안내를 숨길 수 있습니다.
+            spectateHintText.gameObject.SetActive(GameSettings.HintsEnabled);
             spectateHintText.text = string.IsNullOrEmpty(spectateTargetName)
                 ? "탈락! 잠시 후 관전으로 전환됩니다"
                 : $"관전 중: {spectateTargetName}   (좌클릭: 다음 / Tab: 이전)";

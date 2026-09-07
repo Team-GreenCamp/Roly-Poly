@@ -92,6 +92,7 @@ public partial class PlayerController : NetworkBehaviour
     private InputAction moveAction;
     private InputAction jumpAction;
     private InputAction sprintAction;
+    private bool sprintToggled;
 
     public Vector2 MoveInput => moveInput;
     public bool IsKnockedDown => isKnockedDown;

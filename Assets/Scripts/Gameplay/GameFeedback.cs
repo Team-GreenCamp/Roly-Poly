@@ -80,53 +80,53 @@ public class GameFeedback : MonoBehaviour
     {
         if (Instance == null) return;
         Instance.SpawnVfx(Instance.hitVfx, position);
-        Instance.PlayAt(Instance.hitSfx, position, Instance.sfxVolume);
-        Instance.PlayAt(Instance.hitVoice, position, Instance.voiceVolume);
+        Instance.PlayAt(Instance.hitSfx, position, Instance.sfxVolume * GameSettings.SfxVolume);
+        Instance.PlayAt(Instance.hitVoice, position, Instance.voiceVolume * GameSettings.SfxVolume);
     }
 
     public static void DashAt(Vector3 position)
     {
         if (Instance == null) return;
         Instance.SpawnVfx(Instance.dashVfx, position);
-        Instance.PlayAt(Instance.dashSfx, position, Instance.sfxVolume);
+        Instance.PlayAt(Instance.dashSfx, position, Instance.sfxVolume * GameSettings.SfxVolume);
     }
 
     public static void SwingAt(Vector3 position)
     {
         if (Instance == null) return;
-        Instance.PlayAt(Instance.swingSfx, position, Instance.sfxVolume);
+        Instance.PlayAt(Instance.swingSfx, position, Instance.sfxVolume * GameSettings.SfxVolume);
     }
 
     public static void Elimination()
     {
         if (Instance == null) return;
-        Instance.PlayUi(Instance.eliminationVoice, Instance.voiceVolume);
-        Instance.PlayUi(Instance.uiPop, Instance.uiVolume);
+        Instance.PlayUi(Instance.eliminationVoice, Instance.voiceVolume * GameSettings.UiVolume);
+        Instance.PlayUi(Instance.uiPop, Instance.uiVolume * GameSettings.UiVolume);
     }
 
     public static void CountdownTick()
     {
         if (Instance == null) return;
-        Instance.PlayUi(Instance.countdownTick, Instance.uiVolume);
+        Instance.PlayUi(Instance.countdownTick, Instance.uiVolume * GameSettings.UiVolume);
     }
 
     public static void MatchStart()
     {
         if (Instance == null) return;
-        Instance.PlayUi(Instance.goVoice, Instance.voiceVolume);
+        Instance.PlayUi(Instance.goVoice, Instance.voiceVolume * GameSettings.UiVolume);
     }
 
     public static void SuddenDeath()
     {
         if (Instance == null) return;
-        Instance.PlayUi(Instance.suddenDeathVoice, Instance.voiceVolume);
+        Instance.PlayUi(Instance.suddenDeathVoice, Instance.voiceVolume * GameSettings.UiVolume);
     }
 
     public static void WinnerAt(Vector3 position)
     {
         if (Instance == null) return;
         Instance.SpawnVfx(Instance.winnerVfx, position);
-        Instance.PlayUi(Instance.winnerVoice, Instance.voiceVolume);
+        Instance.PlayUi(Instance.winnerVoice, Instance.voiceVolume * GameSettings.UiVolume);
     }
 
     // 코인 획득 지점 연출(모든 클라이언트에서 호출됨 — 획득자가 아니어도 반짝임/사운드가 보인다).
@@ -134,7 +134,7 @@ public class GameFeedback : MonoBehaviour
     {
         if (Instance == null) return;
         Instance.SpawnVfx(Instance.coinVfx, position);
-        Instance.PlayAt(Instance.coinSfx, position, Instance.sfxVolume);
+        Instance.PlayAt(Instance.coinSfx, position, Instance.sfxVolume * GameSettings.SfxVolume);
     }
 
     public static void PlatformFallAt(Vector3 position)

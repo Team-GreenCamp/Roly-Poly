@@ -31,6 +31,16 @@ public partial class PlayerController
     {
         moveInput = moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
 
+        // 토글 스프린트 입력은 프레임마다 한 번만 처리해 FixedUpdate 중복 토글을 막습니다.
+        if (sprintAction != null && GameSettings.UseToggleSprint && sprintAction.WasPressedThisFrame())
+        {
+            sprintToggled = !sprintToggled;
+        }
+        else if (!GameSettings.UseToggleSprint)
+        {
+            sprintToggled = false;
+        }
+
         if (jumpAction != null && jumpAction.WasPressedThisFrame())
         {
             // 입력은 가변 프레임(Update)에서 받고, 실제 점프는 FixedUpdate에서 처리하므로
@@ -224,11 +234,18 @@ public partial class PlayerController
 
     private bool CanSprint()
     {
-        if (sprintAction == null || !sprintAction.IsPressed())
+        if (sprintAction == null)
         {
             return false;
         }
 
-        return moveInput.sqrMagnitude > 0.01f;
+        // 설정에 따라 스프린트 키를 토글 또는 홀드 방식으로 처리합니다.
+        if (GameSettings.UseToggleSprint)
+        {
+            return sprintToggled && moveInput.sqrMagnitude > 0.01f;
+        }
+
+        sprintToggled = false;
+        return sprintAction.IsPressed() && moveInput.sqrMagnitude > 0.01f;
     }
 }

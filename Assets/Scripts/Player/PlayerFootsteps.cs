@@ -105,6 +105,7 @@ public class PlayerFootsteps : MonoBehaviour
         lastClipIndex = index;
 
         source.pitch = Random.Range(pitchRange.x, pitchRange.y);
-        source.PlayOneShot(footstepClips[index], volume);
+        // 설정 패널의 SFX 음량을 발소리에도 반영합니다.
+        source.PlayOneShot(footstepClips[index], volume * GameSettings.SfxVolume);
     }
 }

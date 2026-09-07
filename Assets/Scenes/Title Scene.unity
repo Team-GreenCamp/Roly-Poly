@@ -3085,6 +3085,7 @@ GameObject:
   - component: {fileID: 49421232}
   - component: {fileID: 49421231}
   - component: {fileID: 49421235}
+  - component: {fileID: 49421236}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -3195,6 +3196,18 @@ MonoBehaviour:
   playButton: {fileID: 0}
   uiDocument: {fileID: 0}
   toolkitPlayButtonName: play-button
+--- !u!114 &49421236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 49421230}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07237347ad8da5143bc520dd5333348e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleSettingsController
 --- !u!1 &50053037
 GameObject:
   m_ObjectHideFlags: 0
