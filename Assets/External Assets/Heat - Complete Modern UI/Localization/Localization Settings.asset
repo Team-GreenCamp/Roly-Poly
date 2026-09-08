@@ -18,15 +18,15 @@ MonoBehaviour:
     localizedName: English (US)
     localizationLanguage: {fileID: 11400000, guid: 7f0d34462af20e740a7fc45541f666a0, type: 2}
     isExpanded: 1
-  - languageID: kr
-    languageName: New Language
-    localizedName: English (US)
-    localizationLanguage: {fileID: 0}
+  - languageID: ko-KR
+    languageName: Korean
+    localizedName: "\uD55C\uAD6D\uC5B4"
+    localizationLanguage: {fileID: 11400000, guid: 3dbaf799a9b72ae469f053508662d5b6, type: 2}
     isExpanded: 1
   tables:
   - tableID: UI
     localizationTable: {fileID: 11400000, guid: c4d223e438e911a44aecec230da547ea, type: 2}
-    isExpanded: 0
-  defaultLanguageID: English (en-US)
-  defaultLanguageIndex: 0
-  enableExperimental: 0
+    isExpanded: 1
+  defaultLanguageID: Korean (ko-KR)
+  defaultLanguageIndex: 1
+  enableExperimental: 1

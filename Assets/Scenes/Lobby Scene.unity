@@ -2766,6 +2766,7 @@ GameObject:
   - component: {fileID: 78440078}
   - component: {fileID: 78440077}
   - component: {fileID: 78440076}
+  - component: {fileID: 78440081}
   m_Layer: 5
   m_Name: Next
   m_TagString: Untagged
@@ -2942,7 +2943,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -2974,6 +2975,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &78440081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 78440074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &80860958
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5356,6 +5384,7 @@ GameObject:
   - component: {fileID: 160465087}
   - component: {fileID: 160465086}
   - component: {fileID: 160465085}
+  - component: {fileID: 160465088}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -5500,6 +5529,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 160465083}
   m_CullTransparentMesh: 1
+--- !u!114 &160465088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 160465083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 160465086}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterLocked
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &161090084
 GameObject:
   m_ObjectHideFlags: 0
@@ -7662,6 +7718,22 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -15
       objectReference: {fileID: 0}
+    - target: {fileID: 516079670837412357, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079670837412357, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079671004164874, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079671004164874, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3606706253467721428, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -7893,6 +7965,14 @@ PrefabInstance:
     - target: {fileID: 4923016325065148420, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -25
+      objectReference: {fileID: 0}
+    - target: {fileID: 5488022310468659313, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: localizationKey
+      value: UIEnterCode
+      objectReference: {fileID: 0}
+    - target: {fileID: 5488022310468659313, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5616114101142225826, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_Name
@@ -9362,13 +9442,59 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8840705277017238940, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 233963134}
   m_SourcePrefab: {fileID: 100100000, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
 --- !u!224 &233963131 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2313894646070844027, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
   m_PrefabInstance: {fileID: 233963130}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &233963132 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8840705277017238940, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+  m_PrefabInstance: {fileID: 233963130}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &233963133 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6742762813340434333, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+  m_PrefabInstance: {fileID: 233963130}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233963132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &233963134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233963132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 233963133}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UICode
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &234168791
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12329,6 +12455,14 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 1222561498bd3c647be5e0fd4e79a206, type: 3}
+    - target: {fileID: 5043432399931371065, guid: f7bbdc6c4fa4c334e826cdc0c3974c3a, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5043432399931371065, guid: f7bbdc6c4fa4c334e826cdc0c3974c3a, type: 3}
+      propertyPath: localizationKey
+      value: ExitTitle
+      objectReference: {fileID: 0}
     - target: {fileID: 8199343292434142004, guid: f7bbdc6c4fa4c334e826cdc0c3974c3a, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -13598,6 +13732,7 @@ GameObject:
   - component: {fileID: 325451491}
   - component: {fileID: 325451490}
   - component: {fileID: 325451489}
+  - component: {fileID: 325451492}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -13742,6 +13877,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 325451487}
   m_CullTransparentMesh: 1
+--- !u!114 &325451492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 325451487}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 325451490}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterCompleted
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &331229075
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14357,6 +14519,7 @@ GameObject:
   - component: {fileID: 349392854}
   - component: {fileID: 349392853}
   - component: {fileID: 349392852}
+  - component: {fileID: 349392855}
   m_Layer: 5
   m_Name: Continue
   m_TagString: Untagged
@@ -14432,7 +14595,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -14610,6 +14773,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 349392847}
   m_CullTransparentMesh: 1
+--- !u!114 &349392855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349392847}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonConfirm
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &356134790
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16324,6 +16514,7 @@ GameObject:
   - component: {fileID: 401388150}
   - component: {fileID: 401388149}
   - component: {fileID: 401388148}
+  - component: {fileID: 401388151}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -16468,6 +16659,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 401388146}
   m_CullTransparentMesh: 1
+--- !u!114 &401388151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 401388146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 401388149}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterCompleted
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &404206083
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16975,6 +17193,7 @@ GameObject:
   - component: {fileID: 409114971}
   - component: {fileID: 409114970}
   - component: {fileID: 409114969}
+  - component: {fileID: 409114972}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -17119,6 +17338,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 409114967}
   m_CullTransparentMesh: 1
+--- !u!114 &409114972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 409114967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 409114970}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterUnlocked
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &412848844
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18241,6 +18487,14 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 1222561498bd3c647be5e0fd4e79a206, type: 3}
+    - target: {fileID: 5043432399931371065, guid: f7bbdc6c4fa4c334e826cdc0c3974c3a, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5043432399931371065, guid: f7bbdc6c4fa4c334e826cdc0c3974c3a, type: 3}
+      propertyPath: localizationKey
+      value: UIBack
+      objectReference: {fileID: 0}
     - target: {fileID: 8199343292434142004, guid: f7bbdc6c4fa4c334e826cdc0c3974c3a, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -21437,6 +21691,7 @@ GameObject:
   - component: {fileID: 526601169}
   - component: {fileID: 526601168}
   - component: {fileID: 526601167}
+  - component: {fileID: 526601170}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -21581,6 +21836,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 526601165}
   m_CullTransparentMesh: 1
+--- !u!114 &526601170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 526601165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 526601168}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterLocked
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &528809341
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23976,8 +24258,54 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8840705277017238940, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 601081682}
   m_SourcePrefab: {fileID: 100100000, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+--- !u!1 &601081680 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8840705277017238940, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+  m_PrefabInstance: {fileID: 601081679}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &601081681 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6742762813340434333, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+  m_PrefabInstance: {fileID: 601081679}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 601081680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &601081682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 601081680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 601081681}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIRoom
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &601089397
 GameObject:
   m_ObjectHideFlags: 0
@@ -24587,6 +24915,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5267937658025518218, guid: 41ab1084db0416847aa346afff005130, type: 3}
       propertyPath: m_ChildForceExpandWidth
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: localizationKey
+      value: UIStart
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: showOutputOnEditor
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5579613067281299118, guid: 41ab1084db0416847aa346afff005130, type: 3}
@@ -26216,6 +26556,22 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -15
       objectReference: {fileID: 0}
+    - target: {fileID: 516079670837412357, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079670837412357, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079671004164874, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079671004164874, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3606706253467721428, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -26447,6 +26803,14 @@ PrefabInstance:
     - target: {fileID: 4923016325065148420, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -25
+      objectReference: {fileID: 0}
+    - target: {fileID: 5488022310468659313, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: localizationKey
+      value: UIEnterCode
+      objectReference: {fileID: 0}
+    - target: {fileID: 5488022310468659313, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5616114101142225826, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_Name
@@ -30170,6 +30534,7 @@ GameObject:
   - component: {fileID: 719174025}
   - component: {fileID: 719174024}
   - component: {fileID: 719174023}
+  - component: {fileID: 719174026}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -30314,6 +30679,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 719174021}
   m_CullTransparentMesh: 1
+--- !u!114 &719174026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 719174021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 719174024}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterCompleted
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &724540828
 GameObject:
   m_ObjectHideFlags: 0
@@ -31429,6 +31821,7 @@ GameObject:
   - component: {fileID: 757326505}
   - component: {fileID: 757326504}
   - component: {fileID: 757326503}
+  - component: {fileID: 757326507}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -31587,6 +31980,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 757326501}
   m_CullTransparentMesh: 1
+--- !u!114 &757326507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 757326501}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 757326504}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: NextPageLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &760015772
 GameObject:
   m_ObjectHideFlags: 0
@@ -31743,6 +32163,58 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
+--- !u!1 &766183425
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 766183427}
+  - component: {fileID: 766183426}
+  m_Layer: 0
+  m_Name: Localization Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &766183426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 766183425}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8709296e96cff814f90f27b8b791504c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizationManager
+  UIManagerAsset: {fileID: 11400000, guid: 98972d851a944df4a9402eac62a896e7, type: 2}
+  languageSelector: {fileID: 0}
+  setLanguageOnAwake: 1
+  updateItemsOnSet: 1
+  saveLanguageChanges: 1
+  currentLanguage: 
+  currentLanguageAsset: {fileID: 0}
+  localizedItems: []
+--- !u!4 &766183427
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 766183425}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &767153157
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -32106,6 +32578,7 @@ GameObject:
   - component: {fileID: 781837783}
   - component: {fileID: 781837782}
   - component: {fileID: 781837781}
+  - component: {fileID: 781837784}
   m_Layer: 5
   m_Name: Continue
   m_TagString: Untagged
@@ -32181,7 +32654,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -32359,6 +32832,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 781837776}
   m_CullTransparentMesh: 1
+--- !u!114 &781837784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781837776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonConfirm
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &784088522
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33645,6 +34145,22 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -15
       objectReference: {fileID: 0}
+    - target: {fileID: 516079670837412357, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079670837412357, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079671004164874, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 516079671004164874, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3606706253467721428, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -33876,6 +34392,14 @@ PrefabInstance:
     - target: {fileID: 4923016325065148420, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -25
+      objectReference: {fileID: 0}
+    - target: {fileID: 5488022310468659313, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: localizationKey
+      value: UIEnterName
+      objectReference: {fileID: 0}
+    - target: {fileID: 5488022310468659313, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5616114101142225826, guid: 1d960b804bf3e344981931664d0e1b48, type: 3}
       propertyPath: m_Name
@@ -34805,6 +35329,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6511718018159716061, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
+      propertyPath: localizationKey
+      value: UILoading
+      objectReference: {fileID: 0}
+    - target: {fileID: 6511718018159716061, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8568698792823445072, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -34841,8 +35373,43 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 6333236120101238790, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8944716574115367247, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 821259708}
   m_SourcePrefab: {fileID: 100100000, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
+--- !u!1 &821259707 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8944716574115367247, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
+  m_PrefabInstance: {fileID: 821259706}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &821259708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821259707}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &821291072
 GameObject:
   m_ObjectHideFlags: 0
@@ -38298,6 +38865,7 @@ GameObject:
   - component: {fileID: 896135543}
   - component: {fileID: 896135542}
   - component: {fileID: 896135541}
+  - component: {fileID: 896135545}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -38456,6 +39024,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 896135539}
   m_CullTransparentMesh: 1
+--- !u!114 &896135545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896135539}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 896135542}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ExitTitle
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &896795835
 GameObject:
   m_ObjectHideFlags: 0
@@ -38470,6 +39065,7 @@ GameObject:
   - component: {fileID: 896795839}
   - component: {fileID: 896795838}
   - component: {fileID: 896795837}
+  - component: {fileID: 896795842}
   m_Layer: 5
   m_Name: Controls
   m_TagString: Untagged
@@ -38609,7 +39205,7 @@ MonoBehaviour:
   seperator: {fileID: 44327022}
   isInteractable: 1
   isSelected: 0
-  useLocalization: 0
+  useLocalization: 1
   useCustomText: 0
   useSeperator: 1
   useUINavigation: 0
@@ -38634,6 +39230,33 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   navbar: {fileID: 0}
+--- !u!114 &896795842
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896795835}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIJoinable
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &896977427
 GameObject:
   m_ObjectHideFlags: 0
@@ -38646,6 +39269,7 @@ GameObject:
   - component: {fileID: 896977431}
   - component: {fileID: 896977430}
   - component: {fileID: 896977429}
+  - component: {fileID: 896977432}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -38790,6 +39414,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 896977427}
   m_CullTransparentMesh: 1
+--- !u!114 &896977432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896977427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 896977430}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterUnlocked
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &897521903
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -39961,6 +40612,7 @@ GameObject:
   - component: {fileID: 924122211}
   - component: {fileID: 924122210}
   - component: {fileID: 924122209}
+  - component: {fileID: 924122212}
   m_Layer: 5
   m_Name: Play
   m_TagString: Untagged
@@ -40036,7 +40688,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -40202,6 +40854,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 924122204}
   m_CullTransparentMesh: 1
+--- !u!114 &924122212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 924122204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonConfirm
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &924660424
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -40330,6 +41009,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 434066333}
     m_Modifications:
+    - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: localizationKey
+      value: UIJoin
+      objectReference: {fileID: 0}
+    - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2305471245500124126, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: m_Name
       value: JoinButton
@@ -40529,6 +41216,14 @@ PrefabInstance:
     - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: checkForDoubleClick
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: titleLocalizationKey
+      value: UIJoin
+      objectReference: {fileID: 0}
+    - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: descriptionLocalizationKey
+      value: UIJoinDesc
       objectReference: {fileID: 0}
     - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: onClick.m_PersistentCalls.m_Calls.Array.size
@@ -45266,6 +45961,7 @@ GameObject:
   - component: {fileID: 1043080029}
   - component: {fileID: 1043080027}
   - component: {fileID: 1043080028}
+  - component: {fileID: 1043080032}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -45424,6 +46120,33 @@ RectTransform:
   m_AnchoredPosition: {x: 104.775, y: -15}
   m_SizeDelta: {x: 129.91, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1043080032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1043080026}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1043080027}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: PrevPageLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1046627594
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -46726,6 +47449,7 @@ GameObject:
   - component: {fileID: 1081312903}
   - component: {fileID: 1081312902}
   - component: {fileID: 1081312901}
+  - component: {fileID: 1081312904}
   m_Layer: 5
   m_Name: Play
   m_TagString: Untagged
@@ -46801,7 +47525,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -46967,6 +47691,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1081312896}
   m_CullTransparentMesh: 1
+--- !u!114 &1081312904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081312896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonConfirm
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1083412681
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -49456,6 +50207,7 @@ GameObject:
   - component: {fileID: 1158039295}
   - component: {fileID: 1158039294}
   - component: {fileID: 1158039293}
+  - component: {fileID: 1158039296}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -49600,6 +50352,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1158039291}
   m_CullTransparentMesh: 1
+--- !u!114 &1158039296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1158039291}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1158039294}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterUnlocked
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1158648405
 GameObject:
   m_ObjectHideFlags: 0
@@ -52090,6 +52869,7 @@ GameObject:
   - component: {fileID: 1232767410}
   - component: {fileID: 1232767409}
   - component: {fileID: 1232767408}
+  - component: {fileID: 1232767413}
   m_Layer: 5
   m_Name: General
   m_TagString: Untagged
@@ -52229,7 +53009,7 @@ MonoBehaviour:
   seperator: {fileID: 415801323}
   isInteractable: 1
   isSelected: 1
-  useLocalization: 0
+  useLocalization: 1
   useCustomText: 0
   useSeperator: 1
   useUINavigation: 0
@@ -52254,6 +53034,33 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   navbar: {fileID: 0}
+--- !u!114 &1232767413
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1232767406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonAll
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1242429367
 GameObject:
   m_ObjectHideFlags: 0
@@ -54186,6 +54993,7 @@ GameObject:
   - component: {fileID: 1299996262}
   - component: {fileID: 1299996261}
   - component: {fileID: 1299996260}
+  - component: {fileID: 1299996263}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -54330,6 +55138,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1299996258}
   m_CullTransparentMesh: 1
+--- !u!114 &1299996263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299996258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1299996261}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterUnlocked
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1302515368
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -55587,6 +56422,7 @@ GameObject:
   - component: {fileID: 1341337247}
   - component: {fileID: 1341337246}
   - component: {fileID: 1341337245}
+  - component: {fileID: 1341337248}
   m_Layer: 5
   m_Name: Continue
   m_TagString: Untagged
@@ -55662,7 +56498,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -55840,6 +56676,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1341337240}
   m_CullTransparentMesh: 1
+--- !u!114 &1341337248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1341337240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonConfirm
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1343526889
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -59223,6 +60086,7 @@ GameObject:
   - component: {fileID: 1433228707}
   - component: {fileID: 1433228706}
   - component: {fileID: 1433228705}
+  - component: {fileID: 1433228710}
   m_Layer: 5
   m_Name: Audio
   m_TagString: Untagged
@@ -59362,7 +60226,7 @@ MonoBehaviour:
   seperator: {fileID: 455734402}
   isInteractable: 1
   isSelected: 0
-  useLocalization: 0
+  useLocalization: 1
   useCustomText: 0
   useSeperator: 1
   useUINavigation: 0
@@ -59387,6 +60251,33 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   navbar: {fileID: 0}
+--- !u!114 &1433228710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1433228703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIInGame
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1436329355
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -59849,6 +60740,7 @@ GameObject:
   - component: {fileID: 1463560553}
   - component: {fileID: 1463560552}
   - component: {fileID: 1463560551}
+  - component: {fileID: 1463560556}
   m_Layer: 5
   m_Name: Previous
   m_TagString: Untagged
@@ -60025,7 +60917,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -60057,6 +60949,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &1463560556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1463560549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1464529762
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -60144,6 +61063,7 @@ GameObject:
   - component: {fileID: 1467411527}
   - component: {fileID: 1467411526}
   - component: {fileID: 1467411525}
+  - component: {fileID: 1467411529}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -60302,6 +61222,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1467411523}
   m_CullTransparentMesh: 1
+--- !u!114 &1467411529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1467411523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1467411526}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ExitTitle
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1470154649
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -60700,6 +61647,7 @@ GameObject:
   - component: {fileID: 1474296536}
   - component: {fileID: 1474296535}
   - component: {fileID: 1474296534}
+  - component: {fileID: 1474296537}
   m_Layer: 5
   m_Name: Play
   m_TagString: Untagged
@@ -60775,7 +61723,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -60941,6 +61889,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1474296529}
   m_CullTransparentMesh: 1
+--- !u!114 &1474296537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1474296529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonConfirm
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1488756859
 GameObject:
   m_ObjectHideFlags: 0
@@ -61009,6 +61984,14 @@ PrefabInstance:
     - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: objectType
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: localizationKey
+      value: UIHost
+      objectReference: {fileID: 0}
+    - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: onLanguageChanged.m_PersistentCalls.m_Calls.Array.size
@@ -61227,8 +62210,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: titleLocalizationKey
+      value: UIHost
+      objectReference: {fileID: 0}
+    - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: descriptionLocalizationKey
-      value: 
+      value: UIHostDesc
       objectReference: {fileID: 0}
     - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: onClick.m_PersistentCalls.m_Calls.Array.size
@@ -64213,6 +65200,7 @@ GameObject:
   - component: {fileID: 1564196947}
   - component: {fileID: 1564196946}
   - component: {fileID: 1564196945}
+  - component: {fileID: 1564196948}
   m_Layer: 5
   m_Name: Play
   m_TagString: Untagged
@@ -64288,7 +65276,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -64454,6 +65442,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1564196940}
   m_CullTransparentMesh: 1
+--- !u!114 &1564196948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1564196940}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonConfirm
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1564270174
 GameObject:
   m_ObjectHideFlags: 0
@@ -65354,6 +66369,7 @@ GameObject:
   - component: {fileID: 1600949313}
   - component: {fileID: 1600949312}
   - component: {fileID: 1600949311}
+  - component: {fileID: 1600949316}
   m_Layer: 5
   m_Name: Controller Helper
   m_TagString: Untagged
@@ -65488,7 +66504,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 0
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -65542,6 +66558,33 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0.5}
+--- !u!114 &1600949316
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1600949310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1602406863
 GameObject:
   m_ObjectHideFlags: 0
@@ -67710,6 +68753,7 @@ GameObject:
   - component: {fileID: 1695246447}
   - component: {fileID: 1695246446}
   - component: {fileID: 1695246445}
+  - component: {fileID: 1695246448}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -67854,6 +68898,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1695246443}
   m_CullTransparentMesh: 1
+--- !u!114 &1695246448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1695246443}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1695246446}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterCompleted
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1698644968
 GameObject:
   m_ObjectHideFlags: 0
@@ -68280,13 +69351,27 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8840705277017238940, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1710011853}
   m_SourcePrefab: {fileID: 100100000, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
 --- !u!224 &1710011849 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2313894646070844027, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
   m_PrefabInstance: {fileID: 1710011848}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1710011850 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6742762813340434333, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+  m_PrefabInstance: {fileID: 1710011848}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1710011852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &1710011851 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2313894646070844026, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
@@ -68298,6 +69383,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1710011852 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8840705277017238940, guid: 14e4345db32c427428b642f3627d07f3, type: 3}
+  m_PrefabInstance: {fileID: 1710011848}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1710011853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1710011852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1710011850}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIName
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1710228186
 GameObject:
   m_ObjectHideFlags: 0
@@ -70404,6 +71521,7 @@ GameObject:
   - component: {fileID: 1751593850}
   - component: {fileID: 1751593852}
   - component: {fileID: 1751593851}
+  - component: {fileID: 1751593853}
   m_Layer: 5
   m_Name: Chapters Panel
   m_TagString: Untagged
@@ -70451,8 +71569,8 @@ MonoBehaviour:
     description: "\uCD5C\uD6C4 1\uC778 \uC0DD\uC874 \xB7 \uC2DC\uAC04\uC774 \uC9C0\uB098\uBA74
       \uBC14\uB2E5\uC774 \uBB34\uB108\uC9C4\uB2E4"
     defaultState: 1
-    titleKey: 
-    descriptionKey: 
+    titleKey: MapSurvival
+    descriptionKey: MapSurvivalDesc
     onContinue:
       m_PersistentCalls:
         m_Calls: []
@@ -70468,8 +71586,8 @@ MonoBehaviour:
     description: "\uBC00\uACE0 \uB358\uC838\uC11C \uB9C1 \uBC16\uC73C\uB85C! \uB9C1\uC740
       \uC810\uC810 \uC881\uC544\uC9C4\uB2E4"
     defaultState: 1
-    titleKey: 
-    descriptionKey: 
+    titleKey: MapSumo
+    descriptionKey: MapSumoDesc
     onContinue:
       m_PersistentCalls:
         m_Calls: []
@@ -70485,8 +71603,8 @@ MonoBehaviour:
     description: "\uCE35\uCE35\uC774 \uBB34\uB108\uC9C0\uB294 \uBC14\uB2E5\uC5D0\uC11C
       \uB05D\uAE4C\uC9C0 \uBC84\uD2F0\uAE30"
     defaultState: 1
-    titleKey: 
-    descriptionKey: 
+    titleKey: MapFalling
+    descriptionKey: MapFallingDesc
     onContinue:
       m_PersistentCalls:
         m_Calls: []
@@ -70497,7 +71615,7 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   currentChapterIndex: 0
-  chapterPreset: {fileID: 6494165352434410304, guid: 55e125313b5307545b68991fd6372f4d, type: 3}
+  chapterPreset: {fileID: 6494165352434410304, guid: afa700b54929f434da161f7fd118cbfa, type: 3}
   chapterParent: {fileID: 1619098182}
   previousButton: {fileID: 1463560555}
   nextButton: {fileID: 78440080}
@@ -70505,7 +71623,7 @@ MonoBehaviour:
   showLockedChapters: 1
   setPanelAuto: 0
   checkChapterData: 1
-  useLocalization: 0
+  useLocalization: 1
   barCurveSpeed: 2
   barCurve:
     serializedVersion: 2
@@ -70615,6 +71733,33 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1751593853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1751593848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: MapSurvival
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1754337655
 GameObject:
   m_ObjectHideFlags: 0
@@ -72707,6 +73852,7 @@ GameObject:
   - component: {fileID: 1826236671}
   - component: {fileID: 1826236670}
   - component: {fileID: 1826236669}
+  - component: {fileID: 1826236672}
   m_Layer: 5
   m_Name: Continue
   m_TagString: Untagged
@@ -72782,7 +73928,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -72960,6 +74106,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1826236664}
   m_CullTransparentMesh: 1
+--- !u!114 &1826236672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1826236664}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ButtonConfirm
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1826737532
 GameObject:
   m_ObjectHideFlags: 0
@@ -73928,6 +75101,7 @@ GameObject:
   - component: {fileID: 1842299445}
   - component: {fileID: 1842299444}
   - component: {fileID: 1842299443}
+  - component: {fileID: 1842299446}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -74072,6 +75246,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1842299441}
   m_CullTransparentMesh: 1
+--- !u!114 &1842299446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1842299441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1842299444}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterLocked
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1842301242
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -74146,6 +75347,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 434066333}
     m_Modifications:
+    - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: localizationKey
+      value: UIRooms
+      objectReference: {fileID: 0}
+    - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2305471245500124126, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: m_Name
       value: Room List
@@ -74341,6 +75550,14 @@ PrefabInstance:
     - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: checkForDoubleClick
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: titleLocalizationKey
+      value: UIRooms
+      objectReference: {fileID: 0}
+    - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: descriptionLocalizationKey
+      value: UIRoomsDesc
       objectReference: {fileID: 0}
     - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: onClick.m_PersistentCalls.m_Calls.Array.size
@@ -75485,6 +76702,7 @@ GameObject:
   - component: {fileID: 1869491247}
   - component: {fileID: 1869491245}
   - component: {fileID: 1869491246}
+  - component: {fileID: 1869491250}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -75643,6 +76861,33 @@ RectTransform:
   m_AnchoredPosition: {x: 97.875, y: -15}
   m_SizeDelta: {x: 118.25, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1869491250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1869491244}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1869491245}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: NextChapterLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1873152314
 GameObject:
   m_ObjectHideFlags: 0
@@ -77970,6 +79215,7 @@ GameObject:
   - component: {fileID: 1938273826}
   - component: {fileID: 1938273825}
   - component: {fileID: 1938273824}
+  - component: {fileID: 1938273827}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -78114,6 +79360,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1938273822}
   m_CullTransparentMesh: 1
+--- !u!114 &1938273827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1938273822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1938273825}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ChapterLocked
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1941553082
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -79085,6 +80358,7 @@ GameObject:
   - component: {fileID: 1968356602}
   - component: {fileID: 1968356601}
   - component: {fileID: 1968356600}
+  - component: {fileID: 1968356604}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -79243,6 +80517,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1968356598}
   m_CullTransparentMesh: 1
+--- !u!114 &1968356604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1968356598}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1968356601}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIRefresh
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1969608111
 GameObject:
   m_ObjectHideFlags: 0
@@ -81198,6 +82499,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1280986892}
     m_Modifications:
+    - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: localizationKey
+      value: UIMap
+      objectReference: {fileID: 0}
+    - target: {fileID: -9107937329397581057, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2305471245500124126, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: m_Name
       value: Map Button
@@ -81373,6 +82682,14 @@ PrefabInstance:
     - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: buttonDescription
       value: map name
+      objectReference: {fileID: 0}
+    - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: titleLocalizationKey
+      value: UIMap
+      objectReference: {fileID: 0}
+    - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
+      propertyPath: descriptionLocalizationKey
+      value: UIMapName
       objectReference: {fileID: 0}
     - target: {fileID: 4713780399716241320, guid: c0cf10bd007ca3c41972f9b6229563d1, type: 3}
       propertyPath: onClick.m_PersistentCalls.m_Calls.Array.size
@@ -82460,6 +83777,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5267937658025518218, guid: 41ab1084db0416847aa346afff005130, type: 3}
       propertyPath: m_ChildForceExpandWidth
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: localizationKey
+      value: ReadyLabel
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: showOutputOnEditor
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5579613067281299118, guid: 41ab1084db0416847aa346afff005130, type: 3}
@@ -83571,6 +84900,7 @@ GameObject:
   - component: {fileID: 2086454103}
   - component: {fileID: 2086454101}
   - component: {fileID: 2086454102}
+  - component: {fileID: 2086454106}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -83729,6 +85059,33 @@ RectTransform:
   m_AnchoredPosition: {x: 117.38, y: -15}
   m_SizeDelta: {x: 155.12, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2086454106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2086454100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 2086454101}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: PrevChapterLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &2089731266
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -85403,3 +86760,4 @@ SceneRoots:
   - {fileID: 1837775871}
   - {fileID: 263614402}
   - {fileID: 1097451497}
+  - {fileID: 766183427}

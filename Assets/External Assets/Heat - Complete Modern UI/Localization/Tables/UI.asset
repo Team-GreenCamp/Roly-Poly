@@ -172,7 +172,6 @@ MonoBehaviour:
   - key: ShopTitle
   - key: ContinueTitle
   - key: ContinueDescription
-  - key: NewGameTitle
   - key: NewGameDescription
   - key: LoadGameTitle
   - key: LoadGameDescription
@@ -189,3 +188,84 @@ MonoBehaviour:
   - key: ClothesTitle
   - key: VehiclesTitle
   - key: LoadTitle
+  - key: HudCollapse
+  - key: HudCollapseTimer
+  - key: HudKill
+  - key: HudFall
+  - key: HudAlive
+  - key: HudWaiting
+  - key: HudGo
+  - key: HudEliminated
+  - key: HudSpectating
+  - key: HudYouWin
+  - key: HudPlayerWins
+  - key: HudWins
+  - key: HudWinner
+  - key: ClearTitle
+  - key: ReturningLobby
+  - key: LobbyCreating
+  - key: LobbyCreateFailed
+  - key: LobbyEnterCode
+  - key: LobbyChecking
+  - key: LobbyJoiningCode
+  - key: LobbyJoining
+  - key: LobbyDirectJoin
+  - key: LobbyCodeFailed
+  - key: LobbyCheckCode
+  - key: LobbyRetry
+  - key: LobbyUnsupported
+  - key: LobbyNetworkFailed
+  - key: LobbyJoinFailed
+  - key: LobbyLoading
+  - key: LobbyNoRooms
+  - key: LobbyRoomCount
+  - key: LobbyLoadFailed
+  - key: RoomUnnamed
+  - key: MapUnspecified
+  - key: RoomOpen
+  - key: RoomInGame
+  - key: RoomClosed
+  - key: RoomUnknown
+  - key: MapSurvival
+  - key: MapSumo
+  - key: MapFalling
+  - key: UIRefresh
+  - key: UIJoin
+  - key: UIName
+  - key: UIAlive
+  - key: UITotal
+  - key: UICoin
+  - key: UIWin
+  - key: UILose
+  - key: UIEliminated
+  - key: UIHud
+  - key: UIJoinable
+  - key: UIInGame
+  - key: UIFiveSeconds
+  - key: UIButton
+  - key: UIKey
+  - key: UISaveSlot
+  - key: UISampleItem
+  - key: UIHost
+  - key: UIHostDesc
+  - key: UIJoinDesc
+  - key: UIRoomsDesc
+  - key: UIMap
+  - key: UIMapName
+  - key: UIRooms
+  - key: UIStart
+  - key: UIBack
+  - key: UIRoom
+  - key: UICode
+  - key: UIEnterCode
+  - key: UIEnterName
+  - key: UILoading
+  - key: UIPlaceholder
+  - key: UIQuest
+  - key: UITitle
+  - key: UIDescription
+  - key: UIChapterTitle
+  - key: MapSurvivalDesc
+  - key: MapSumoDesc
+  - key: MapFallingDesc
+  - key: Key #174

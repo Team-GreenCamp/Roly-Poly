@@ -922,7 +922,7 @@ public class LobbyUIController : MonoBehaviour
         }
 
         EnsureDefaultMapSelection();
-        ShowLoading("방을 만드는 중입니다...");
+        ShowLoading("LobbyCreating");
 
         try
         {
@@ -945,7 +945,7 @@ public class LobbyUIController : MonoBehaviour
         catch (System.Exception exception)
         {
             // async void라 예외가 새어나가면 추적이 어려우므로 여기서 잡아 사용자에게 표시합니다.
-            SetRoomListStatus($"방 생성 실패: {exception.Message}");
+            SetRoomListStatus("LobbyCreateFailed", exception.Message);
             Debug.LogException(exception);
         }
         finally
@@ -971,7 +971,7 @@ public class LobbyUIController : MonoBehaviour
         {
             // 참가 코드를 입력하지 않았으면 접속을 시도하지 않습니다.
             // 확인 버튼이 무조건 실행하는 로딩 팝업/패널 닫힘을 한 프레임 뒤에 되돌려 무한 로딩을 막습니다.
-            SetRoomListStatus("입장할 룸 코드를 입력해주세요.");
+            SetRoomListStatus("LobbyEnterCode");
             StartCoroutine(CancelJoinTransitionNextFrame());
             return;
         }
@@ -981,7 +981,7 @@ public class LobbyUIController : MonoBehaviour
         {
             isJoiningRoom = true;
             RefreshUI();
-            ShowLoading("방 정보를 확인하는 중입니다...");
+            ShowLoading("LobbyChecking");
 
             RoomApiClient.RoomDto room = null;
             try
@@ -996,12 +996,12 @@ public class LobbyUIController : MonoBehaviour
 
             if (room != null)
             {
-                joinSucceeded = await JoinBackendRoomAsync(room, "룸 코드로 방에 접속하는 중입니다...");
+                joinSucceeded = await JoinBackendRoomAsync(room, "LobbyJoiningCode");
             }
             else
             {
-                UpdateLoadingMessage("방에 접속하는 중입니다...");
-                SetRoomListStatus("일치하는 공개 방이 없어 직접 접속을 시도합니다...");
+                UpdateLoadingMessage("LobbyJoining");
+                SetRoomListStatus("LobbyDirectJoin");
 
                 if (useRelayForRoomList)
                 {
@@ -1024,7 +1024,7 @@ public class LobbyUIController : MonoBehaviour
         catch (System.Exception exception)
         {
             joinSucceeded = false;
-            SetRoomListStatus($"룸 코드 입장 실패: {exception.Message}");
+            SetRoomListStatus("LobbyCodeFailed", exception.Message);
         }
         finally
         {
@@ -1040,7 +1040,7 @@ public class LobbyUIController : MonoBehaviour
                 }
 
                 ReopenJoinPanel();
-                SetRoomListStatus("방에 접속하지 못했습니다. 참가 코드를 다시 확인해주세요.");
+                SetRoomListStatus("LobbyCheckCode");
             }
 
             RefreshUI();
@@ -1064,13 +1064,13 @@ public class LobbyUIController : MonoBehaviour
             return;
         }
 
-        bool joined = await JoinBackendRoomAsync(room, "방에 접속하는 중입니다...");
+        bool joined = await JoinBackendRoomAsync(room, "LobbyJoining");
 
         if (!joined)
         {
             // RoomListItemView가 접속 전에 방 목록 패널을 닫으므로, 실패 시 다시 열어 빈 화면에 갇히지 않게 한다.
             ReopenJoinPanel();
-            SetRoomListStatus("방에 접속하지 못했습니다. 다시 시도해주세요.");
+            SetRoomListStatus("LobbyRetry");
         }
     }
 
@@ -1099,13 +1099,13 @@ public class LobbyUIController : MonoBehaviour
             }
             else
             {
-                SetRoomListStatus($"지원하지 않는 접속 방식입니다: {room.connectionType}");
+                SetRoomListStatus("LobbyUnsupported", room.connectionType);
                 return false;
             }
 
             if (!await WaitForClientConnectionAsync())
             {
-                SetRoomListStatus("네트워크 방 접속에 실패했습니다.");
+                SetRoomListStatus("LobbyNetworkFailed");
                 if (sessionManager.IsOnline && !sessionManager.IsHost)
                 {
                     sessionManager.Shutdown();
@@ -1126,7 +1126,7 @@ public class LobbyUIController : MonoBehaviour
         catch (System.Exception exception)
         {
             joined = false;
-            SetRoomListStatus($"방 입장 실패: {exception.Message}");
+            SetRoomListStatus("LobbyJoinFailed", exception.Message);
 
             if (sessionManager.IsOnline && !sessionManager.IsHost)
             {
@@ -1431,20 +1431,20 @@ public class LobbyUIController : MonoBehaviour
         {
             if (showLoading)
             {
-                ShowLoading("방 목록을 불러오는 중입니다...");
+                ShowLoading("LobbyLoading");
             }
 
-            SetRoomListStatus("방 목록을 불러오는 중입니다...");
+            SetRoomListStatus("LobbyLoading");
             RoomApiClient.RoomDto[] rooms = await GetRoomApiClient().GetRoomsAsync();
             SyncBackendPlayerCount(rooms);
             RebuildRoomList(rooms);
-            SetRoomListStatus(rooms.Length == 0 ? "표시할 공개 방이 없습니다." : $"공개 방 {rooms.Length}개");
+            SetRoomListStatus(rooms.Length == 0 ? "LobbyNoRooms" : "LobbyRoomCount", rooms.Length);
         }
         catch (System.Exception exception)
         {
             RebuildRoomList(System.Array.Empty<RoomApiClient.RoomDto>());
             Debug.LogWarning($"방 목록 로드 실패: {exception.Message}");
-            SetRoomListStatus($"방 목록 로드 실패: {exception.Message}");
+            SetRoomListStatus("LobbyLoadFailed", exception.Message);
         }
         finally
         {
@@ -1587,13 +1587,13 @@ public class LobbyUIController : MonoBehaviour
         return lobbyButtonPanelRoot;
     }
 
-    private void ShowLoading(string message)
+    private void ShowLoading(string key, params object[] arguments)
     {
         loadingRequestCount++;
 
         if (loadingMessageText != null)
         {
-            loadingMessageText.text = message;
+            GameLocalization.Set(loadingMessageText, key, arguments);
         }
 
         if (loadingRoot == null)
@@ -1646,12 +1646,12 @@ public class LobbyUIController : MonoBehaviour
         return loadingRoot != null && loadingRoot.GetComponent("UIPopup") != null;
     }
 
-    private void UpdateLoadingMessage(string message)
+    private void UpdateLoadingMessage(string key, params object[] arguments)
     {
         // 로딩 요청 카운트를 늘리지 않고 메시지만 갱신합니다.
         if (loadingMessageText != null)
         {
-            loadingMessageText.text = message;
+            GameLocalization.Set(loadingMessageText, key, arguments);
         }
     }
 
@@ -1774,12 +1774,12 @@ public class LobbyUIController : MonoBehaviour
         TMP_Text[] texts = row.GetComponentsInChildren<TMP_Text>(true);
         if (texts.Length > 0)
         {
-            texts[0].text = string.IsNullOrWhiteSpace(room.name) ? "이름 없는 방" : room.name;
+            texts[0].text = string.IsNullOrWhiteSpace(room.name) ? GameLocalization.Get("RoomUnnamed") : room.name;
         }
 
         if (texts.Length > 1)
         {
-            string mapText = string.IsNullOrWhiteSpace(room.mapId) ? "맵 미지정" : room.mapId;
+            string mapText = GameLocalization.MapName(room.mapId);
             texts[1].text = $"{room.currentPlayers} / {room.maxPlayers}  {GetRoomStatusText(room.status)}  {mapText}";
         }
 
@@ -1866,12 +1866,13 @@ public class LobbyUIController : MonoBehaviour
         generatedRoomRows.Clear();
     }
 
-    private void SetRoomListStatus(string message)
+    private void SetRoomListStatus(string key, params object[] arguments)
     {
+        string message = GameLocalization.Get(key, arguments);
         // 라벨이 연결돼 있으면 화면에도 표시(빌드에서 사용자 피드백). 없으면 기존처럼 콘솔에만 남긴다.
         if (roomListStatusLabel != null)
         {
-            roomListStatusLabel.text = message ?? string.Empty;
+            GameLocalization.Set(roomListStatusLabel, key, arguments);
         }
 
         if (!string.IsNullOrWhiteSpace(message))

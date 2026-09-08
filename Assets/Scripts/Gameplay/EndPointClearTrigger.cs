@@ -13,8 +13,9 @@ public class EndPointClearTrigger : NetworkBehaviour
     [Header("Clear Flow")]
     [SerializeField] private float returnToLobbyDelay = 4f;
     [SerializeField] private string fallbackLobbySceneName = "Lobby Scene";
-    [SerializeField] private string clearMessage = "CLEAR";
-    [SerializeField] private string returningMessage = "Returning to lobby...";
+    // 클리어 안내는 HEAT UI 테이블의 키로 지정합니다.
+    [SerializeField] private string clearMessageKey = "ClearTitle";
+    [SerializeField] private string returningMessageKey = "ReturningLobby";
 
     [Header("Optional UI")]
     [SerializeField] private GameObject clearPanel;
@@ -233,12 +234,12 @@ public class EndPointClearTrigger : NetworkBehaviour
 
         if (clearMessageText != null)
         {
-            clearMessageText.text = clearMessage;
+            GameLocalization.Set(clearMessageText, clearMessageKey);
         }
 
         if (returningMessageText != null)
         {
-            returningMessageText.text = returningMessage;
+            GameLocalization.Set(returningMessageText, returningMessageKey);
         }
     }
 
@@ -271,13 +272,13 @@ public class EndPointClearTrigger : NetworkBehaviour
         Image background = runtimeClearPanel.AddComponent<Image>();
         background.color = new Color(0f, 0f, 0f, 0.65f);
 
-        clearMessageText = CreateRuntimeText("Clear Message", runtimeClearPanel.transform, clearMessage, 54, new Vector2(0f, 36f));
-        returningMessageText = CreateRuntimeText("Returning Message", runtimeClearPanel.transform, returningMessage, 24, new Vector2(0f, -32f));
+        clearMessageText = CreateRuntimeText("Clear Message", runtimeClearPanel.transform, clearMessageKey, 54, new Vector2(0f, 36f));
+        returningMessageText = CreateRuntimeText("Returning Message", runtimeClearPanel.transform, returningMessageKey, 24, new Vector2(0f, -32f));
 
         return runtimeClearPanel;
     }
 
-    private TMP_Text CreateRuntimeText(string objectName, Transform parent, string message, float fontSize, Vector2 anchoredPosition)
+    private TMP_Text CreateRuntimeText(string objectName, Transform parent, string messageKey, float fontSize, Vector2 anchoredPosition)
     {
         GameObject textObject = new GameObject(objectName);
         textObject.transform.SetParent(parent, false);
@@ -289,7 +290,7 @@ public class EndPointClearTrigger : NetworkBehaviour
         textRect.anchoredPosition = anchoredPosition;
 
         TextMeshProUGUI text = textObject.AddComponent<TextMeshProUGUI>();
-        text.text = message;
+        GameLocalization.Set(text, messageKey);
         text.fontSize = fontSize;
         text.alignment = TextAlignmentOptions.Center;
         text.color = Color.white;

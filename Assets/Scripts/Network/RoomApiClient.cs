@@ -143,10 +143,10 @@ public class RoomApiClient
     {
         return status switch
         {
-            "open" => "대기중",
-            "in_game" => "진행중",
-            "closed" => "닫힘",
-            _ => string.IsNullOrWhiteSpace(status) ? "알 수 없음" : status
+            "open" => GameLocalization.Get("RoomOpen"),
+            "in_game" => GameLocalization.Get("RoomInGame"),
+            "closed" => GameLocalization.Get("RoomClosed"),
+            _ => string.IsNullOrWhiteSpace(status) ? GameLocalization.Get("RoomUnknown") : status
         };
     }
 

@@ -49,10 +49,7 @@ public sealed class TitleSettingsController : MonoBehaviour
             switch (selector.transform.parent.name)
             {
                 case "Language":
-                    // 현재 프로젝트에 포함된 번역 데이터는 영어 하나뿐이라 샘플 선택지를 제거합니다.
-                    selector.items.Clear();
-                    selector.CreateNewItem("English");
-                    selector.defaultIndex = 0;
+                    // 언어 목록과 선택 복원은 씬의 LocalizationManager가 처리합니다.
                     selector.saveSelected = false;
                     break;
                 case "UI Scale":

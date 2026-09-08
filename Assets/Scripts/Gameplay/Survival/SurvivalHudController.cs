@@ -127,7 +127,7 @@ public class SurvivalHudController : MonoBehaviour
                 GameFeedback.SuddenDeath();
             }
 
-            suddenDeathText.text = "⚠ 바닥 붕괴 중! 중앙 안전구역으로!";
+            GameLocalization.Set(suddenDeathText, "HudCollapse");
             SetActiveSafe(SuddenDeathRoot, true);
             return;
         }
@@ -135,7 +135,7 @@ public class SurvivalHudController : MonoBehaviour
         double remaining = gameManager.SuddenDeathRemaining;
         if (remaining <= suddenDeathWarnSeconds)
         {
-            suddenDeathText.text = $"⚠ {Mathf.CeilToInt((float)remaining)}초 후 외곽부터 붕괴 시작!";
+            GameLocalization.Set(suddenDeathText, "HudCollapseTimer", Mathf.CeilToInt((float)remaining));
             SetActiveSafe(SuddenDeathRoot, true);
         }
         else
@@ -160,10 +160,10 @@ public class SurvivalHudController : MonoBehaviour
             return;
         }
 
-        string victimName = $"Player {victimClientId + 1}";
-        killFeedText.text = killerClientId != ulong.MaxValue
-            ? $"Player {killerClientId + 1} ▶ {victimName} 떨어뜨림!"
-            : $"{victimName} 추락...";
+        if (killerClientId != ulong.MaxValue)
+            GameLocalization.Set(killFeedText, "HudKill", killerClientId + 1, victimClientId + 1);
+        else
+            GameLocalization.Set(killFeedText, "HudFall", victimClientId + 1);
 
         SetActiveSafe(KillFeedRoot, true);
         killFeedHideAt = Time.time + Mathf.Max(1f, killFeedDuration);
@@ -225,9 +225,9 @@ public class SurvivalHudController : MonoBehaviour
             int total = gameManager.TotalPlayerCount;
 
             // 연결된 텍스트만 갱신 — 합침형(구형 씬)과 분리형(Alive/Total 나뉜 패널) 모두 지원.
-            if (aliveCountText != null)
+            if (aliveCountText != null && aliveCountText != aliveNumberText)
             {
-                aliveCountText.text = $"생존 {alive}/{total}";
+                GameLocalization.Set(aliveCountText, "HudAlive", alive, total);
             }
             if (aliveNumberText != null)
             {
@@ -265,7 +265,7 @@ public class SurvivalHudController : MonoBehaviour
             if (countdownText != null)
             {
                 countdownText.fontSize = countdownBaseFontSize > 0f ? countdownBaseFontSize * 0.4f : 48f;
-                countdownText.text = $"플레이어 대기 중 {gameManager.WaitingConnected}/{gameManager.WaitingRequired}";
+                countdownText.text = GameLocalization.Get("HudWaiting", gameManager.WaitingConnected, gameManager.WaitingRequired);
             }
 
             hideGoAtTime = -1f;
@@ -307,11 +307,13 @@ public class SurvivalHudController : MonoBehaviour
                 hideGoAtTime = Time.time + Mathf.Max(0.2f, goDisplaySeconds);
                 if (countdownText != null)
                 {
-                    countdownText.text = "GO!";
+                    countdownText.text = GameLocalization.Get("HudGo");
                 }
                 GameFeedback.MatchStart();
             }
 
+            if (countdownText != null && Time.time < hideGoAtTime)
+                countdownText.text = GameLocalization.Get("HudGo");
             SetActiveSafe(countdownPanel, Time.time < hideGoAtTime);
             return;
         }
@@ -329,8 +331,8 @@ public class SurvivalHudController : MonoBehaviour
             // 힌트 표시 설정에 따라 관전 조작 안내를 숨길 수 있습니다.
             spectateHintText.gameObject.SetActive(GameSettings.HintsEnabled);
             spectateHintText.text = string.IsNullOrEmpty(spectateTargetName)
-                ? "탈락! 잠시 후 관전으로 전환됩니다"
-                : $"관전 중: {spectateTargetName}   (좌클릭: 다음 / Tab: 이전)";
+                ? GameLocalization.Get("HudEliminated")
+                : GameLocalization.Get("HudSpectating", spectateTargetName);
         }
     }
 
@@ -351,10 +353,10 @@ public class SurvivalHudController : MonoBehaviour
             return;
         }
 
-        string winnerName = localWon ? "YOU WIN!" : $"Player {winner + 1} WINS!";
+        string winnerName = localWon ? GameLocalization.Get("HudYouWin") : GameLocalization.Get("HudPlayerWins", winner + 1);
         int wins = SurvivalWinTracker.GetWins(winner);
-        string winsSuffix = wins > 1 ? $"  (통산 {wins}승)" : string.Empty;
-        winnerText.text = $"{winnerName}{winsSuffix}\n잠시 후 로비로 돌아갑니다...";
+        string winsSuffix = wins > 1 ? GameLocalization.Get("HudWins", wins) : string.Empty;
+        winnerText.text = GameLocalization.Get("HudWinner", winnerName, winsSuffix);
     }
 
     private static void SetActiveSafe(GameObject target, bool active)

@@ -518,6 +518,7 @@ GameObject:
   - component: {fileID: 6533297}
   - component: {fileID: 6533296}
   - component: {fileID: 6533295}
+  - component: {fileID: 6533298}
   m_Layer: 5
   m_Name: Display Header
   m_TagString: Untagged
@@ -662,6 +663,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6533293}
   m_CullTransparentMesh: 1
+--- !u!114 &6533298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6533293}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 6533295}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: DisplayHeader
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &16965594
 GameObject:
   m_ObjectHideFlags: 0
@@ -2267,6 +2295,7 @@ GameObject:
   - component: {fileID: 41816313}
   - component: {fileID: 41816312}
   - component: {fileID: 41816311}
+  - component: {fileID: 41816315}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -2425,6 +2454,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 41816309}
   m_CullTransparentMesh: 1
+--- !u!114 &41816315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 41816309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 41816312}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ExitTitle
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &44929069
 GameObject:
   m_ObjectHideFlags: 0
@@ -3086,6 +3142,7 @@ GameObject:
   - component: {fileID: 49421231}
   - component: {fileID: 49421235}
   - component: {fileID: 49421236}
+  - component: {fileID: 49421237}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -3208,6 +3265,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07237347ad8da5143bc520dd5333348e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleSettingsController
+--- !u!114 &49421237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 49421230}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8709296e96cff814f90f27b8b791504c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  UIManagerAsset: {fileID: 11400000, guid: 98972d851a944df4a9402eac62a896e7, type: 2}
+  languageSelector: {fileID: 1872129220}
+  setLanguageOnAwake: 1
+  updateItemsOnSet: 1
+  saveLanguageChanges: 1
+  currentLanguage: 
+  currentLanguageAsset: {fileID: 0}
+  localizedItems: []
 --- !u!1 &50053037
 GameObject:
   m_ObjectHideFlags: 0
@@ -7187,6 +7264,7 @@ GameObject:
   - component: {fileID: 129431391}
   - component: {fileID: 129431390}
   - component: {fileID: 129431389}
+  - component: {fileID: 129431392}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -7331,6 +7409,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 129431387}
   m_CullTransparentMesh: 1
+--- !u!114 &129431392
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 129431387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 129431390}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: SubtitleScaleLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &129476998
 GameObject:
   m_ObjectHideFlags: 0
@@ -8795,6 +8900,7 @@ GameObject:
   - component: {fileID: 156026914}
   - component: {fileID: 156026913}
   - component: {fileID: 156026912}
+  - component: {fileID: 156026915}
   m_Layer: 5
   m_Name: Controller Layout
   m_TagString: Untagged
@@ -8870,7 +8976,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -9036,6 +9142,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 156026907}
   m_CullTransparentMesh: 1
+--- !u!114 &156026915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 156026907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ControllerLayoutTitle
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &157651070
 GameObject:
   m_ObjectHideFlags: 0
@@ -10164,6 +10297,7 @@ GameObject:
   - component: {fileID: 189379799}
   - component: {fileID: 189379798}
   - component: {fileID: 189379797}
+  - component: {fileID: 189379800}
   m_Layer: 5
   m_Name: Label Off
   m_TagString: Untagged
@@ -10308,6 +10442,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 189379795}
   m_CullTransparentMesh: 1
+--- !u!114 &189379800
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 189379795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 189379797}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LabelOff
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &189764774
 GameObject:
   m_ObjectHideFlags: 0
@@ -10800,6 +10961,7 @@ GameObject:
   - component: {fileID: 197549151}
   - component: {fileID: 197549150}
   - component: {fileID: 197549149}
+  - component: {fileID: 197549153}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -10958,6 +11120,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 197549147}
   m_CullTransparentMesh: 1
+--- !u!114 &197549153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 197549147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 197549150}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &197850158
 GameObject:
   m_ObjectHideFlags: 0
@@ -11816,6 +12005,7 @@ GameObject:
   - component: {fileID: 211952463}
   - component: {fileID: 211952462}
   - component: {fileID: 211952461}
+  - component: {fileID: 211952465}
   m_Layer: 5
   m_Name: Next Button
   m_TagString: Untagged
@@ -11972,7 +12162,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -12016,6 +12206,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &211952465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 211952459}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &215774075
 GameObject:
   m_ObjectHideFlags: 0
@@ -13303,6 +13520,7 @@ GameObject:
   - component: {fileID: 242534563}
   - component: {fileID: 242534562}
   - component: {fileID: 242534561}
+  - component: {fileID: 242534566}
   m_Layer: 5
   m_Name: Controls
   m_TagString: Untagged
@@ -13442,7 +13660,7 @@ MonoBehaviour:
   seperator: {fileID: 1369664588}
   isInteractable: 1
   isSelected: 0
-  useLocalization: 0
+  useLocalization: 1
   useCustomText: 0
   useSeperator: 1
   useUINavigation: 0
@@ -13467,6 +13685,33 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   navbar: {fileID: 0}
+--- !u!114 &242534566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 242534559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ControlsTitle
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &245442957
 GameObject:
   m_ObjectHideFlags: 0
@@ -15764,6 +16009,7 @@ GameObject:
   - component: {fileID: 277715006}
   - component: {fileID: 277715005}
   - component: {fileID: 277715004}
+  - component: {fileID: 277715008}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -15922,6 +16168,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 277715002}
   m_CullTransparentMesh: 1
+--- !u!114 &277715008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 277715002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 277715005}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &279587548
 GameObject:
   m_ObjectHideFlags: 0
@@ -16160,6 +16433,7 @@ GameObject:
   - component: {fileID: 280406674}
   - component: {fileID: 280406673}
   - component: {fileID: 280406672}
+  - component: {fileID: 280406675}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -16304,6 +16578,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 280406670}
   m_CullTransparentMesh: 1
+--- !u!114 &280406675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 280406670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 280406673}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIVolumeLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &281442377
 GameObject:
   m_ObjectHideFlags: 0
@@ -18731,6 +19032,7 @@ GameObject:
   m_Component:
   - component: {fileID: 354265826}
   - component: {fileID: 354265825}
+  - component: {fileID: 354265827}
   m_Layer: 5
   m_Name: Description Area
   m_TagString: Untagged
@@ -18760,7 +19062,7 @@ MonoBehaviour:
   coverImage: {fileID: 1429161163}
   titleObject: {fileID: 1233945148}
   descriptionObject: {fileID: 1419387564}
-  useLocalization: 0
+  useLocalization: 1
   localizedObject: {fileID: 0}
 --- !u!224 &354265826
 RectTransform:
@@ -18785,6 +19087,33 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -25}
   m_SizeDelta: {x: 660, y: -50}
   m_Pivot: {x: 1, y: 0.5}
+--- !u!114 &354265827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354265824}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: SettingsTitle
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &362575449
 GameObject:
   m_ObjectHideFlags: 0
@@ -19264,6 +19593,7 @@ GameObject:
   - component: {fileID: 366694812}
   - component: {fileID: 366694811}
   - component: {fileID: 366694810}
+  - component: {fileID: 366694813}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -19408,6 +19738,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 366694808}
   m_CullTransparentMesh: 1
+--- !u!114 &366694813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 366694808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 366694811}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: MusicVolumeLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &368262456
 GameObject:
   m_ObjectHideFlags: 0
@@ -20011,6 +20368,7 @@ GameObject:
   - component: {fileID: 378632791}
   - component: {fileID: 378632790}
   - component: {fileID: 378632789}
+  - component: {fileID: 378632793}
   m_Layer: 5
   m_Name: Prev Button
   m_TagString: Untagged
@@ -20167,7 +20525,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -20211,6 +20569,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &378632793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378632787}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &379965976
 GameObject:
   m_ObjectHideFlags: 0
@@ -21451,6 +21836,7 @@ GameObject:
   - component: {fileID: 403889762}
   - component: {fileID: 403889761}
   - component: {fileID: 403889760}
+  - component: {fileID: 403889763}
   m_Layer: 5
   m_Name: Camera & Player Header
   m_TagString: Untagged
@@ -21595,6 +21981,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 403889758}
   m_CullTransparentMesh: 1
+--- !u!114 &403889763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403889758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 403889760}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: CamAndPlayerLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &405995922
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -24055,6 +24468,7 @@ GameObject:
   - component: {fileID: 457389182}
   - component: {fileID: 457389181}
   - component: {fileID: 457389180}
+  - component: {fileID: 457389183}
   m_Layer: 5
   m_Name: Accessibility Header
   m_TagString: Untagged
@@ -24199,6 +24613,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 457389178}
   m_CullTransparentMesh: 1
+--- !u!114 &457389183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 457389178}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 457389180}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: AccessibilityTitle
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &461686543
 GameObject:
   m_ObjectHideFlags: 0
@@ -24496,6 +24937,7 @@ GameObject:
   - component: {fileID: 467862539}
   - component: {fileID: 467862538}
   - component: {fileID: 467862537}
+  - component: {fileID: 467862540}
   m_Layer: 5
   m_Name: Label On
   m_TagString: Untagged
@@ -24640,6 +25082,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 467862535}
   m_CullTransparentMesh: 1
+--- !u!114 &467862540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 467862535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 467862537}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LabelOn
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &468824357
 GameObject:
   m_ObjectHideFlags: 0
@@ -26174,6 +26643,7 @@ GameObject:
   - component: {fileID: 498060235}
   - component: {fileID: 498060234}
   - component: {fileID: 498060233}
+  - component: {fileID: 498060236}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -26318,6 +26788,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 498060231}
   m_CullTransparentMesh: 1
+--- !u!114 &498060236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 498060231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 498060234}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: TextureQualityLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &501890575
 GameObject:
   m_ObjectHideFlags: 0
@@ -26579,6 +27076,7 @@ GameObject:
   - component: {fileID: 504145939}
   - component: {fileID: 504145938}
   - component: {fileID: 504145937}
+  - component: {fileID: 504145941}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -26737,6 +27235,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 504145935}
   m_CullTransparentMesh: 1
+--- !u!114 &504145941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 504145935}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 504145938}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &505146091
 GameObject:
   m_ObjectHideFlags: 0
@@ -28606,6 +29131,7 @@ GameObject:
   - component: {fileID: 529982405}
   - component: {fileID: 529982404}
   - component: {fileID: 529982403}
+  - component: {fileID: 529982406}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -28750,6 +29276,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 529982401}
   m_CullTransparentMesh: 1
+--- !u!114 &529982406
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529982401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 529982404}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: EnableHintsLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &531571619
 GameObject:
   m_ObjectHideFlags: 0
@@ -32176,6 +32729,7 @@ GameObject:
   - component: {fileID: 607931327}
   - component: {fileID: 607931326}
   - component: {fileID: 607931325}
+  - component: {fileID: 607931329}
   m_Layer: 5
   m_Name: Next Button
   m_TagString: Untagged
@@ -32332,7 +32886,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -32376,6 +32930,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &607931329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 607931323}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &612266335
 GameObject:
   m_ObjectHideFlags: 0
@@ -32502,6 +33083,7 @@ GameObject:
   - component: {fileID: 613486301}
   - component: {fileID: 613486300}
   - component: {fileID: 613486299}
+  - component: {fileID: 613486303}
   m_Layer: 5
   m_Name: Prev Button
   m_TagString: Untagged
@@ -32658,7 +33240,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -32702,6 +33284,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &613486303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 613486297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &614726252
 GameObject:
   m_ObjectHideFlags: 0
@@ -34933,6 +35542,7 @@ GameObject:
   - component: {fileID: 660603796}
   - component: {fileID: 660603795}
   - component: {fileID: 660603794}
+  - component: {fileID: 660603797}
   m_Layer: 5
   m_Name: Label Off
   m_TagString: Untagged
@@ -35077,6 +35687,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 660603792}
   m_CullTransparentMesh: 1
+--- !u!114 &660603797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 660603792}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 660603794}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LabelOff
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &661842572
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -35534,6 +36171,7 @@ GameObject:
   - component: {fileID: 676471956}
   - component: {fileID: 676471955}
   - component: {fileID: 676471954}
+  - component: {fileID: 676471957}
   m_Layer: 5
   m_Name: Advanced Header
   m_TagString: Untagged
@@ -35678,6 +36316,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 676471952}
   m_CullTransparentMesh: 1
+--- !u!114 &676471957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 676471952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 676471954}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: AdvancedHeader
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &677901248
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -36382,6 +37047,7 @@ GameObject:
   - component: {fileID: 682893000}
   - component: {fileID: 682892999}
   - component: {fileID: 682892998}
+  - component: {fileID: 682893001}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -36526,6 +37192,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 682892996}
   m_CullTransparentMesh: 1
+--- !u!114 &682893001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 682892996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 682892999}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: SprintModeLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &686959119
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -37104,6 +37797,7 @@ GameObject:
   - component: {fileID: 694847843}
   - component: {fileID: 694847842}
   - component: {fileID: 694847841}
+  - component: {fileID: 694847845}
   m_Layer: 5
   m_Name: Prev Button
   m_TagString: Untagged
@@ -37260,7 +37954,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -37304,6 +37998,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &694847845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 694847839}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &697517566
 GameObject:
   m_ObjectHideFlags: 0
@@ -40384,6 +41105,7 @@ GameObject:
   - component: {fileID: 760556320}
   - component: {fileID: 760556319}
   - component: {fileID: 760556318}
+  - component: {fileID: 760556323}
   m_Layer: 5
   m_Name: Audio
   m_TagString: Untagged
@@ -40523,7 +41245,7 @@ MonoBehaviour:
   seperator: {fileID: 769558264}
   isInteractable: 1
   isSelected: 0
-  useLocalization: 0
+  useLocalization: 1
   useCustomText: 0
   useSeperator: 1
   useUINavigation: 0
@@ -40548,6 +41270,33 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   navbar: {fileID: 0}
+--- !u!114 &760556323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 760556316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: AudioTitle
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &761798038
 GameObject:
   m_ObjectHideFlags: 0
@@ -42345,6 +43094,7 @@ GameObject:
   - component: {fileID: 817542286}
   - component: {fileID: 817542285}
   - component: {fileID: 817542284}
+  - component: {fileID: 817542288}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -42503,6 +43253,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 817542282}
   m_CullTransparentMesh: 1
+--- !u!114 &817542288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 817542282}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 817542285}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &821618895
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -46243,6 +47020,7 @@ GameObject:
   - component: {fileID: 892903919}
   - component: {fileID: 892903920}
   - component: {fileID: 892903921}
+  - component: {fileID: 892903922}
   m_Layer: 5
   m_Name: Horizontal Selector
   m_TagString: Untagged
@@ -46303,7 +47081,7 @@ MonoBehaviour:
   invokeOnAwake: 1
   invertAnimation: 0
   loopSelection: 1
-  useLocalization: 0
+  useLocalization: 1
   iconScale: 1
   contentSpacing: 15
   defaultIndex: 0
@@ -46346,6 +47124,33 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &892903922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 892903918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: SprintToggleLabel
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &894234790
 GameObject:
   m_ObjectHideFlags: 0
@@ -46655,6 +47460,7 @@ GameObject:
   - component: {fileID: 899259918}
   - component: {fileID: 899259917}
   - component: {fileID: 899259916}
+  - component: {fileID: 899259919}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -46799,6 +47605,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 899259914}
   m_CullTransparentMesh: 1
+--- !u!114 &899259919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899259914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 899259917}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: VSyncLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &902051810
 GameObject:
   m_ObjectHideFlags: 0
@@ -47544,6 +48377,7 @@ GameObject:
   - component: {fileID: 925573736}
   - component: {fileID: 925573735}
   - component: {fileID: 925573734}
+  - component: {fileID: 925573737}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -47688,6 +48522,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 925573732}
   m_CullTransparentMesh: 1
+--- !u!114 &925573737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 925573732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 925573735}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: CamSensitivityLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &925871776
 GameObject:
   m_ObjectHideFlags: 0
@@ -49422,6 +50283,7 @@ GameObject:
   - component: {fileID: 965845553}
   - component: {fileID: 965845552}
   - component: {fileID: 965845551}
+  - component: {fileID: 965845555}
   m_Layer: 5
   m_Name: Next Button
   m_TagString: Untagged
@@ -49578,7 +50440,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -49622,6 +50484,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &965845555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 965845549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &967870836
 GameObject:
   m_ObjectHideFlags: 0
@@ -50129,6 +51018,7 @@ GameObject:
   - component: {fileID: 972485107}
   - component: {fileID: 972485106}
   - component: {fileID: 972485105}
+  - component: {fileID: 972485109}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -50287,6 +51177,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 972485103}
   m_CullTransparentMesh: 1
+--- !u!114 &972485109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 972485103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 972485106}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &973045010
 GameObject:
   m_ObjectHideFlags: 0
@@ -50901,6 +51818,7 @@ GameObject:
   - component: {fileID: 980753060}
   - component: {fileID: 980753059}
   - component: {fileID: 980753058}
+  - component: {fileID: 980753062}
   m_Layer: 5
   m_Name: Next Button
   m_TagString: Untagged
@@ -51057,7 +51975,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -51101,6 +52019,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &980753062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 980753056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &981561930
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -52073,6 +53018,7 @@ GameObject:
   - component: {fileID: 1001764663}
   - component: {fileID: 1001764662}
   - component: {fileID: 1001764661}
+  - component: {fileID: 1001764664}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -52217,6 +53163,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1001764659}
   m_CullTransparentMesh: 1
+--- !u!114 &1001764664
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001764659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1001764662}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LanguageTitle
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1003644234
 GameObject:
   m_ObjectHideFlags: 0
@@ -53201,6 +54174,7 @@ GameObject:
   - component: {fileID: 1024594259}
   - component: {fileID: 1024594258}
   - component: {fileID: 1024594257}
+  - component: {fileID: 1024594261}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -53359,6 +54333,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1024594255}
   m_CullTransparentMesh: 1
+--- !u!114 &1024594261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1024594255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1024594258}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1024922189
 GameObject:
   m_ObjectHideFlags: 0
@@ -53788,6 +54789,7 @@ GameObject:
   - component: {fileID: 1032602922}
   - component: {fileID: 1032602921}
   - component: {fileID: 1032602920}
+  - component: {fileID: 1032602924}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -53946,6 +54948,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1032602918}
   m_CullTransparentMesh: 1
+--- !u!114 &1032602924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032602918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1032602921}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: PrevCategoryLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1036675529
 GameObject:
   m_ObjectHideFlags: 0
@@ -54592,6 +55621,7 @@ GameObject:
   - component: {fileID: 1041797738}
   - component: {fileID: 1041797737}
   - component: {fileID: 1041797736}
+  - component: {fileID: 1041797740}
   m_Layer: 5
   m_Name: Next Button
   m_TagString: Untagged
@@ -54748,7 +55778,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -54792,6 +55822,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &1041797740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1041797734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1042125740
 GameObject:
   m_ObjectHideFlags: 0
@@ -55792,6 +56849,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5267937658025518218, guid: 41ab1084db0416847aa346afff005130, type: 3}
       propertyPath: m_ChildForceExpandWidth
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: localizationKey
+      value: UIStart
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: showOutputOnEditor
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5579613067281299118, guid: 41ab1084db0416847aa346afff005130, type: 3}
@@ -57572,6 +58641,7 @@ GameObject:
   - component: {fileID: 1096392180}
   - component: {fileID: 1096392179}
   - component: {fileID: 1096392178}
+  - component: {fileID: 1096392181}
   m_Layer: 5
   m_Name: Label On
   m_TagString: Untagged
@@ -57716,6 +58786,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1096392176}
   m_CullTransparentMesh: 1
+--- !u!114 &1096392181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096392176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1096392178}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LabelOn
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1101547344
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -58279,6 +59376,7 @@ GameObject:
   - component: {fileID: 1112786585}
   - component: {fileID: 1112786584}
   - component: {fileID: 1112786583}
+  - component: {fileID: 1112786586}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -58423,6 +59521,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1112786581}
   m_CullTransparentMesh: 1
+--- !u!114 &1112786586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1112786581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1112786584}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: ReverseLookLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1121817157
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -62666,6 +63791,7 @@ GameObject:
   - component: {fileID: 1218587594}
   - component: {fileID: 1218587593}
   - component: {fileID: 1218587592}
+  - component: {fileID: 1218587595}
   m_Layer: 5
   m_Name: General Header
   m_TagString: Untagged
@@ -62810,6 +63936,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1218587590}
   m_CullTransparentMesh: 1
+--- !u!114 &1218587595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218587590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1218587592}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: GeneralTitle
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1220093261
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -66522,6 +67675,7 @@ GameObject:
   - component: {fileID: 1289057110}
   - component: {fileID: 1289057109}
   - component: {fileID: 1289057108}
+  - component: {fileID: 1289057111}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -66666,6 +67820,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1289057106}
   m_CullTransparentMesh: 1
+--- !u!114 &1289057111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1289057106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1289057109}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIScaleLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1290279339
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -67827,6 +69008,7 @@ GameObject:
   - component: {fileID: 1313062057}
   - component: {fileID: 1313062056}
   - component: {fileID: 1313062055}
+  - component: {fileID: 1313062059}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -67985,6 +69167,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1313062053}
   m_CullTransparentMesh: 1
+--- !u!114 &1313062059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1313062053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1313062056}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1313677117
 GameObject:
   m_ObjectHideFlags: 0
@@ -69712,6 +70921,7 @@ GameObject:
   - component: {fileID: 1360662813}
   - component: {fileID: 1360662812}
   - component: {fileID: 1360662811}
+  - component: {fileID: 1360662814}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -69856,6 +71066,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1360662809}
   m_CullTransparentMesh: 1
+--- !u!114 &1360662814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360662809}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1360662812}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: AnisotropicFilteringLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1361868841
 GameObject:
   m_ObjectHideFlags: 0
@@ -71971,6 +73208,7 @@ GameObject:
   - component: {fileID: 1402371259}
   - component: {fileID: 1402371258}
   - component: {fileID: 1402371257}
+  - component: {fileID: 1402371261}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -72129,6 +73367,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1402371255}
   m_CullTransparentMesh: 1
+--- !u!114 &1402371261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1402371255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1402371258}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: NextCategoryLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1403629221
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -74976,6 +76241,18 @@ PrefabInstance:
       propertyPath: m_ChildForceExpandWidth
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: localizationKey
+      value: ExitTitle
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: showOutputOnEditor
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5579613067281299118, guid: 41ab1084db0416847aa346afff005130, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -75748,6 +77025,7 @@ GameObject:
   - component: {fileID: 1461872815}
   - component: {fileID: 1461872814}
   - component: {fileID: 1461872813}
+  - component: {fileID: 1461872817}
   m_Layer: 5
   m_Name: Next Button
   m_TagString: Untagged
@@ -75904,7 +77182,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -75948,6 +77226,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &1461872817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1461872811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1462062995
 GameObject:
   m_ObjectHideFlags: 0
@@ -76276,6 +77581,7 @@ GameObject:
   - component: {fileID: 1466568129}
   - component: {fileID: 1466568128}
   - component: {fileID: 1466568127}
+  - component: {fileID: 1466568131}
   m_Layer: 5
   m_Name: Next Button
   m_TagString: Untagged
@@ -76432,7 +77738,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -76476,6 +77782,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &1466568131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1466568125}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1466586278
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -76650,6 +77983,7 @@ GameObject:
   - component: {fileID: 1471853717}
   - component: {fileID: 1471853716}
   - component: {fileID: 1471853715}
+  - component: {fileID: 1471853718}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -76794,6 +78128,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1471853713}
   m_CullTransparentMesh: 1
+--- !u!114 &1471853718
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471853713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1471853716}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: EnableSubtitlesLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1473836862
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -77156,6 +78517,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5267937658025518218, guid: 41ab1084db0416847aa346afff005130, type: 3}
       propertyPath: m_ChildForceExpandWidth
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: objectType
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: localizationKey
+      value: SettingsTitle
+      objectReference: {fileID: 0}
+    - target: {fileID: 5393352734342297470, guid: 41ab1084db0416847aa346afff005130, type: 3}
+      propertyPath: showOutputOnEditor
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5579613067281299118, guid: 41ab1084db0416847aa346afff005130, type: 3}
@@ -78521,6 +79894,7 @@ GameObject:
   - component: {fileID: 1503834942}
   - component: {fileID: 1503834943}
   - component: {fileID: 1503834944}
+  - component: {fileID: 1503834945}
   m_Layer: 5
   m_Name: Horizontal Selector
   m_TagString: Untagged
@@ -78581,7 +79955,7 @@ MonoBehaviour:
   invokeOnAwake: 1
   invertAnimation: 0
   loopSelection: 1
-  useLocalization: 0
+  useLocalization: 1
   iconScale: 1
   contentSpacing: 15
   defaultIndex: 2
@@ -78666,6 +80040,33 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1503834945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1503834941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: SettingsGraphicsLow
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1504286491
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -78749,6 +80150,7 @@ GameObject:
   - component: {fileID: 1509096824}
   - component: {fileID: 1509096823}
   - component: {fileID: 1509096822}
+  - component: {fileID: 1509096826}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -78907,6 +80309,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1509096820}
   m_CullTransparentMesh: 1
+--- !u!114 &1509096826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509096820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1509096823}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1509562387
 GameObject:
   m_ObjectHideFlags: 0
@@ -79062,6 +80491,7 @@ GameObject:
   - component: {fileID: 1514342327}
   - component: {fileID: 1514342326}
   - component: {fileID: 1514342325}
+  - component: {fileID: 1514342329}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -79220,6 +80650,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1514342323}
   m_CullTransparentMesh: 1
+--- !u!114 &1514342329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1514342323}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1514342326}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1514511370
 GameObject:
   m_ObjectHideFlags: 0
@@ -79548,6 +81005,7 @@ GameObject:
   - component: {fileID: 1520893303}
   - component: {fileID: 1520893302}
   - component: {fileID: 1520893301}
+  - component: {fileID: 1520893305}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -79706,6 +81164,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1520893299}
   m_CullTransparentMesh: 1
+--- !u!114 &1520893305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1520893299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1520893302}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1521109152
 GameObject:
   m_ObjectHideFlags: 0
@@ -80236,6 +81721,7 @@ GameObject:
   - component: {fileID: 1526846347}
   - component: {fileID: 1526846346}
   - component: {fileID: 1526846345}
+  - component: {fileID: 1526846348}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -80380,6 +81866,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1526846343}
   m_CullTransparentMesh: 1
+--- !u!114 &1526846348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1526846343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1526846346}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: FrameRateLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1528422594
 GameObject:
   m_ObjectHideFlags: 0
@@ -80394,6 +81907,7 @@ GameObject:
   - component: {fileID: 1528422599}
   - component: {fileID: 1528422598}
   - component: {fileID: 1528422597}
+  - component: {fileID: 1528422601}
   m_Layer: 5
   m_Name: Visuals
   m_TagString: Untagged
@@ -80430,7 +81944,7 @@ MonoBehaviour:
   seperator: {fileID: 2073197779}
   isInteractable: 1
   isSelected: 1
-  useLocalization: 0
+  useLocalization: 1
   useCustomText: 0
   useSeperator: 1
   useUINavigation: 0
@@ -80558,6 +82072,33 @@ MonoBehaviour:
   m_ChildScaleWidth: 1
   m_ChildScaleHeight: 1
   m_ReverseArrangement: 0
+--- !u!114 &1528422601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1528422594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: VisualsTitle
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1529641578
 GameObject:
   m_ObjectHideFlags: 0
@@ -81379,6 +82920,7 @@ GameObject:
   - component: {fileID: 1546113666}
   - component: {fileID: 1546113665}
   - component: {fileID: 1546113664}
+  - component: {fileID: 1546113668}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -81537,6 +83079,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1546113662}
   m_CullTransparentMesh: 1
+--- !u!114 &1546113668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1546113662}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1546113665}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1546513762
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -84085,6 +85654,7 @@ GameObject:
   - component: {fileID: 1579402556}
   - component: {fileID: 1579402557}
   - component: {fileID: 1579402558}
+  - component: {fileID: 1579402559}
   m_Layer: 5
   m_Name: Horizontal Selector
   m_TagString: Untagged
@@ -84145,7 +85715,7 @@ MonoBehaviour:
   invokeOnAwake: 1
   invertAnimation: 0
   loopSelection: 1
-  useLocalization: 0
+  useLocalization: 1
   iconScale: 1
   contentSpacing: 15
   defaultIndex: 0
@@ -84266,6 +85836,33 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1579402559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579402555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: FrameRateUnlimited
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1585650459
 GameObject:
   m_ObjectHideFlags: 0
@@ -84641,6 +86238,7 @@ GameObject:
   - component: {fileID: 1592736699}
   - component: {fileID: 1592736698}
   - component: {fileID: 1592736697}
+  - component: {fileID: 1592736700}
   m_Layer: 5
   m_Name: Volume Header
   m_TagString: Untagged
@@ -84785,6 +86383,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1592736695}
   m_CullTransparentMesh: 1
+--- !u!114 &1592736700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1592736695}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1592736697}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: VolumeHeader
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1593982810
 GameObject:
   m_ObjectHideFlags: 0
@@ -85149,6 +86774,7 @@ GameObject:
   - component: {fileID: 1596882584}
   - component: {fileID: 1596882583}
   - component: {fileID: 1596882582}
+  - component: {fileID: 1596882585}
   m_Layer: 5
   m_Name: Label Off
   m_TagString: Untagged
@@ -85293,6 +86919,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1596882580}
   m_CullTransparentMesh: 1
+--- !u!114 &1596882585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1596882580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1596882582}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LabelOff
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1598186684
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -86126,6 +87779,7 @@ GameObject:
   - component: {fileID: 1601502142}
   - component: {fileID: 1601502141}
   - component: {fileID: 1601502140}
+  - component: {fileID: 1601502143}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -86270,6 +87924,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1601502138}
   m_CullTransparentMesh: 1
+--- !u!114 &1601502143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1601502138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1601502141}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: MasterVolumeLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1601621743
 GameObject:
   m_ObjectHideFlags: 0
@@ -87004,6 +88685,7 @@ GameObject:
   - component: {fileID: 1613330390}
   - component: {fileID: 1613330389}
   - component: {fileID: 1613330388}
+  - component: {fileID: 1613330391}
   m_Layer: 5
   m_Name: UI & HUD Header
   m_TagString: Untagged
@@ -87148,6 +88830,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1613330386}
   m_CullTransparentMesh: 1
+--- !u!114 &1613330391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1613330386}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1613330388}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIHud
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1613596893
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -90308,6 +92017,7 @@ GameObject:
   - component: {fileID: 1680517557}
   - component: {fileID: 1680517556}
   - component: {fileID: 1680517555}
+  - component: {fileID: 1680517558}
   m_Layer: 5
   m_Name: Label On
   m_TagString: Untagged
@@ -90452,6 +92162,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1680517553}
   m_CullTransparentMesh: 1
+--- !u!114 &1680517558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1680517553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1680517555}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LabelOn
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1681246585
 GameObject:
   m_ObjectHideFlags: 0
@@ -91363,6 +93100,7 @@ GameObject:
   - component: {fileID: 1699064333}
   - component: {fileID: 1699064332}
   - component: {fileID: 1699064331}
+  - component: {fileID: 1699064335}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -91521,6 +93259,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1699064329}
   m_CullTransparentMesh: 1
+--- !u!114 &1699064335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1699064329}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1699064332}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIKey
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1699712092
 GameObject:
   m_ObjectHideFlags: 0
@@ -94770,6 +96535,7 @@ GameObject:
   - component: {fileID: 1796354786}
   - component: {fileID: 1796354787}
   - component: {fileID: 1796354788}
+  - component: {fileID: 1796354789}
   m_Layer: 5
   m_Name: Horizontal Selector
   m_TagString: Untagged
@@ -94830,7 +96596,7 @@ MonoBehaviour:
   invokeOnAwake: 1
   invertAnimation: 0
   loopSelection: 1
-  useLocalization: 0
+  useLocalization: 1
   iconScale: 1
   contentSpacing: 15
   defaultIndex: 3
@@ -94933,6 +96699,33 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1796354789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1796354785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: SettingsGraphicsLow
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1797972247
 GameObject:
   m_ObjectHideFlags: 0
@@ -95726,6 +97519,7 @@ GameObject:
   - component: {fileID: 1809911704}
   - component: {fileID: 1809911703}
   - component: {fileID: 1809911702}
+  - component: {fileID: 1809911706}
   m_Layer: 5
   m_Name: Prev Button
   m_TagString: Untagged
@@ -95882,7 +97676,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -95926,6 +97720,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &1809911706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809911700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1810684109
 GameObject:
   m_ObjectHideFlags: 0
@@ -96516,6 +98337,7 @@ GameObject:
   - component: {fileID: 1824096924}
   - component: {fileID: 1824096923}
   - component: {fileID: 1824096922}
+  - component: {fileID: 1824096926}
   m_Layer: 5
   m_Name: Prev Button
   m_TagString: Untagged
@@ -96672,7 +98494,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -96716,6 +98538,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &1824096926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1824096920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1827582047
 GameObject:
   m_ObjectHideFlags: 0
@@ -97455,6 +99304,7 @@ GameObject:
   - component: {fileID: 1839814993}
   - component: {fileID: 1839814992}
   - component: {fileID: 1839814991}
+  - component: {fileID: 1839814995}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -97613,6 +99463,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1839814989}
   m_CullTransparentMesh: 1
+--- !u!114 &1839814995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839814989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1839814992}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: NextPageLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1839936120
 GameObject:
   m_ObjectHideFlags: 0
@@ -101502,6 +103379,7 @@ GameObject:
   - component: {fileID: 1933723045}
   - component: {fileID: 1933723044}
   - component: {fileID: 1933723043}
+  - component: {fileID: 1933723047}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -101660,6 +103538,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1933723041}
   m_CullTransparentMesh: 1
+--- !u!114 &1933723047
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1933723041}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1933723044}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: PrevPageLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1001 &1935670672
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -102877,6 +104782,7 @@ GameObject:
   - component: {fileID: 1957403805}
   - component: {fileID: 1957403804}
   - component: {fileID: 1957403803}
+  - component: {fileID: 1957403806}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -103021,6 +104927,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1957403801}
   m_CullTransparentMesh: 1
+--- !u!114 &1957403806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1957403801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1957403804}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: SFXVolumeLabel
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1961560526
 GameObject:
   m_ObjectHideFlags: 0
@@ -103033,6 +104966,7 @@ GameObject:
   - component: {fileID: 1961560530}
   - component: {fileID: 1961560529}
   - component: {fileID: 1961560528}
+  - component: {fileID: 1961560531}
   m_Layer: 5
   m_Name: Label On
   m_TagString: Untagged
@@ -103177,6 +105111,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1961560526}
   m_CullTransparentMesh: 1
+--- !u!114 &1961560531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1961560526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 1961560528}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LabelOn
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &1961607102
 GameObject:
   m_ObjectHideFlags: 0
@@ -105202,6 +107163,7 @@ GameObject:
   - component: {fileID: 2003878112}
   - component: {fileID: 2003878111}
   - component: {fileID: 2003878110}
+  - component: {fileID: 2003878114}
   m_Layer: 5
   m_Name: Prev Button
   m_TagString: Untagged
@@ -105358,7 +107320,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -105402,6 +107364,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &2003878114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2003878108}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &2004996312
 GameObject:
   m_ObjectHideFlags: 0
@@ -106378,6 +108367,7 @@ GameObject:
   - component: {fileID: 2022768407}
   - component: {fileID: 2022768406}
   - component: {fileID: 2022768405}
+  - component: {fileID: 2022768409}
   m_Layer: 5
   m_Name: Prev Button
   m_TagString: Untagged
@@ -106534,7 +108524,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -106578,6 +108568,33 @@ MonoBehaviour:
       m_Calls: []
   overrideInteractable: 0
   latestTabIndex: 0
+--- !u!114 &2022768409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2022768403}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIButton
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &2023114735
 GameObject:
   m_ObjectHideFlags: 0
@@ -108553,6 +110570,7 @@ GameObject:
   - component: {fileID: 2044806127}
   - component: {fileID: 2044806126}
   - component: {fileID: 2044806125}
+  - component: {fileID: 2044806130}
   m_Layer: 5
   m_Name: General
   m_TagString: Untagged
@@ -108692,7 +110710,7 @@ MonoBehaviour:
   seperator: {fileID: 382053829}
   isInteractable: 1
   isSelected: 0
-  useLocalization: 0
+  useLocalization: 1
   useCustomText: 0
   useSeperator: 1
   useUINavigation: 0
@@ -108717,6 +110735,33 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   navbar: {fileID: 0}
+--- !u!114 &2044806130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044806123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: GeneralTitle
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &2046366849
 GameObject:
   m_ObjectHideFlags: 0
@@ -111987,6 +114032,7 @@ GameObject:
   - component: {fileID: 2107503317}
   - component: {fileID: 2107503316}
   - component: {fileID: 2107503315}
+  - component: {fileID: 2107503318}
   m_Layer: 5
   m_Name: Key Bindings
   m_TagString: Untagged
@@ -112131,6 +114177,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2107503313}
   m_CullTransparentMesh: 1
+--- !u!114 &2107503318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2107503313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 2107503315}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: KeyBindingsHeader
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &2108744647
 GameObject:
   m_ObjectHideFlags: 0
@@ -113580,6 +115653,7 @@ GameObject:
   - component: {fileID: 2138500174}
   - component: {fileID: 2138500173}
   - component: {fileID: 2138500172}
+  - component: {fileID: 2138500175}
   m_Layer: 5
   m_Name: Label Off
   m_TagString: Untagged
@@ -113724,6 +115798,33 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2138500170}
   m_CullTransparentMesh: 1
+--- !u!114 &2138500175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2138500170}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 2138500172}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: LabelOff
+  objectType: 0
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &2139206584
 GameObject:
   m_ObjectHideFlags: 0

@@ -176,6 +176,8 @@ namespace Michsky.UI.Heat
 
         public string GetKeyOutput(string key)
         {
+            // 다른 UI 컴포넌트의 Awake가 먼저 실행돼도 번역을 조회할 수 있게 합니다.
+            if (!isInitialized) { InitializeItem(); }
             string keyValue = null;
             bool keyFound = false;
 

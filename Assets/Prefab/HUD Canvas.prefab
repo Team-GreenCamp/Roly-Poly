@@ -134,6 +134,8 @@ MonoBehaviour:
   spectateHintText: {fileID: 4690724925135079677}
   winnerPanel: {fileID: 0}
   winnerText: {fileID: 5359423276649075588}
+  actionTextWin: {fileID: 0}
+  actionTextLose: {fileID: 0}
   suddenDeathPanel: {fileID: 7561660991334278680}
   suddenDeathText: {fileID: 856939387119269624}
   suddenDeathWarnSeconds: 15
@@ -1611,6 +1613,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5762660994073214503, guid: 9c065c563e82ae044a8c775910707f32, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6658513479559482189, guid: 9c065c563e82ae044a8c775910707f32, type: 3}
+      propertyPath: localizationKey
+      value: UIAlive
+      objectReference: {fileID: 0}
+    - target: {fileID: 6658513479559482189, guid: 9c065c563e82ae044a8c775910707f32, type: 3}
+      propertyPath: showOutputOnEditor
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

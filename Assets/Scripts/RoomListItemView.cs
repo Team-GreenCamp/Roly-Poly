@@ -18,6 +18,14 @@ public class RoomListItemView : MonoBehaviour
 
     private RoomApiClient.RoomDto boundRoom;
     private UnityAction joinClicked;
+    private Michsky.UI.Heat.LocalizationLanguage displayedLanguage;
+
+    // 이미 생성된 방 목록도 언어가 바뀌면 상태와 기본 이름을 다시 표시합니다.
+    private void LateUpdate()
+    {
+        if (boundRoom != null && displayedLanguage != GameLocalization.Language)
+            Bind(boundRoom, joinClicked);
+    }
     private readonly List<GameObject> panelsToCloseOnJoin = new List<GameObject>();
 
     public void BindReferences(TMP_Text nameText, TMP_Text detailText, CanvasButton button)
@@ -35,16 +43,17 @@ public class RoomListItemView : MonoBehaviour
         }
 
         boundRoom = room;
+        displayedLanguage = GameLocalization.Language;
         joinClicked = onJoinClicked;
 
         if (roomNameText != null)
         {
-            roomNameText.text = string.IsNullOrWhiteSpace(room.name) ? "이름 없는 방" : room.name;
+            roomNameText.text = string.IsNullOrWhiteSpace(room.name) ? GameLocalization.Get("RoomUnnamed") : room.name;
         }
 
         if (roomDetailText != null)
         {
-            string mapText = string.IsNullOrWhiteSpace(room.mapId) ? "맵 미지정" : room.mapId;
+            string mapText = GameLocalization.MapName(room.mapId);
             roomDetailText.text = $"{room.currentPlayers} / {room.maxPlayers}  {GetRoomStatusText(room.status)}  {mapText}";
         }
 
