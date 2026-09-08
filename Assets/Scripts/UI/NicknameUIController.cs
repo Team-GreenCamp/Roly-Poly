@@ -1,6 +1,7 @@
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 using Michsky.UI.Heat;
 
 // 로비 Canvas의 Profile/Text에 로컬 플레이어 닉네임을 표시한다.
@@ -49,7 +50,20 @@ public class NicknameUIController : MonoBehaviour
             return;
         }
 
-        profileNameText.text = GetCurrentNickname();
+        string nickname = GetCurrentNickname();
+        if (profileNameText.text == nickname)
+        {
+            return;
+        }
+
+        profileNameText.text = nickname;
+
+        // 현재 닉네임을 기준으로 텍스트와 Profile 레이아웃을 즉시 다시 계산한다.
+        LayoutRebuilder.ForceRebuildLayoutImmediate(profileNameText.rectTransform);
+        if (profileNameText.transform.parent is RectTransform profileRectTransform)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(profileRectTransform);
+        }
     }
 
     private void RegisterProfilePopupEvents()
@@ -89,6 +103,12 @@ public class NicknameUIController : MonoBehaviour
         }
 
         string nickname = nicknameInputField.text != null ? nicknameInputField.text.Trim() : string.Empty;
+        // 빈 입력은 기존 닉네임을 유지한다.
+        if (string.IsNullOrEmpty(nickname))
+        {
+            return;
+        }
+
         PlayerPrefs.SetString(NetworkOwnedObjectActivator.NicknamePrefKey, nickname);
         PlayerPrefs.Save();
 

@@ -15,7 +15,7 @@ MonoBehaviour:
   localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
   languageID: en-US
   languageName: English
-  localizedName: English
+  localizedName: English (US)
   tableList:
   - table: {fileID: 11400000, guid: c4d223e438e911a44aecec230da547ea, type: 2}
     tableContent:
@@ -1043,6 +1043,10 @@ MonoBehaviour:
       spriteValue: {fileID: 0}
     - key: UIEnterCode
       value: enter room code
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UINickname
+      value: Enter Nickname
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: UIEnterName

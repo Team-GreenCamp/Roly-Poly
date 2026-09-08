@@ -31,6 +31,7 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private CanvasButton readyButton;
     [SerializeField] private GameObject roomEntryPanel;
     [SerializeField] private TMP_Text roomCodeDisplayText;
+    [SerializeField] private TMP_Text roomNameDisplayText;
     [SerializeField] private string lobbyButtonPanelObjectName = "Button Panel";
     [SerializeField] private string readyButtonObjectName = "Ready Button";
     [SerializeField] private string startButtonObjectName = "Start Button";
@@ -84,6 +85,7 @@ public class LobbyUIController : MonoBehaviour
     private bool readyButtonRuntimeListenerRegistered;
     private string selectedMapChapterId = string.Empty;
     private string selectedMapSceneName = string.Empty;
+    private string activeBackendRoomName = string.Empty;
 
     private readonly List<GameObject> generatedRoomRows = new List<GameObject>();
     private RoomApiClient roomApiClient;
@@ -364,6 +366,7 @@ public class LobbyUIController : MonoBehaviour
         {
             mapCanvasButton = mapButtonObject.GetComponent<CanvasButton>();
         }
+
     }
 
     private void ResolveLobbyActionButtons()
@@ -693,6 +696,7 @@ public class LobbyUIController : MonoBehaviour
         }
 
         defaultMapId = mapId.Trim();
+        UpdateMapButtonDescription();
         selectedMapChapterId = string.IsNullOrWhiteSpace(chapterId) ? string.Empty : chapterId.Trim();
         if (!string.IsNullOrWhiteSpace(sceneName))
         {
@@ -786,6 +790,8 @@ public class LobbyUIController : MonoBehaviour
 
     private void ApplyMapButtonBackground(MapSelection selection, string chapterId)
     {
+        UpdateMapButtonDescription();
+
         Sprite background = selection != null ? selection.buttonBackground : null;
         if (background == null)
         {
@@ -799,6 +805,44 @@ public class LobbyUIController : MonoBehaviour
 
         // 선택 확정 후 로비의 Map Button 배경을 선택한 맵 이미지로 갱신합니다.
         mapBoxButton.SetBackground(background);
+    }
+
+    private void UpdateMapButtonDescription()
+    {
+        if (mapBoxButton == null)
+        {
+            return;
+        }
+
+        string mapId = defaultMapId;
+        if (string.IsNullOrWhiteSpace(mapId))
+        {
+            mapId = NormalizeMapId(selectedMapChapterId);
+        }
+
+        if (string.IsNullOrWhiteSpace(mapId))
+        {
+            return;
+        }
+
+        // 맵별 번역 키를 먼저 지정해 Heat의 언어 변경 갱신도 같은 이름을 사용하게 합니다.
+        mapBoxButton.descriptionLocalizationKey = GetMapDescriptionLocalizationKey(mapId);
+        string mapName = GameLocalization.MapName(mapId);
+        if (!string.Equals(mapBoxButton.buttonDescription, mapName, System.StringComparison.Ordinal))
+        {
+            mapBoxButton.SetDescription(mapName);
+        }
+    }
+
+    private static string GetMapDescriptionLocalizationKey(string mapId)
+    {
+        return mapId switch
+        {
+            "chapter-1" => "MapSurvival",
+            "chapter-2" => "MapSumo",
+            "chapter-3" => "MapFalling",
+            _ => "MapUnspecified"
+        };
     }
 
     private Sprite GetChapterBackground(string chapterId)
@@ -1119,6 +1163,7 @@ public class LobbyUIController : MonoBehaviour
             activeBackendRoomId = joinedRoom.id;
             activeBackendRoomOwnedByHost = false;
             backendConnectedPlayerCount = joinedRoom.currentPlayers;
+            activeBackendRoomName = joinedRoom.name;
             RefreshUI();
             await RefreshRoomsAsync();
             joined = true;
@@ -1184,6 +1229,7 @@ public class LobbyUIController : MonoBehaviour
         await ReleaseBackendRoomAsync();
         sessionManager.Shutdown();
         backendConnectedPlayerCount = -1;
+        activeBackendRoomName = string.Empty;
         isReady = false;
         RefreshUI();
         await RefreshRoomsAsync(true);
@@ -1297,6 +1343,7 @@ public class LobbyUIController : MonoBehaviour
             activeBackendRoomOwnedByHost = true;
             nextRoomHeartbeatTime = Time.unscaledTime + Mathf.Max(1f, roomHeartbeatInterval);
             backendConnectedPlayerCount = room.currentPlayers;
+            activeBackendRoomName = room.name;
             Debug.Log($"방이 등록되었습니다: {room.name}");
             RefreshUI();
             await RefreshRoomsAsync();
@@ -1318,6 +1365,7 @@ public class LobbyUIController : MonoBehaviour
         bool releaseAsHost = activeBackendRoomOwnedByHost;
         activeBackendRoomId = 0;
         activeBackendRoomOwnedByHost = false;
+        activeBackendRoomName = string.Empty;
 
         try
         {
@@ -1487,13 +1535,20 @@ public class LobbyUIController : MonoBehaviour
             addressInputField.interactable = !isBusy;
         }
 
-        if (roomCodeDisplayText != null)
+            if (roomCodeDisplayText != null)
         {
             // Relay 접속 코드를 대기 패널에서 바로 확인할 수 있게 표시합니다.
             roomCodeDisplayText.text = GetDisplayedRoomCode();
         }
 
+        if (roomNameDisplayText != null)
+        {
+            // 대기실 상단에는 실제 백엔드 방 이름을 표시하고, 이름이 없으면 번역된 기본 문구를 사용합니다.
+            roomNameDisplayText.text = isOnline ? GetDisplayedRoomName() : string.Empty;
+        }
+
         UpdateMapButtonInteractable();
+        UpdateMapButtonDescription();
 
         if (roomEntryPanel != null)
         {
@@ -1902,6 +1957,7 @@ public class LobbyUIController : MonoBehaviour
             {
                 activeBackendRoomId = rooms[i].id;
                 backendConnectedPlayerCount = rooms[i].currentPlayers;
+                activeBackendRoomName = rooms[i].name;
 
                 // 게임 씬 전환으로 이 컨트롤러가 재생성되면 호스트 소유 플래그가 유실된다.
                 // 호스트(서버)면 소유권을 복구해 하트비트를 재개하고, 방이 in_game으로 남아 있으면 open으로 되돌린다.
@@ -1976,6 +2032,13 @@ public class LobbyUIController : MonoBehaviour
 
         string joinCode = GetJoinCode();
         return string.IsNullOrWhiteSpace(joinCode) ? "-" : joinCode;
+    }
+
+    private string GetDisplayedRoomName()
+    {
+        return string.IsNullOrWhiteSpace(activeBackendRoomName)
+            ? GameLocalization.Get("RoomUnnamed")
+            : activeBackendRoomName.Trim();
     }
 
     private static string NormalizeRoomCode(string joinCode)

@@ -948,7 +948,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: UIInGame
-      value: "\uAC8C\uC784 \uC9C4\uD589 \uC911"
+      value: "\uC9C4\uD589\uC911\uC778 \uAC8C\uC784"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: UIFiveSeconds
@@ -1017,6 +1017,10 @@ MonoBehaviour:
       spriteValue: {fileID: 0}
     - key: UIEnterCode
       value: "\uB8F8 \uCF54\uB4DC \uC785\uB825"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UINickname
+      value: "\uB2C9\uB124\uC784\uC744 \uC785\uB825\uD558\uC138\uC694"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: UIEnterName

@@ -258,6 +258,7 @@ MonoBehaviour:
   - key: UIRoom
   - key: UICode
   - key: UIEnterCode
+  - key: UINickname
   - key: UIEnterName
   - key: UILoading
   - key: UIPlaceholder

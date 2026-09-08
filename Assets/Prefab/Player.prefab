@@ -70,7 +70,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2196377955
+  GlobalObjectIdHash: 498835207
   InScenePlacedSourceGlobalObjectIdHash: 498835207
   DeferredDespawnTick: 0
   Ownership: 1
@@ -335,8 +335,8 @@ MonoBehaviour:
   - Network Test
   showNameLabel: 1
   showNameLabelOnlyInLobby: 1
-  nameLabelOffset: {x: 0, y: 1.8, z: 0}
-  nameLabelFontSize: 2.5
+  nameLabelOffset: {x: 0, y: 1.5, z: 0}
+  nameLabelFontSize: 1.5
   nameLabelFont: {fileID: 11400000, guid: 306e3d1a41ce2445c8a34c0976610a2a, type: 2}
   nameLabelBackgroundColor: {r: 0, g: 0, b: 0, a: 0.6}
   nameLabelBackgroundPadding: {x: 0.25, y: 0.02}
