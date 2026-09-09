@@ -487,7 +487,7 @@ MonoBehaviour:
   normalCG: {fileID: 5958917}
   highlightCG: {fileID: 1682302205}
   useSounds: 1
-  useLocalization: 0
+  useLocalization: 1
   fadingMultiplier: 8
   onHotkeyPress:
     m_PersistentCalls:
@@ -15977,7 +15977,7 @@ MonoBehaviour:
   normalCG: {fileID: 277657591}
   highlightCG: {fileID: 1237551558}
   useSounds: 1
-  useLocalization: 0
+  useLocalization: 1
   fadingMultiplier: 8
   onHotkeyPress:
     m_PersistentCalls:
@@ -38806,7 +38806,7 @@ MonoBehaviour:
   normalCG: {fileID: 709758216}
   highlightCG: {fileID: 362575451}
   useSounds: 1
-  useLocalization: 0
+  useLocalization: 1
   fadingMultiplier: 8
   onHotkeyPress:
     m_PersistentCalls:
@@ -70549,7 +70549,7 @@ MonoBehaviour:
   normalCG: {fileID: 1350790589}
   highlightCG: {fileID: 981833484}
   useSounds: 1
-  useLocalization: 0
+  useLocalization: 1
   fadingMultiplier: 8
   onHotkeyPress:
     m_PersistentCalls:

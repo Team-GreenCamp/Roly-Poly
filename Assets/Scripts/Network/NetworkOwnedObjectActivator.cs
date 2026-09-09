@@ -1028,7 +1028,17 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
+        bool isNewCameraTarget = boundCamera != cinemachineCamera || cinemachineCamera.Follow != cameraRoot;
         cinemachineCamera.Follow = cameraRoot;
+
+        // 새 맵에서 월드 기준 궤도 카메라를 연결할 때만 플레이어 등 뒤로 맞춥니다.
+        var orbitalFollow = cinemachineCamera.GetComponent<CinemachineOrbitalFollow>();
+        if (isNewCameraTarget && orbitalFollow != null &&
+            orbitalFollow.TrackerSettings.BindingMode == Unity.Cinemachine.TargetTracking.BindingMode.WorldSpace)
+        {
+            orbitalFollow.HorizontalAxis.Value = orbitalFollow.HorizontalAxis.ClampValue(transform.eulerAngles.y);
+            cinemachineCamera.PreviousStateIsValid = false;
+        }
 
         // Pan Tilt 카메라는 LookAt을 강제로 잡으면 수동 회전 입력이 꼬일 수 있다.
         if (cinemachineCamera.GetComponent<CinemachinePanTilt>() == null)

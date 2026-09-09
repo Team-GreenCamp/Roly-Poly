@@ -119,6 +119,15 @@ public class SurvivalHudController : MonoBehaviour
             return;
         }
 
+        // 레이스에서는 기존 경고 영역을 남은 시간과 완주 상태 표시에 사용합니다.
+        if (gameManager.IsRace)
+        {
+            GameLocalization.Set(suddenDeathText, gameManager.LocalRaceFinished ? "HudRaceFinished" : "HudRaceTimer",
+                Mathf.CeilToInt((float)gameManager.RaceRemaining), gameManager.RaceFinishCount, gameManager.TotalPlayerCount);
+            SetActiveSafe(SuddenDeathRoot, true);
+            return;
+        }
+
         if (gameManager.IsSuddenDeath)
         {
             if (!suddenDeathAnnounced)
@@ -217,7 +226,7 @@ public class SurvivalHudController : MonoBehaviour
         bool show = state == SurvivalGameManager.MatchState.Countdown
             || state == SurvivalGameManager.MatchState.Playing;
 
-        SetActiveSafe(alivePanel, show);
+        SetActiveSafe(alivePanel, show && !gameManager.IsRace);
 
         if (show)
         {

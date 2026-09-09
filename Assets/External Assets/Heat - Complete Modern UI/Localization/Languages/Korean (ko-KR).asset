@@ -750,6 +750,14 @@ MonoBehaviour:
       value: "\uD50C\uB808\uC774\uC5B4 {0} \uCD94\uB77D..."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HudRaceTimer
+      value: "\ub0a8\uc740 \uc2dc\uac04 {0}\ucd08  |  \uc644\uc8fc {1}/{2}"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceFinished
+      value: "\uc644\uc8fc! \ub2e4\ub978 \ucc38\uac00\uc790\ub97c \uae30\ub2e4\ub9ac\ub294 \uc911... {0}\ucd08"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: HudAlive
       value: "\uC0DD\uC874 {0}/{1}"
       audioValue: {fileID: 0}
@@ -896,7 +904,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumo
-      value: "\uC2A4\uBAA8 \uB9C1\uC544\uC6C3"
+      value: "\uc7a5\uc560\ubb3c \ub808\uc774\uc2a4"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFalling
@@ -1057,7 +1065,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc
-      value: "\uBC00\uACE0 \uB358\uC838\uC11C \uB9C1 \uBC16\uC73C\uB85C! \uB9C1\uC740
+      value: "\uc6c0\uc9c1\uc774\ub294 \uc7a5\uc560\ubb3c\uc744 \ud53c\ud574 \uacb0\uc2b9\uc120\uae4c\uc9c0 \ub2ec\ub9ac\uc138\uc694. \ub5a8\uc5b4\uc9c0\uba74 \ub9c8\uc9c0\ub9c9 \uccb4\ud06c\ud3ec\uc778\ud2b8\uc5d0\uc11c \ub2e4\uc2dc \uc2dc\uc791\ud569\ub2c8\ub2e4."
         \uC810\uC810 \uC881\uC544\uC9C4\uB2E4"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}

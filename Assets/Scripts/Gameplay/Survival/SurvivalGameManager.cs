@@ -16,7 +16,7 @@ using UnityEngine;
 // 접속 종료 = 탈락. 호스트 단독(solo) 테스트에서는 생존 1명으로 종료하지 않고, 자신이 떨어져야 종료된다.
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
-public class SurvivalGameManager : NetworkBehaviour
+public partial class SurvivalGameManager : NetworkBehaviour
 {
     public enum MatchState : byte { Waiting = 0, Countdown = 1, Playing = 2, Finished = 3 }
 
@@ -186,7 +186,8 @@ public class SurvivalGameManager : NetworkBehaviour
     private void Update()
     {
         UpdateLocalInputLock();
-        UpdateServerKillSweep();
+        if (raceMode) UpdateRace();
+        else UpdateServerKillSweep();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -242,7 +243,7 @@ public class SurvivalGameManager : NetworkBehaviour
         matchState.Value = (byte)MatchState.Playing;
 
         // 서든데스 예약: 정체(둘 다 싸움을 피함) 방지. 시간이 되면 발판을 바깥쪽부터 무너뜨린다.
-        if (suddenDeathStartSeconds > 0f)
+        if (!raceMode && suddenDeathStartSeconds > 0f)
         {
             suddenDeathStartTime.Value = NetworkManager.ServerTime.Time + suddenDeathStartSeconds;
             StartCoroutine(ServerSuddenDeathFlow());
@@ -435,6 +436,7 @@ public class SurvivalGameManager : NetworkBehaviour
 
     private void CheckWinnerOnServer()
     {
+        if (raceMode) { CheckRaceFinished(); return; }
         if (soloMode)
         {
             // 단독 테스트: 생존 1명으로는 절대 종료하지 않는다(시작 즉시 승리 방지).
@@ -468,7 +470,7 @@ public class SurvivalGameManager : NetworkBehaviour
         matchState.Value = (byte)MatchState.Finished;
 
         // 세션 승수 갱신 + 전 클라이언트 동기화(로비 이름표 ★ 표시용).
-        int totalWins = SurvivalWinTracker.AddWin(winner);
+        int totalWins = winner == ulong.MaxValue ? 0 : SurvivalWinTracker.AddWin(winner);
         AnnounceWinnerClientRpc(winner, totalWins);
 
         // 시상대: 1등=승자, 2등=가장 늦게 탈락, 3등=그 다음. 없으면 ulong.MaxValue.
@@ -480,6 +482,11 @@ public class SurvivalGameManager : NetworkBehaviour
             if (found == 0) second = eliminationOrder[i];
             else third = eliminationOrder[i];
             found++;
+        }
+        if (raceMode)
+        {
+            second = raceFinishOrder.Count > 1 ? raceFinishOrder[1] : ulong.MaxValue;
+            third = raceFinishOrder.Count > 2 ? raceFinishOrder[2] : ulong.MaxValue;
         }
         ShowPodiumClientRpc(winner, second, third);
 
@@ -862,7 +869,7 @@ public class SurvivalGameManager : NetworkBehaviour
         PlayerController player = ResolveLocalPlayer();
         if (player != null)
         {
-            player.SetGameplayInputEnabled(State == MatchState.Playing);
+            player.SetGameplayInputEnabled(State == MatchState.Playing && !localRaceFinished);
         }
     }
 

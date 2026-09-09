@@ -779,6 +779,14 @@ MonoBehaviour:
       value: Player {0} fell...
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HudRaceTimer
+      value: "TIME {0}s  |  FINISHED {1}/{2}"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceFinished
+      value: "FINISHED! Waiting for racers... {0}s"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: HudAlive
       value: Alive {0}/{1}
       audioValue: {fileID: 0}
@@ -922,7 +930,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumo
-      value: Sumo Ring Out
+      value: "Obstacle Race"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFalling
@@ -1082,7 +1090,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc
-      value: Push and throw opponents out of the shrinking ring!
+      value: "Dodge moving obstacles and race to the finish. Falling returns you to the last checkpoint."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFallingDesc

@@ -805,6 +805,19 @@ public class LobbyUIController : MonoBehaviour
 
         // 선택 확정 후 로비의 Map Button 배경을 선택한 맵 이미지로 갱신합니다.
         mapBoxButton.SetBackground(background);
+
+        // 원본 비율로 영역을 꽉 채우고, 넘치는 가장자리는 기존 배경 마스크로 자릅니다.
+        CanvasImage image = mapBoxButton.backgroundObj;
+        if (image != null)
+        {
+            image.type = CanvasImage.Type.Simple;
+            image.preserveAspect = true;
+            image.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            if (!image.TryGetComponent<UnityEngine.UI.AspectRatioFitter>(out var fitter))
+                fitter = image.gameObject.AddComponent<UnityEngine.UI.AspectRatioFitter>();
+            fitter.aspectRatio = background.rect.width / background.rect.height;
+            fitter.aspectMode = UnityEngine.UI.AspectRatioFitter.AspectMode.EnvelopeParent;
+        }
     }
 
     private void UpdateMapButtonDescription()
@@ -966,6 +979,8 @@ public class LobbyUIController : MonoBehaviour
         }
 
         EnsureDefaultMapSelection();
+        // 입력 패널이 닫히기 전에 방 이름을 보관합니다.
+        string requestedRoomName = GetRoomName();
         ShowLoading("LobbyCreating");
 
         try
@@ -982,8 +997,11 @@ public class LobbyUIController : MonoBehaviour
             if (sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
             {
                 PublishCurrentMapSelectionIfHost();
+                // 백엔드 등록이 지연되거나 실패해도 생성한 방 이름을 표시합니다.
+                activeBackendRoomName = requestedRoomName;
+                RefreshUI();
                 ShowWaitingRoomAfterHostStarted();
-                await RegisterHostedRoomAsync();
+                await RegisterHostedRoomAsync(requestedRoomName);
             }
         }
         catch (System.Exception exception)
@@ -1014,9 +1032,7 @@ public class LobbyUIController : MonoBehaviour
         if (string.IsNullOrWhiteSpace(joinCode))
         {
             // 참가 코드를 입력하지 않았으면 접속을 시도하지 않습니다.
-            // 확인 버튼이 무조건 실행하는 로딩 팝업/패널 닫힘을 한 프레임 뒤에 되돌려 무한 로딩을 막습니다.
             SetRoomListStatus("LobbyEnterCode");
-            StartCoroutine(CancelJoinTransitionNextFrame());
             return;
         }
 
@@ -1026,6 +1042,8 @@ public class LobbyUIController : MonoBehaviour
             isJoiningRoom = true;
             RefreshUI();
             ShowLoading("LobbyChecking");
+            // 유효한 코드일 때만 로딩과 입력 패널 전환을 시작합니다.
+            ResolveJoinPanelManager()?.HideCurrentPanel();
 
             RoomApiClient.RoomDto room = null;
             try
@@ -1321,7 +1339,7 @@ public class LobbyUIController : MonoBehaviour
         return false;
     }
 
-    private async Task RegisterHostedRoomAsync()
+    private async Task RegisterHostedRoomAsync(string roomName)
     {
         EnsureDefaultMapSelection();
 
@@ -1330,7 +1348,7 @@ public class LobbyUIController : MonoBehaviour
             // 방 목록에서 선택 입장할 수 있도록 현재 접속 정보를 백엔드에 저장합니다.
             RoomApiClient.RoomDto room = await GetRoomApiClient().CreateRoomAsync(new RoomApiClient.CreateRoomRequest
             {
-                name = GetRoomName(),
+                name = roomName,
                 connectionType = useRelayForRoomList ? "relay" : "local",
                 connectionValue = useRelayForRoomList ? sessionManager.CurrentJoinCode : sessionManager.LocalConnectionValue,
                 mapId = defaultMapId,
@@ -1343,7 +1361,7 @@ public class LobbyUIController : MonoBehaviour
             activeBackendRoomOwnedByHost = true;
             nextRoomHeartbeatTime = Time.unscaledTime + Mathf.Max(1f, roomHeartbeatInterval);
             backendConnectedPlayerCount = room.currentPlayers;
-            activeBackendRoomName = room.name;
+            activeBackendRoomName = string.IsNullOrWhiteSpace(room.name) ? roomName : room.name;
             Debug.Log($"방이 등록되었습니다: {room.name}");
             RefreshUI();
             await RefreshRoomsAsync();
@@ -1731,15 +1749,6 @@ public class LobbyUIController : MonoBehaviour
         }
     }
 
-    private System.Collections.IEnumerator CancelJoinTransitionNextFrame()
-    {
-        // 확인 버튼의 PlayIn(로딩)/HideCurrentPanel(패널 닫힘)이 먼저 실행되도록 한 프레임 기다립니다.
-        yield return null;
-
-        ForceHideLoading();
-        ReopenJoinPanel();
-    }
-
     private void ReopenJoinPanel()
     {
         HeatPanelManager panelManager = ResolveJoinPanelManager();
@@ -1957,7 +1966,9 @@ public class LobbyUIController : MonoBehaviour
             {
                 activeBackendRoomId = rooms[i].id;
                 backendConnectedPlayerCount = rooms[i].currentPlayers;
-                activeBackendRoomName = rooms[i].name;
+                // 이름이 누락된 응답으로 이미 확보한 방 이름을 지우지 않습니다.
+                if (!string.IsNullOrWhiteSpace(rooms[i].name))
+                    activeBackendRoomName = rooms[i].name;
 
                 // 게임 씬 전환으로 이 컨트롤러가 재생성되면 호스트 소유 플래그가 유실된다.
                 // 호스트(서버)면 소유권을 복구해 하트비트를 재개하고, 방이 in_game으로 남아 있으면 open으로 되돌린다.
