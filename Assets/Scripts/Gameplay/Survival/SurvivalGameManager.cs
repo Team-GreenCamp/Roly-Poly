@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Cinemachine;
@@ -127,7 +127,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
         NetworkManager != null && suddenDeathStartTime.Value > 0
         && NetworkManager.ServerTime.Time >= suddenDeathStartTime.Value;
 
-    public bool IsEliminated(ulong clientId) => eliminatedClients.Contains(clientId);
+    public bool IsEliminated(ulong clientId) => IsServer ? !aliveClients.Contains(clientId) : eliminatedClients.Contains(clientId);
 
     private void Awake()
     {
@@ -188,6 +188,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
         UpdateLocalInputLock();
         if (raceMode) UpdateRace();
         else UpdateServerKillSweep();
+        UpdateTimedSurvival();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -242,8 +243,10 @@ public partial class SurvivalGameManager : NetworkBehaviour
 
         matchState.Value = (byte)MatchState.Playing;
 
+        if (timedCoinSurvival) survivalDeadline.Value = NetworkManager.ServerTime.Time + 120;
+
         // 서든데스 예약: 정체(둘 다 싸움을 피함) 방지. 시간이 되면 발판을 바깥쪽부터 무너뜨린다.
-        if (!raceMode && suddenDeathStartSeconds > 0f)
+        if (!raceMode && !timedCoinSurvival && suddenDeathStartSeconds > 0f)
         {
             suddenDeathStartTime.Value = NetworkManager.ServerTime.Time + suddenDeathStartSeconds;
             StartCoroutine(ServerSuddenDeathFlow());
@@ -437,6 +440,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
     private void CheckWinnerOnServer()
     {
         if (raceMode) { CheckRaceFinished(); return; }
+        if (timedCoinSurvival && aliveClients.Count == 0) { FinishMatchOnServer(ulong.MaxValue); return; }
         if (soloMode)
         {
             // 단독 테스트: 생존 1명으로는 절대 종료하지 않는다(시작 즉시 승리 방지).
@@ -466,6 +470,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
 
     private void FinishMatchOnServer(ulong winner)
     {
+        if (State == MatchState.Finished) return;
         winnerClientId.Value = winner;
         matchState.Value = (byte)MatchState.Finished;
 
@@ -487,6 +492,11 @@ public partial class SurvivalGameManager : NetworkBehaviour
         {
             second = raceFinishOrder.Count > 1 ? raceFinishOrder[1] : ulong.MaxValue;
             third = raceFinishOrder.Count > 2 ? raceFinishOrder[2] : ulong.MaxValue;
+        }
+        if (coinFinishOrder.Count > 0)
+        {
+            second = coinFinishOrder.Count > 1 ? coinFinishOrder[1] : ulong.MaxValue;
+            third = coinFinishOrder.Count > 2 ? coinFinishOrder[2] : ulong.MaxValue;
         }
         ShowPodiumClientRpc(winner, second, third);
 

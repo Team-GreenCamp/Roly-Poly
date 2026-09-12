@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -41,7 +41,7 @@ public static class DetailFallingFloors
         Debug.Log("FALLING DETAIL PASS: "+tiles+" ProBuilder tiles, "+scenery+" scenery bodies; original physics preserved.");
     }
 
-    private static void ReplaceBox(GameObject obj,float bevel,bool glass)
+    public static void ReplaceBox(GameObject obj,float bevel,bool glass)
     {
         Vector3 scale=obj.transform.localScale;
         var material=obj.GetComponent<MeshRenderer>().sharedMaterial;
@@ -51,7 +51,8 @@ public static class DetailFallingFloors
         Object.DestroyImmediate(template.gameObject);
         // 기존 큐브 메시를 비워 ProBuilder의 Reset이 미초기화 면을 재구축하지 않도록 합니다.
         obj.GetComponent<MeshFilter>().sharedMesh=null;
-        var mesh=obj.AddComponent<ProBuilderMesh>();
+        var mesh=obj.GetComponent<ProBuilderMesh>();
+        if(mesh==null)mesh=obj.AddComponent<ProBuilderMesh>();
         mesh.RebuildWithPositionsAndFaces(points,faces);
         obj.GetComponent<MeshRenderer>().sharedMaterials=new[]{material,glass?material:Mat("Cream")};
         mesh.ToMesh();mesh.Refresh();

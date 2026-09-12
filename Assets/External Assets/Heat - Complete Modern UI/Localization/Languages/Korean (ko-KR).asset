@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -750,6 +750,14 @@ MonoBehaviour:
       value: "\uD50C\uB808\uC774\uC5B4 {0} \uCD94\uB77D..."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HudSurvivalBonus
+      value: "\ub0a8\uc740 \uc2dc\uac04 {0}\ucd08 | \uc678\uacfd \ud551\ud06c \ucf54\uc778 3\uc810!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSurvivalTimer
+      value: "\ub0a8\uc740 \uc2dc\uac04 {0}\ucd08 | \uc2dc\uac04 \uc885\ub8cc \uc2dc \ucf54\uc778 \uc21c\uc704\ub85c \uacb0\uc815"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: HudRaceTimer
       value: "\ub0a8\uc740 \uc2dc\uac04 {0}\ucd08  |  \uc644\uc8fc {1}/{2}"
       audioValue: {fileID: 0}
@@ -1060,8 +1068,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSurvivalDesc
-      value: "\uCD5C\uD6C4 1\uC778 \uC0DD\uC874 \xB7 \uC2DC\uAC04\uC774 \uC9C0\uB098\uBA74
-        \uBC14\uB2E5\uC774 \uBB34\uB108\uC9C4\uB2E4"
+      value: "\ubc1f\uc73c\uba74 \uc0ac\ub77c\uc9c0\ub294 \ubc1c\ud310\uc740 \uc7a0\uc2dc \ud6c4 \uc7ac\uc0dd\uc131\ub429\ub2c8\ub2e4. \ucd5c\ud6c4 \uc0dd\uc874\uc790\uac00 \uc2b9\ub9ac\ud558\uba70, 2\ubd84\uc774 \uc9c0\ub098\uba74 \ucf54\uc778 \uc810\uc218\ub85c \uc2b9\uc790\ub97c \uacb0\uc815\ud569\ub2c8\ub2e4."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc

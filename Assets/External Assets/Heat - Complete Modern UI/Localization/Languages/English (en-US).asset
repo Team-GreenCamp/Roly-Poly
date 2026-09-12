@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -779,6 +779,14 @@ MonoBehaviour:
       value: Player {0} fell...
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HudSurvivalBonus
+      value: "Time left: {0}s | Outer pink coins: 3 points!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSurvivalTimer
+      value: "Time left: {0}s | Coins decide at time limit"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: HudRaceTimer
       value: "TIME {0}s  |  FINISHED {1}/{2}"
       audioValue: {fileID: 0}
@@ -1086,7 +1094,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSurvivalDesc
-      value: Be the last survivor. The floor collapses over time.
+      value: "Stepped tiles disappear and regenerate. Be the last survivor, or lead in coins when the 2-minute timer ends."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc

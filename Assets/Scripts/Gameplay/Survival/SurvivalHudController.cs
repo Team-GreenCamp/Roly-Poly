@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -124,6 +124,13 @@ public class SurvivalHudController : MonoBehaviour
         {
             GameLocalization.Set(suddenDeathText, gameManager.LocalRaceFinished ? "HudRaceFinished" : "HudRaceTimer",
                 Mathf.CeilToInt((float)gameManager.RaceRemaining), gameManager.RaceFinishCount, gameManager.TotalPlayerCount);
+            SetActiveSafe(SuddenDeathRoot, true);
+            return;
+        }
+
+        if (gameManager.IsTimedCoinSurvival)
+        {
+            GameLocalization.Set(suddenDeathText, gameManager.SurvivalRemaining <= 30 ? "HudSurvivalBonus" : "HudSurvivalTimer", Mathf.CeilToInt((float)gameManager.SurvivalRemaining));
             SetActiveSafe(SuddenDeathRoot, true);
             return;
         }

@@ -25569,7 +25569,7 @@ MonoBehaviour:
   - chapterId: Chapter 3
     mapId: chapter-3
     sceneName: Falling Floors
-    buttonBackground: {fileID: 21300000, guid: b40193ac6ad554f14a52eee5d7ab0e6f, type: 3}
+    buttonBackground: {fileID: 21300000, guid: 4df290bf0dd74254a6a8350e20936747, type: 3}
   loadingRoot: {fileID: 1894725635}
   loadingMessageText: {fileID: 0}
   roomNameInputField: {fileID: 185845169}
@@ -71687,7 +71687,7 @@ MonoBehaviour:
         m_Calls: []
   - chapterID: Chapter 3
     title: "\uB5A8\uC5B4\uC9C0\uB294 \uBC14\uB2E5"
-    background: {fileID: 21300000, guid: b40193ac6ad554f14a52eee5d7ab0e6f, type: 3}
+    background: {fileID: 21300000, guid: 4df290bf0dd74254a6a8350e20936747, type: 3}
     description: "\uCE35\uCE35\uC774 \uBB34\uB108\uC9C0\uB294 \uBC14\uB2E5\uC5D0\uC11C
       \uB05D\uAE4C\uC9C0 \uBC84\uD2F0\uAE30"
     defaultState: 1

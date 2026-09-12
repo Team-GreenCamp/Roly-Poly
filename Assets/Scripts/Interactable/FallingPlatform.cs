@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -9,7 +9,7 @@ using UnityEngine;
 // 따라서 밟은 플레이어의 소유 클라이언트가 서버에 낙하를 요청하고, 서버만 물리를 굴려 NetworkTransform으로
 // 위치를 모두에게 전파합니다. (NetworkObject가 없으면 기존처럼 각 클라이언트가 로컬로 처리합니다.)
 [RequireComponent(typeof(NetworkObject))]
-public class FallingPlatform : NetworkBehaviour
+public partial class FallingPlatform : NetworkBehaviour
 {
     [Header("설정")]
     [Tooltip("플레이어가 밟고 나서 떨어질 때까지의 대기 시간 (초)")]
@@ -65,7 +65,7 @@ public class FallingPlatform : NetworkBehaviour
 
     // 실제로 물리 낙하가 시작됐는지(fallDelay 유예 이후 rb.isKinematic이 풀린 시점).
     // 서버/오프라인 로컬 판정용 — 밟은 뒤 유예 동안에는 코인을 조기 회수하지 않도록 IsFalling과 구분한다.
-    public bool HasPhysicallyDropped => rb != null && !rb.isKinematic;
+    public bool HasPhysicallyDropped => RegenerationHidden || (rb != null && !rb.isKinematic);
 
     public override void OnNetworkSpawn()
     {
@@ -169,7 +169,7 @@ public class FallingPlatform : NetworkBehaviour
                 continue;
             }
 
-            if (tintWeight <= 0f && transparencyWeight <= 0f)
+            if (tintWeight <= 0f && transparencyWeight <= 0f && regenerationOpacity >= 1f)
             {
                 tintRenderer.SetPropertyBlock(null); // 블록 제거 → 머티리얼 원래 색 복원
                 continue;
@@ -178,13 +178,14 @@ public class FallingPlatform : NetworkBehaviour
             Color tinted = Color.Lerp(tintOriginalColors[i], steppedTintColor, tintWeight);
             // 색 경고와 별개로 원래 불투명 상태에서 천천히 반투명 상태로 전환한다.
             tinted.a = Mathf.Lerp(tintOriginalColors[i].a, steppedAlpha, transparencyWeight);
+            tinted.a *= regenerationOpacity;
             tintBlock.Clear();
             tintBlock.SetColor(BaseColorId, tinted);
             tintBlock.SetColor(LegacyColorId, tinted);
             tintRenderer.SetPropertyBlock(tintBlock);
         }
 
-        if (tintWeight <= 0f && transparencyWeight <= 0f)
+        if (tintWeight <= 0f && transparencyWeight <= 0f && regenerationOpacity >= 1f)
         {
             RestoreOriginalMaterials();
         }
@@ -339,6 +340,8 @@ public class FallingPlatform : NetworkBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         if (!triggerByStepping) return;
+        if (respawnTweenSeconds > 0f && SurvivalGameManager.Instance != null
+            && SurvivalGameManager.Instance.State != SurvivalGameManager.MatchState.Playing) return;
         if (!collision.gameObject.CompareTag("Player")) return;
         // 위에서 밟았을 때만 떨어집니다.
         if (collision.transform.position.y <= transform.position.y) return;
@@ -375,6 +378,11 @@ public class FallingPlatform : NetworkBehaviour
     // 서버만 물리를 굴리고, 결과 위치는 NetworkTransform이 클라이언트에 전파합니다.
     private IEnumerator ServerFallRoutine()
     {
+        if (respawnTweenSeconds > 0f && respawnDelay > 0f)
+        {
+            yield return RegenerateRoutine();
+            yield break;
+        }
         yield return new WaitForSeconds(fallDelay);
 
         rb.isKinematic = false;
@@ -423,6 +431,11 @@ public class FallingPlatform : NetworkBehaviour
         if (playFallVfx)
         {
             GameFeedback.PlatformFallAt(transform.position + Vector3.up * 0.3f);
+        }
+        if (respawnTweenSeconds > 0f && respawnDelay > 0f)
+        {
+            yield return RegenerateRoutine();
+            yield break;
         }
         yield return new WaitForSeconds(fallDelay);
 

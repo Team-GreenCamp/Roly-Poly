@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -57,6 +57,13 @@ public class SurvivalCoinManager : NetworkBehaviour
     // 로컬에서 줍기 요청을 보낸 코인(응답 전 중복 RPC 방지).
     private readonly HashSet<int> pendingPickups = new HashSet<int>();
 
+    // 마지막 30초에는 외곽에 최대 8개의 3점 코인을 추가합니다.
+    private bool bonusStarted;
+    private Material bonusMaterial;
+    public bool IsBonusTime => SurvivalGameManager.Instance != null
+        && SurvivalGameManager.Instance.IsTimedCoinSurvival
+        && SurvivalGameManager.Instance.State == SurvivalGameManager.MatchState.Playing
+        && SurvivalGameManager.Instance.SurvivalRemaining <= 30;
     private Material coinMaterial;
     private int nextCoinId;
     private float nextWaveTime;
@@ -64,6 +71,9 @@ public class SurvivalCoinManager : NetworkBehaviour
 
     public int LocalScore =>
         NetworkManager != null && scores.TryGetValue(NetworkManager.LocalClientId, out int score) ? score : 0;
+
+    private readonly Dictionary<ulong, double> scoreReachedAt = new Dictionary<ulong, double>();
+    public double GetScoreReachedAt(ulong clientId) => scoreReachedAt.TryGetValue(clientId, out double time) ? time : 0;
 
     public int GetScore(ulong clientId) => scores.TryGetValue(clientId, out int score) ? score : 0;
 
@@ -84,6 +94,7 @@ public class SurvivalCoinManager : NetworkBehaviour
             Destroy(coinMaterial);
         }
 
+        if (bonusMaterial != null) Destroy(bonusMaterial);
         base.OnDestroy();
     }
 
@@ -119,6 +130,11 @@ public class SurvivalCoinManager : NetworkBehaviour
         }
 
         ReclaimCoinsOnFallenPlatforms();
+        if (IsBonusTime && !bonusStarted)
+        {
+            bonusStarted = true;
+            SpawnWaveOnServer(true);
+        }
 
         if (Time.time < nextWaveTime)
         {
@@ -127,6 +143,7 @@ public class SurvivalCoinManager : NetworkBehaviour
 
         nextWaveTime = Time.time + Mathf.Max(2f, respawnInterval);
         SpawnWaveOnServer();
+        if (IsBonusTime) SpawnWaveOnServer(true);
     }
 
     // 서버: 코인이 놓인 발판이 무너지기 시작했거나 despawn되면 코인도 즉시 회수한다(공중 부양 방지).
@@ -153,9 +170,11 @@ public class SurvivalCoinManager : NetworkBehaviour
         }
     }
 
-    private void SpawnWaveOnServer()
+    private void SpawnWaveOnServer(bool bonus = false)
     {
-        int toSpawn = maxActiveCoins - activeCoins.Count;
+        int bonusCount = 0;
+        foreach (var coin in activeCoins.Values) if (coin.value == 3 && IsBonusTime) bonusCount++;
+        int toSpawn = bonus ? 8 - bonusCount : maxActiveCoins - activeCoins.Count;
         if (toSpawn <= 0)
         {
             return;
@@ -168,23 +187,30 @@ public class SurvivalCoinManager : NetworkBehaviour
         float maxDistance = 0.01f;
         for (int i = 0; i < platforms.Length; i++)
         {
+            if (platforms[i] != null)
+            {
+                Vector3 offset = platforms[i].transform.position - transform.position;
+                maxDistance = Mathf.Max(maxDistance, Mathf.Max(Mathf.Abs(offset.x), Mathf.Abs(offset.z)));
+            }
             if (platforms[i] == null || platforms[i].IsFalling)
             {
                 continue;
             }
 
             candidates.Add(platforms[i]);
-            maxDistance = Mathf.Max(maxDistance,
-                Vector3.Distance(platforms[i].transform.position, transform.position));
+
         }
 
         // 무작위 순서로 뽑되 기존 코인과 너무 가까운 자리는 건너뛴다.
-        for (int i = candidates.Count - 1; i > 0 && toSpawn > 0; i--)
+        for (int i = candidates.Count - 1; i >= 0 && toSpawn > 0; i--)
         {
             int j = Random.Range(0, i + 1);
             (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
 
             FallingPlatform platform = candidates[i];
+            Vector3 delta = platform.transform.position - transform.position;
+            float edgeDistance = Mathf.Max(Mathf.Abs(delta.x), Mathf.Abs(delta.z)) / maxDistance;
+            if (bonus && edgeDistance < .8f) continue;
             Vector3 position = platform.transform.position + Vector3.up * coinHeightOffset;
             if (IsNearExistingCoin(position))
             {
@@ -192,7 +218,7 @@ public class SurvivalCoinManager : NetworkBehaviour
             }
 
             float normalizedDistance = Vector3.Distance(platform.transform.position, transform.position) / maxDistance;
-            int value = normalizedDistance >= outerDistanceThreshold ? outerCoinValue : innerCoinValue;
+            int value = bonus ? 3 : (normalizedDistance >= outerDistanceThreshold ? outerCoinValue : innerCoinValue);
 
             int id = nextCoinId++;
             AddCoinLocal(id, position, value);
@@ -295,6 +321,12 @@ public class SurvivalCoinManager : NetworkBehaviour
         }
 
         ulong senderClientId = rpcParams.Receive.SenderClientId;
+        var match = SurvivalGameManager.Instance;
+        // 종료/탈락 후 도착한 요청이나 플레이어가 없는 요청은 점수에 반영하지 않습니다.
+        if (match == null || match.State != SurvivalGameManager.MatchState.Playing
+            || match.IsEliminated(senderClientId) || (match.IsTimedCoinSurvival && match.SurvivalRemaining <= 0)
+            || !NetworkManager.ConnectedClients.TryGetValue(senderClientId, out var sender) || sender.PlayerObject == null
+            || (coin.platform != null && coin.platform.HasPhysicallyDropped)) return;
 
         // 위치 검증: NOA 동기화로 서버에도 플레이어 트랜스폼이 반영되므로 거리로 판별한다.
         // (지연 동안의 이동을 감안해 넉넉한 반경. 신원은 SenderClientId라 남의 코인 대리 획득은 불가.)
@@ -311,6 +343,7 @@ public class SurvivalCoinManager : NetworkBehaviour
         scores.TryGetValue(senderClientId, out int score);
         score += coin.value;
         scores[senderClientId] = score;
+        scoreReachedAt[senderClientId] = NetworkManager.ServerTime.Time;
 
         Vector3 coinPosition = coin.position;
         RemoveCoinLocal(coinId);
@@ -417,7 +450,7 @@ public class SurvivalCoinManager : NetworkBehaviour
         disc.transform.SetParent(root.transform, false);
         // 세워진 동전 모양: 눕힌 원판을 X축으로 90° 세우고 루트를 Y축으로 회전시킨다.
         disc.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-        float diameter = value >= outerCoinValue ? 0.6f : 0.45f; // 고가치 코인은 조금 크게
+        float diameter = value > 1 ? 0.8f : 0.45f; // 고가치 코인은 조금 크게
         disc.transform.localScale = new Vector3(diameter, 0.04f, diameter);
 
         if (coinMaterial == null)
@@ -432,7 +465,13 @@ public class SurvivalCoinManager : NetworkBehaviour
             }
         }
 
-        disc.GetComponent<Renderer>().sharedMaterial = coinMaterial;
+        if (value > 1 && bonusMaterial == null)
+        {
+            bonusMaterial = new Material(coinMaterial);
+            bonusMaterial.color = new Color(1f, .25f, .65f);
+            bonusMaterial.SetColor("_EmissionColor", new Color(1f, .12f, .45f));
+        }
+        disc.GetComponent<Renderer>().sharedMaterial = value > 1 ? bonusMaterial : coinMaterial;
         return root;
     }
 

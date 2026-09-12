@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -25,6 +25,15 @@ namespace Michsky.UI.Heat
 
         public void UpdateBackgroundRect() 
         { 
+            // 원본 이미지 비율로 패널을 채워 좌우 여백과 늘어짐을 방지합니다.
+            if (backgroundImage != null && backgroundImage.sprite != null)
+            {
+                var fitter = backgroundImage.GetComponent<AspectRatioFitter>();
+                if (fitter == null) fitter = backgroundImage.gameObject.AddComponent<AspectRatioFitter>();
+                fitter.aspectRatio = backgroundImage.sprite.rect.width / backgroundImage.sprite.rect.height;
+                fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                backgroundImage.preserveAspect = true;
+            }
             chapterManager.currentBackgroundRect = backgroundRect;
             chapterManager.DoStretch();
         }
