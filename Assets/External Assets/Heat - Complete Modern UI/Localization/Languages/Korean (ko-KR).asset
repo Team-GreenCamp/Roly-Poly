@@ -750,6 +750,14 @@ MonoBehaviour:
       value: "\uD50C\uB808\uC774\uC5B4 {0} \uCD94\uB77D..."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HudSurvivalRule
+      value: "시간 종료 시 코인 순위로 결정"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSurvivalBonusRule
+      value: "외곽 핑크 코인 3점!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: HudSurvivalBonus
       value: "\ub0a8\uc740 \uc2dc\uac04 {0}\ucd08 | \uc678\uacfd \ud551\ud06c \ucf54\uc778 3\uc810!"
       audioValue: {fileID: 0}

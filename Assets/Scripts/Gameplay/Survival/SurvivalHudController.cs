@@ -42,6 +42,10 @@ public class SurvivalHudController : MonoBehaviour
     [Tooltip("서든데스(붕괴 시작) 몇 초 전부터 경고 타이머를 표시할지.")]
     [SerializeField] private float suddenDeathWarnSeconds = 15f;
 
+    [Header("제한시간 (상단 중앙, 선택)")]
+    [SerializeField] private GameObject matchTimerPanel;
+    [SerializeField] private TMP_Text matchTimerText;
+
     [Header("코인 점수 (우상단 고정 UI)")]
     [SerializeField] private GameObject coinPanel;
     [SerializeField] private TMP_Text coinText;
@@ -75,6 +79,7 @@ public class SurvivalHudController : MonoBehaviour
 
         SetActiveSafe(alivePanel, false);
         SetActiveSafe(coinPanel, false);
+        SetActiveSafe(matchTimerPanel, false);
         SetActiveSafe(countdownPanel, false);
         SetActiveSafe(eliminatedPanel, false);
         SetActiveSafe(winnerPanel, false);
@@ -102,8 +107,20 @@ public class SurvivalHudController : MonoBehaviour
         UpdateCountdownPanel(state);
         UpdateEliminatedPanel(state);
         UpdateWinnerPanel(state);
+        UpdateMatchTimer(state);
         UpdateSuddenDeathText(state);
         UpdateKillFeed();
+    }
+
+    // 규칙 안내와 분리한 고정 타이머를 분:초로 표시합니다.
+    private void UpdateMatchTimer(SurvivalGameManager.MatchState state)
+    {
+        bool show = state == SurvivalGameManager.MatchState.Playing && gameManager.IsTimedCoinSurvival;
+        SetActiveSafe(matchTimerPanel, show);
+        if (!show || matchTimerText == null) return;
+        int seconds = Mathf.Max(0, Mathf.CeilToInt((float)gameManager.SurvivalRemaining));
+        matchTimerText.text = $"{seconds / 60:00}:{seconds % 60:00}";
+        matchTimerText.color = seconds <= 30 ? new Color(1f, .78f, .3f) : Color.white;
     }
 
     private void UpdateSuddenDeathText(SurvivalGameManager.MatchState state)
@@ -130,7 +147,12 @@ public class SurvivalHudController : MonoBehaviour
 
         if (gameManager.IsTimedCoinSurvival)
         {
-            GameLocalization.Set(suddenDeathText, gameManager.SurvivalRemaining <= 30 ? "HudSurvivalBonus" : "HudSurvivalTimer", Mathf.CeilToInt((float)gameManager.SurvivalRemaining));
+            // 전용 타이머가 연결된 씬에서는 안내 영역에 규칙만 표시합니다.
+            bool separateTimer = matchTimerPanel != null && matchTimerText != null;
+            string key = gameManager.SurvivalRemaining <= 30
+                ? (separateTimer ? "HudSurvivalBonusRule" : "HudSurvivalBonus")
+                : (separateTimer ? "HudSurvivalRule" : "HudSurvivalTimer");
+            GameLocalization.Set(suddenDeathText, key, Mathf.CeilToInt((float)gameManager.SurvivalRemaining));
             SetActiveSafe(SuddenDeathRoot, true);
             return;
         }

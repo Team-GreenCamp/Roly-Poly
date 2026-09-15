@@ -779,6 +779,14 @@ MonoBehaviour:
       value: Player {0} fell...
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HudSurvivalRule
+      value: "Coins decide at time limit"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSurvivalBonusRule
+      value: "Outer pink coins: 3 points!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: HudSurvivalBonus
       value: "Time left: {0}s | Outer pink coins: 3 points!"
       audioValue: {fileID: 0}
