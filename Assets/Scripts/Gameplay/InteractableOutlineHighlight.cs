@@ -9,12 +9,15 @@ public class InteractableOutlineHighlight : MonoBehaviour
     [SerializeField] private Outline.Mode highlightMode = Outline.Mode.OutlineVisible;
 
     private bool wasOutlineEnabled;
+    private Outline.Mode originalMode;
+    private Color originalColor;
+    private float originalWidth;
     private bool isHighlighted;
 
     private void Awake()
     {
         EnsureOutline();
-        wasOutlineEnabled = outline != null && outline.enabled;
+        CacheOriginalOutlineState();
         SetHighlighted(false);
     }
 
@@ -41,11 +44,13 @@ public class InteractableOutlineHighlight : MonoBehaviour
         isHighlighted = shouldHighlight;
         if (shouldHighlight)
         {
+            CacheOriginalOutlineState();
             ApplyHighlightStyle();
             outline.enabled = true;
         }
         else
         {
+            RestoreOriginalOutlineStyle();
             outline.enabled = wasOutlineEnabled;
         }
     }
@@ -70,5 +75,31 @@ public class InteractableOutlineHighlight : MonoBehaviour
             outline = gameObject.AddComponent<Outline>();
             outline.enabled = false;
         }
+    }
+
+    private void CacheOriginalOutlineState()
+    {
+        if (outline == null)
+        {
+            return;
+        }
+
+        // 하이라이트 해제 시 기존 Outline 설정으로 되돌리기 위해 원래 상태를 저장합니다.
+        wasOutlineEnabled = outline.enabled;
+        originalMode = outline.OutlineMode;
+        originalColor = outline.OutlineColor;
+        originalWidth = outline.OutlineWidth;
+    }
+
+    private void RestoreOriginalOutlineStyle()
+    {
+        if (outline == null)
+        {
+            return;
+        }
+
+        outline.OutlineMode = originalMode;
+        outline.OutlineColor = originalColor;
+        outline.OutlineWidth = originalWidth;
     }
 }

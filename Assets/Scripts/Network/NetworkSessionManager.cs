@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.Collections;
@@ -24,19 +25,25 @@ public class NetworkSessionManager : MonoBehaviour
     [SerializeField] private int maxPlayers = 8;
     [SerializeField] private string relayConnectionType = "dtls";
 
-    [Header("Characters")]
-    [SerializeField] private int characterSlotCount = 4;
-
     [Header("Local")]
     [SerializeField] private string localAdvertisedAddress = "127.0.0.1";
     [SerializeField] private string localListenAddress = "0.0.0.0";
     [SerializeField] private int localPort = 7777;
 
     [Header("Scene Flow")]
+    [SerializeField] private string lobbySceneName = "Lobby Scene";
     [SerializeField] private string gameSceneName = "GameScene";
 
+    [Header("Game Start Broadcast")]
+    [Tooltip("게임 시작 신호를 보낸 뒤 씬 전환을 시작하기까지 기다리는 시간(초). 지연이 큰 환경에서는 늘리세요.")]
+    [SerializeField] private float gameStartBroadcastDelaySeconds = 0.25f;
+    [Tooltip("게임 시작 신호 재전송 간격(초).")]
+    [SerializeField] private float gameStartBroadcastRetryIntervalSeconds = 0.35f;
+    [Tooltip("게임 시작 신호 재전송 횟수. 패킷 손실에 대비해 여러 번 보냅니다.")]
+    [SerializeField] private int gameStartBroadcastRetryCount = 3;
+
     [Header("Debug")]
-    [SerializeField] private bool logReadyDebug = true;
+    [SerializeField] private bool logReadyDebug = false;
 
     public event Action StateChanged;
     public event Action<string, string, string> MapSelectionChanged;
@@ -54,6 +61,7 @@ public class NetworkSessionManager : MonoBehaviour
     public bool IsConnectedClient => networkManager != null && networkManager.IsConnectedClient;
     public bool LocalReady { get; private set; }
     public string CurrentGameSceneName => gameSceneName;
+    public string CurrentLobbySceneName => lobbySceneName;
     public string CurrentMapChapterId { get; private set; } = string.Empty;
     public string CurrentMapId { get; private set; } = string.Empty;
     public bool CanHostStartGame => networkManager != null
@@ -63,13 +71,17 @@ public class NetworkSessionManager : MonoBehaviour
 
     private const string ReadyStateMessageName = "ReadyState";
     private const string MapSelectionMessageName = "MapSelection";
+    private const string GameStartMessageName = "GameStart";
+    // 방 정원 상한.
+    private const int MaxSupportedPlayers = 8;
     private bool callbacksRegistered;
+    private bool namedMessagesRegistered;
     private bool isShuttingDown;
     private bool gameStartRequested;
-    private readonly Dictionary<ulong, int> assignedCharacters = new Dictionary<ulong, int>();
+    private Coroutine gameSceneLoadRoutine;
+    private Coroutine gameStartBroadcastRoutine;
     private readonly HashSet<ulong> readyClientIds = new HashSet<ulong>();
-    private readonly List<int> availableCharacters = new List<int>();
-    private System.Random characterRandom = new System.Random();
+    private bool sceneCallbacksRegistered;
 
     private void Reset()
     {
@@ -116,8 +128,8 @@ public class NetworkSessionManager : MonoBehaviour
             CurrentJoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
             unityTransport.SetRelayServerData(allocation.ToRelayServerData(GetRelayConnectionType()));
             isShuttingDown = false;
-            ResetCharacterAssignments();
             ResetReadyState();
+            SurvivalWinTracker.ResetAll(); // 새 세션: 이전 방의 승수 초기화(클라이언트 ID 재사용 대비)
 
             if (!networkManager.StartHost())
             {
@@ -126,6 +138,8 @@ public class NetworkSessionManager : MonoBehaviour
                 return;
             }
 
+            RegisterSceneCallbacks();
+            RegisterNamedMessageHandlers();
             SetStatus($"Relay 호스트를 시작했습니다. Join Code: {CurrentJoinCode}");
             UpdateConnectedPlayerCount();
         }
@@ -139,6 +153,43 @@ public class NetworkSessionManager : MonoBehaviour
         {
             SetBusy(false);
         }
+    }
+
+    // 데디케이티드 서버(헤드리스, AWS 등) 시작: 플레이어 없는 순수 서버로 열고 게임 씬을 로드한다.
+    // Relay 없이 지정 포트를 모든 인터페이스(0.0.0.0)에서 listen → 클라는 공인 IP:포트로 직접 접속.
+    public bool StartDedicatedServer(int port, string gameScene)
+    {
+        CacheReferences();
+        if (networkManager == null || unityTransport == null)
+        {
+            Debug.LogError("[Dedicated] NetworkManager/UnityTransport를 찾지 못했습니다.");
+            return false;
+        }
+        if (networkManager.IsListening)
+        {
+            return false;
+        }
+
+        // 모든 인터페이스에서 listen(외부 클라 접속 허용).
+        unityTransport.SetConnectionData("0.0.0.0", (ushort)port, "0.0.0.0");
+        isShuttingDown = false;
+        ResetReadyState();
+        SurvivalWinTracker.ResetAll();
+
+        if (!networkManager.StartServer())
+        {
+            Debug.LogError("[Dedicated] StartServer 실패.");
+            return false;
+        }
+
+        RegisterSceneCallbacks();
+        RegisterNamedMessageHandlers();
+        gameSceneName = string.IsNullOrWhiteSpace(gameScene) ? gameSceneName : gameScene.Trim();
+
+        // NGO 네트워크 씬 로드(접속하는 클라는 자동으로 이 씬으로 동기화됨).
+        networkManager.SceneManager.LoadScene(gameSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+        Debug.Log($"[Dedicated] 서버 시작: 포트 {port}, 씬 '{gameSceneName}'. 클라 접속 대기 중.");
+        return true;
     }
 
     public Task StartLocalHostAsync()
@@ -157,8 +208,8 @@ public class NetworkSessionManager : MonoBehaviour
             unityTransport.SetConnectionData(GetLocalAdvertisedAddress(), GetLocalPort(), GetLocalListenAddress());
             CurrentJoinCode = LocalConnectionValue;
             isShuttingDown = false;
-            ResetCharacterAssignments();
             ResetReadyState();
+            SurvivalWinTracker.ResetAll(); // 새 세션: 이전 방의 승수 초기화(클라이언트 ID 재사용 대비)
 
             if (!networkManager.StartHost())
             {
@@ -167,6 +218,8 @@ public class NetworkSessionManager : MonoBehaviour
                 return Task.CompletedTask;
             }
 
+            RegisterSceneCallbacks();
+            RegisterNamedMessageHandlers();
             SetStatus($"로컬 호스트를 시작했습니다. 주소: {CurrentJoinCode}");
             UpdateConnectedPlayerCount();
         }
@@ -218,6 +271,8 @@ public class NetworkSessionManager : MonoBehaviour
                 return;
             }
 
+            RegisterSceneCallbacks();
+            RegisterNamedMessageHandlers();
             SetStatus($"Join Code {normalizedJoinCode} 로 접속 중입니다...");
             UpdateConnectedPlayerCount();
         }
@@ -263,6 +318,8 @@ public class NetworkSessionManager : MonoBehaviour
                 return Task.CompletedTask;
             }
 
+            RegisterSceneCallbacks();
+            RegisterNamedMessageHandlers();
             SetStatus($"{CurrentJoinCode} 로 접속 중입니다...");
             UpdateConnectedPlayerCount();
         }
@@ -295,6 +352,9 @@ public class NetworkSessionManager : MonoBehaviour
         }
 
         isShuttingDown = true;
+        UnregisterSceneCallbacks();
+        UnregisterNamedMessageHandlers();
+        StopGameStartRoutines();
         networkManager.Shutdown();
         CurrentJoinCode = string.Empty;
         ResetReadyState();
@@ -364,6 +424,8 @@ public class NetworkSessionManager : MonoBehaviour
 
     public bool StartGame()
     {
+        Debug.Log($"[ReadyFlow][StartGame] requested. isServer={(networkManager != null && networkManager.IsServer)}, connected=[{(networkManager != null ? string.Join(", ", networkManager.ConnectedClientsIds) : string.Empty)}], ready=[{string.Join(", ", readyClientIds)}], scene={gameSceneName}");
+
         if (networkManager == null)
         {
             SetStatus("NetworkManager를 찾을 수 없습니다.");
@@ -401,20 +463,99 @@ public class NetworkSessionManager : MonoBehaviour
 
         LogReadyDebug($"StartGame requested. scene={gameSceneName}, connected=[{string.Join(", ", networkManager.ConnectedClientsIds)}], ready=[{string.Join(", ", readyClientIds)}]");
 
-        SceneEventProgressStatus progressStatus =
-            networkManager.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
-
-        if (progressStatus != SceneEventProgressStatus.Started)
-        {
-            SetStatus($"게임 씬 전환을 시작하지 못했습니다. ({progressStatus})");
-            LogReadyDebug($"StartGame failed. SceneEventProgressStatus={progressStatus}");
-            return false;
-        }
+        // 게임 시작 직전에 선택된 씬 이름을 한 번 더 보내 클라이언트 UI/상태와 서버 로드 대상을 맞춥니다.
+        SendMapSelectionToClients(CurrentMapChapterId, CurrentMapId, gameSceneName);
+        TryBroadcastGameStartThroughPlayerObject(gameSceneName);
+        SendGameStartToClients(gameSceneName);
+        StartGameStartBroadcastRepeater(gameSceneName);
+        RegisterSceneCallbacks();
 
         gameStartRequested = true;
         SetStatus($"게임 씬으로 전환 중입니다: {gameSceneName}");
-        LogReadyDebug($"StartGame succeeded. Scene loading started: {gameSceneName}");
+
+        if (gameSceneLoadRoutine != null)
+        {
+            StopCoroutine(gameSceneLoadRoutine);
+        }
+
+        // Start 상태 메시지가 클라이언트에 먼저 도착할 시간을 준 뒤 Netcode 씬 전환을 시작합니다.
+        gameSceneLoadRoutine = StartCoroutine(LoadGameSceneAfterStartBroadcast(gameSceneName));
         return true;
+    }
+
+    private IEnumerator LoadGameSceneAfterStartBroadcast(string targetSceneName)
+    {
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, gameStartBroadcastDelaySeconds));
+
+        gameSceneLoadRoutine = null;
+        if (networkManager == null || networkManager.SceneManager == null || string.IsNullOrWhiteSpace(targetSceneName))
+        {
+            yield break;
+        }
+
+        SceneEventProgressStatus progressStatus =
+            networkManager.SceneManager.LoadScene(targetSceneName, LoadSceneMode.Single);
+
+        if (progressStatus != SceneEventProgressStatus.Started)
+        {
+            gameStartRequested = false;
+            SetStatus($"게임 씬 전환을 시작하지 못했습니다. ({progressStatus})");
+            LogReadyDebug($"StartGame failed. SceneEventProgressStatus={progressStatus}");
+            yield break;
+        }
+
+        LogReadyDebug($"StartGame succeeded. Scene loading started: {targetSceneName}");
+    }
+
+    public bool ReturnToLobby()
+    {
+        if (networkManager == null)
+        {
+            SetStatus("NetworkManager를 찾을 수 없습니다.");
+            return false;
+        }
+
+        if (!networkManager.IsServer)
+        {
+            SetStatus("로비 복귀는 호스트만 할 수 있습니다.");
+            return false;
+        }
+
+        if (!networkManager.NetworkConfig.EnableSceneManagement)
+        {
+            SetStatus("NetworkManager에서 Enable Scene Management를 켜야 합니다.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(lobbySceneName))
+        {
+            SetStatus("전환할 로비 씬 이름이 비어 있습니다.");
+            return false;
+        }
+
+        // 클리어 후 로비로 돌아오면 다시 Ready를 받아야 하므로 상태를 초기화합니다.
+        ResetReadyState();
+        SceneEventProgressStatus progressStatus =
+            networkManager.SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Single);
+
+        if (progressStatus != SceneEventProgressStatus.Started)
+        {
+            SetStatus($"로비 씬 전환을 시작하지 못했습니다. ({progressStatus})");
+            return false;
+        }
+
+        SetStatus($"로비 씬으로 전환 중입니다: {lobbySceneName}");
+        return true;
+    }
+
+    // 개발용(DirectPlayBootstrap): 로컬 호스트 포트를 바꾼다.
+    // 아레나 직접 실행은 혼자 하는 테스트라 고정 포트(7777)가 다른 인스턴스와 충돌하지 않게 랜덤 포트를 쓴다.
+    public void SetLocalPort(int port)
+    {
+        if (port > 0 && port <= ushort.MaxValue)
+        {
+            localPort = port;
+        }
     }
 
     public void SetGameSceneName(string sceneName)
@@ -495,8 +636,7 @@ public class NetworkSessionManager : MonoBehaviour
             networkManager.NetworkConfig.NetworkTransport = unityTransport;
         }
 
-        characterSlotCount = Mathf.Clamp(characterSlotCount, 2, 4);
-        maxPlayers = Mathf.Clamp(maxPlayers, 2, characterSlotCount);
+        maxPlayers = Mathf.Clamp(maxPlayers, 2, MaxSupportedPlayers);
         if (localPort <= 0 || localPort > ushort.MaxValue)
         {
             localPort = 7777;
@@ -519,8 +659,8 @@ public class NetworkSessionManager : MonoBehaviour
         networkManager.OnClientConnectedCallback += HandleClientConnected;
         networkManager.OnClientDisconnectCallback += HandleClientDisconnected;
         networkManager.ConnectionApprovalCallback = HandleConnectionApproval;
-        networkManager.CustomMessagingManager.RegisterNamedMessageHandler(ReadyStateMessageName, HandleReadyStateMessage);
-        networkManager.CustomMessagingManager.RegisterNamedMessageHandler(MapSelectionMessageName, HandleMapSelectionMessage);
+        // 네임드 메시지 핸들러는 여기서 등록하지 않는다. CustomMessagingManager는 세션 시작(StartHost/StartClient)
+        // 시점에 만들어지고 Shutdown마다 새로 교체되므로, 세션이 시작될 때 등록한다(RegisterNamedMessageHandlers).
         callbacksRegistered = true;
     }
 
@@ -535,9 +675,68 @@ public class NetworkSessionManager : MonoBehaviour
         networkManager.OnClientConnectedCallback -= HandleClientConnected;
         networkManager.OnClientDisconnectCallback -= HandleClientDisconnected;
         networkManager.ConnectionApprovalCallback = null;
-        networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(ReadyStateMessageName);
-        networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(MapSelectionMessageName);
+        UnregisterNamedMessageHandlers();
+        UnregisterSceneCallbacks();
         callbacksRegistered = false;
+    }
+
+    // CustomMessagingManager는 세션마다 새로 생성되므로 세션 시작 직후(StartHost/StartClient 성공 후) 매번 등록한다.
+    // OnEnable에서 한 번만 등록하면 (a) 세션 시작 전에는 매니저가 null이고, (b) 재시작한 두 번째 방부터는
+    // 새 매니저에 핸들러가 없어 Ready/맵선택/게임시작 네임드 메시지가 조용히 끊긴다.
+    private void RegisterNamedMessageHandlers()
+    {
+        if (namedMessagesRegistered || networkManager == null || networkManager.CustomMessagingManager == null)
+        {
+            return;
+        }
+
+        networkManager.CustomMessagingManager.RegisterNamedMessageHandler(ReadyStateMessageName, HandleReadyStateMessage);
+        networkManager.CustomMessagingManager.RegisterNamedMessageHandler(MapSelectionMessageName, HandleMapSelectionMessage);
+        networkManager.CustomMessagingManager.RegisterNamedMessageHandler(GameStartMessageName, HandleGameStartMessage);
+        namedMessagesRegistered = true;
+    }
+
+    private void UnregisterNamedMessageHandlers()
+    {
+        if (!namedMessagesRegistered)
+        {
+            return;
+        }
+
+        if (networkManager != null && networkManager.CustomMessagingManager != null)
+        {
+            networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(ReadyStateMessageName);
+            networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(MapSelectionMessageName);
+            networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(GameStartMessageName);
+        }
+
+        namedMessagesRegistered = false;
+    }
+
+    private void RegisterSceneCallbacks()
+    {
+        if (sceneCallbacksRegistered || networkManager == null || networkManager.SceneManager == null)
+        {
+            return;
+        }
+
+        networkManager.SceneManager.OnSceneEvent += HandleNetworkSceneEvent;
+        sceneCallbacksRegistered = true;
+    }
+
+    private void UnregisterSceneCallbacks()
+    {
+        if (!sceneCallbacksRegistered)
+        {
+            return;
+        }
+
+        if (networkManager != null && networkManager.SceneManager != null)
+        {
+            networkManager.SceneManager.OnSceneEvent -= HandleNetworkSceneEvent;
+        }
+
+        sceneCallbacksRegistered = false;
     }
 
     private async Task EnsureRelayReadyAsync()
@@ -616,6 +815,7 @@ public class NetworkSessionManager : MonoBehaviour
 
     private void HandleServerStarted()
     {
+        RegisterSceneCallbacks();
         UpdateConnectedPlayerCount();
 
         if (networkManager != null && networkManager.IsHost)
@@ -626,6 +826,7 @@ public class NetworkSessionManager : MonoBehaviour
 
     private void HandleClientConnected(ulong clientId)
     {
+        RegisterSceneCallbacks();
         UpdateConnectedPlayerCount();
 
         if (networkManager == null)
@@ -647,7 +848,6 @@ public class NetworkSessionManager : MonoBehaviour
 
         if (networkManager.IsServer)
         {
-            GetOrAssignCharacterIndex(clientId);
             SetClientReady(clientId, false);
             SendMapSelectionToClient(clientId, CurrentMapChapterId, CurrentMapId, gameSceneName);
             SetStatus($"플레이어가 로비에 입장했습니다. 현재 인원: {ConnectedPlayerCount}");
@@ -671,6 +871,8 @@ public class NetworkSessionManager : MonoBehaviour
             }
 
             CurrentJoinCode = string.Empty;
+            // 로컬 연결이 끊기면 CustomMessagingManager도 함께 파괴되므로 다음 세션에서 다시 등록되도록 리셋한다.
+            UnregisterNamedMessageHandlers();
 
             return;
         }
@@ -678,9 +880,26 @@ public class NetworkSessionManager : MonoBehaviour
         if (networkManager.IsServer)
         {
             readyClientIds.Remove(clientId);
-            ReleaseCharacterIndex(clientId);
             SetStatus($"플레이어가 로비에서 나갔습니다. 현재 인원: {ConnectedPlayerCount}");
             NotifyStateChanged();
+        }
+    }
+
+    private void HandleNetworkSceneEvent(SceneEvent sceneEvent)
+    {
+        string completedClients = sceneEvent.ClientsThatCompleted != null
+            ? string.Join(", ", sceneEvent.ClientsThatCompleted)
+            : string.Empty;
+        string timedOutClients = sceneEvent.ClientsThatTimedOut != null
+            ? string.Join(", ", sceneEvent.ClientsThatTimedOut)
+            : string.Empty;
+
+        // 네트워크 씬 전환이 클라이언트까지 도달했는지 Unity Console에서 확인하기 위한 로그입니다.
+        LogReadyDebug($"SceneEvent type={sceneEvent.SceneEventType}, scene={sceneEvent.SceneName}, clientId={sceneEvent.ClientId}, completed=[{completedClients}], timedOut=[{timedOutClients}]");
+
+        if (sceneEvent.SceneEventType == SceneEventType.LoadEventCompleted && !string.IsNullOrWhiteSpace(timedOutClients))
+        {
+            SetStatus($"일부 클라이언트가 씬 로드를 완료하지 못했습니다: {timedOutClients}");
         }
     }
 
@@ -718,6 +937,49 @@ public class NetworkSessionManager : MonoBehaviour
         NotifyStateChanged();
     }
 
+    private void HandleGameStartMessage(ulong clientId, FastBufferReader reader)
+    {
+        reader.ReadValueSafe(out FixedString128Bytes sceneName);
+        string targetSceneName = NormalizeMessageString(sceneName.ToString());
+
+        if (networkManager == null || networkManager.IsServer || string.IsNullOrWhiteSpace(targetSceneName))
+        {
+            return;
+        }
+
+        gameSceneName = targetSceneName;
+        Debug.Log($"[ReadyFlow][GameStart] received from host. scene={targetSceneName}");
+        // 실제 씬 로드는 Netcode SceneManager 이벤트만 사용해야 NetworkObject spawn 순서가 깨지지 않습니다.
+    }
+
+    private void StartGameStartBroadcastRepeater(string targetSceneName)
+    {
+        if (gameStartBroadcastRoutine != null)
+        {
+            StopCoroutine(gameStartBroadcastRoutine);
+        }
+
+        // 씬 전환 직전 패킷 유실/순서 문제에 대비해 시작 신호를 짧게 반복 전송합니다.
+        gameStartBroadcastRoutine = StartCoroutine(RepeatGameStartBroadcast(targetSceneName));
+    }
+
+    private IEnumerator RepeatGameStartBroadcast(string targetSceneName)
+    {
+        for (int i = 0; i < gameStartBroadcastRetryCount; i++)
+        {
+            yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, gameStartBroadcastRetryIntervalSeconds));
+
+            if (networkManager == null || !networkManager.IsServer || string.IsNullOrWhiteSpace(targetSceneName))
+            {
+                break;
+            }
+
+            SendGameStartToClients(targetSceneName);
+        }
+
+        gameStartBroadcastRoutine = null;
+    }
+
     private bool TrySubmitReadyThroughPlayerObject(bool isReady)
     {
         NetworkObject playerObject = networkManager.LocalClient != null
@@ -740,6 +1002,30 @@ public class NetworkSessionManager : MonoBehaviour
         activator.SubmitReadyState(isReady);
         LogReadyDebug($"Ready ServerRpc sent through player object. ready={isReady}");
         return true;
+    }
+
+    private bool TryBroadcastGameStartThroughPlayerObject(string sceneName)
+    {
+        NetworkObject playerObject = networkManager.LocalClient != null
+            ? networkManager.LocalClient.PlayerObject
+            : null;
+
+        if (playerObject == null)
+        {
+            Debug.Log("[ReadyFlow][GameStartRpc] Host player object is null.");
+            return false;
+        }
+
+        NetworkOwnedObjectActivator activator = playerObject.GetComponent<NetworkOwnedObjectActivator>();
+        if (activator == null)
+        {
+            Debug.Log("[ReadyFlow][GameStartRpc] NetworkOwnedObjectActivator is missing on host player.");
+            return false;
+        }
+
+        bool didBroadcast = activator.BroadcastGameStart(sceneName);
+        Debug.Log($"[ReadyFlow][GameStartRpc] broadcast via player object. success={didBroadcast}, scene={sceneName}");
+        return didBroadcast;
     }
 
     private void SetClientReady(ulong clientId, bool isReady)
@@ -841,6 +1127,35 @@ public class NetworkSessionManager : MonoBehaviour
         networkManager.CustomMessagingManager.SendNamedMessage(MapSelectionMessageName, clientId, writer);
     }
 
+    private void SendGameStartToClients(string sceneName)
+    {
+        if (networkManager == null || networkManager.CustomMessagingManager == null || !networkManager.IsServer)
+        {
+            return;
+        }
+
+        string normalizedSceneName = NormalizeMessageString(sceneName);
+        if (string.IsNullOrWhiteSpace(normalizedSceneName))
+        {
+            return;
+        }
+
+        foreach (ulong clientId in networkManager.ConnectedClientsIds)
+        {
+            if (clientId == networkManager.LocalClientId)
+            {
+                continue;
+            }
+
+            using FastBufferWriter writer = new FastBufferWriter(256, Allocator.Temp);
+            writer.WriteValueSafe(new FixedString128Bytes(normalizedSceneName));
+            networkManager.CustomMessagingManager.SendNamedMessage(GameStartMessageName, clientId, writer);
+        }
+
+        // 호스트가 누른 Start 상태를 클라이언트에게 명시적으로 전달했는지 확인하기 위한 로그입니다.
+        Debug.Log($"[ReadyFlow][GameStart] broadcast scene={normalizedSceneName}, clients=[{string.Join(", ", networkManager.ConnectedClientsIds)}]");
+    }
+
     private void NotifyMapSelectionChanged(string chapterId, string mapId, string sceneName)
     {
         MapSelectionChanged?.Invoke(chapterId, mapId, sceneName);
@@ -853,11 +1168,47 @@ public class NetworkSessionManager : MonoBehaviour
 
     private void ResetReadyState()
     {
+        StopGameStartRoutines();
         LocalReady = false;
         gameStartRequested = false;
         readyClientIds.Clear();
+
+        // 머리 위 체크 표시(NOA syncedReadyState)도 함께 내린다.
+        // 서버 목록만 비우면 판정은 초기화되는데 표시는 켜진 채 로비로 돌아오는 불일치가 생긴다.
+        if (networkManager != null && networkManager.IsServer)
+        {
+            foreach (NetworkClient client in networkManager.ConnectedClients.Values)
+            {
+                if (client.PlayerObject == null)
+                {
+                    continue;
+                }
+
+                NetworkOwnedObjectActivator activator = client.PlayerObject.GetComponent<NetworkOwnedObjectActivator>();
+                if (activator != null)
+                {
+                    activator.ResetReadyStateOnServer();
+                }
+            }
+        }
+
         LogReadyDebug("Ready state reset.");
         NotifyStateChanged();
+    }
+
+    private void StopGameStartRoutines()
+    {
+        if (gameSceneLoadRoutine != null)
+        {
+            StopCoroutine(gameSceneLoadRoutine);
+            gameSceneLoadRoutine = null;
+        }
+
+        if (gameStartBroadcastRoutine != null)
+        {
+            StopCoroutine(gameStartBroadcastRoutine);
+            gameStartBroadcastRoutine = null;
+        }
     }
 
     private int GetConnectedClientCountForDebug()
@@ -894,71 +1245,30 @@ public class NetworkSessionManager : MonoBehaviour
         Debug.Log($"[ReadyFlow] {message}");
     }
 
-    public int GetOrAssignCharacterIndex(ulong clientId)
-    {
-        if (assignedCharacters.TryGetValue(clientId, out int assignedIndex))
-        {
-            return assignedIndex;
-        }
-
-        if (availableCharacters.Count == 0)
-        {
-            return 0;
-        }
-
-        int characterIndex = availableCharacters[0];
-        availableCharacters.RemoveAt(0);
-        assignedCharacters[clientId] = characterIndex;
-        return characterIndex;
-    }
-
-    private void ReleaseCharacterIndex(ulong clientId)
-    {
-        if (!assignedCharacters.TryGetValue(clientId, out int characterIndex))
-        {
-            return;
-        }
-
-        assignedCharacters.Remove(clientId);
-        if (!availableCharacters.Contains(characterIndex))
-        {
-            availableCharacters.Add(characterIndex);
-        }
-    }
-
-    private void ResetCharacterAssignments()
-    {
-        assignedCharacters.Clear();
-        availableCharacters.Clear();
-
-        for (int i = 0; i < characterSlotCount; i++)
-        {
-            availableCharacters.Add(i);
-        }
-
-        // 방마다 캐릭터 순서를 섞어서 입장 순서와 캐릭터가 고정되지 않게 합니다.
-        for (int i = 0; i < availableCharacters.Count; i++)
-        {
-            int swapIndex = characterRandom.Next(i, availableCharacters.Count);
-            (availableCharacters[i], availableCharacters[swapIndex]) =
-                (availableCharacters[swapIndex], availableCharacters[i]);
-        }
-    }
-
     private void HandleConnectionApproval(
         NetworkManager.ConnectionApprovalRequest request,
         NetworkManager.ConnectionApprovalResponse response)
     {
-        bool hasCharacterSlot = assignedCharacters.ContainsKey(request.ClientNetworkId) || availableCharacters.Count > 0;
-
-        response.Approved = hasCharacterSlot;
-        response.CreatePlayerObject = hasCharacterSlot;
-        response.Reason = hasCharacterSlot ? string.Empty : "사용 가능한 캐릭터가 없습니다.";
-
-        if (hasCharacterSlot)
+        // 매치 진행 중 난입 차단: 카운트다운에서 생존자 스냅샷이 확정된 뒤 들어온 클라이언트는
+        // 승리 후보도, 탈락/유령화 대상도 아닌 채 맵을 돌아다니게 되므로 접속 자체를 거부한다.
+        // (Waiting 동안의 입장은 허용 — 스냅샷 확정 전이라 정상 합류된다.)
+        SurvivalGameManager arena = SurvivalGameManager.Instance;
+        if (arena != null && arena.State != SurvivalGameManager.MatchState.Waiting)
         {
-            GetOrAssignCharacterIndex(request.ClientNetworkId);
+            response.Approved = false;
+            response.CreatePlayerObject = false;
+            response.Reason = "매치가 이미 진행 중입니다.";
+            return;
         }
+
+        // 정원 검사는 실제 접속 인원 기준으로만 한다.
+        // (캐릭터는 중복 허용 직접 선택제라 초기 인덱스는 0으로 시작하고 로비에서 각자 선택한다.)
+        int connectedCount = networkManager != null ? networkManager.ConnectedClientsIds.Count : 0;
+        bool hasRoom = connectedCount < maxPlayers;
+
+        response.Approved = hasRoom;
+        response.CreatePlayerObject = hasRoom;
+        response.Reason = hasRoom ? string.Empty : "방 정원이 가득 찼습니다.";
     }
 
     private void UpdateConnectedPlayerCount()

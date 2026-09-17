@@ -26,6 +26,8 @@ namespace Michsky.UI.Heat
 
         // Helpers
         [HideInInspector] public LocalizedObject localizedObject;
+        private string displayedTitleKey;
+        private string displayedDescriptionKey;
 
         void Awake()
         {
@@ -67,6 +69,27 @@ namespace Michsky.UI.Heat
                 localizedObject = null;
                 useLocalization = false;
             }
+            else
+            {
+                // 현재 가리키는 설정의 설명도 언어 변경 직후 다시 표시합니다.
+                localizedObject.localizationKey = titleKey;
+                localizedObject.updateMode = LocalizedObject.UpdateMode.OnEnable;
+                localizedObject.onLanguageChanged.AddListener(_ => RefreshLocalizedContent());
+            }
+        }
+
+        public void UpdateLocalizedUI(string newTitleKey, string newDescriptionKey, Sprite newCover)
+        {
+            displayedTitleKey = newTitleKey;
+            displayedDescriptionKey = newDescriptionKey;
+            UpdateUI(localizedObject.GetKeyOutput(newTitleKey), localizedObject.GetKeyOutput(newDescriptionKey), newCover);
+        }
+
+        private void RefreshLocalizedContent()
+        {
+            if (localizedObject == null || string.IsNullOrEmpty(displayedTitleKey)) { return; }
+            titleObject.text = localizedObject.GetKeyOutput(displayedTitleKey);
+            descriptionObject.text = localizedObject.GetKeyOutput(displayedDescriptionKey);
         }
 
         public void UpdateUI(string newTitle, string newDescription, Sprite newCover) 
@@ -80,6 +103,8 @@ namespace Michsky.UI.Heat
 
         public void SetDefault()
         {
+            displayedTitleKey = titleKey;
+            displayedDescriptionKey = descriptionKey;
             if (localizedObject == null)
             {
                 titleObject.text = title;

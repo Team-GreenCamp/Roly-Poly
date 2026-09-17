@@ -42,9 +42,14 @@ public class RoomApiClient
 
     private readonly string baseUrl;
 
-    public RoomApiClient(string baseUrl)
+    // 백엔드 인증 토큰(선택). 비어 있으면 기존처럼 인증 헤더 없이 요청합니다.
+    // 보안을 실제로 적용하려면 Express 백엔드가 이 토큰을 검증해야 합니다(방 생성/삭제/수정 보호).
+    public string AuthToken { get; set; }
+
+    public RoomApiClient(string baseUrl, string authToken = null)
     {
         this.baseUrl = NormalizeBaseUrl(baseUrl);
+        AuthToken = authToken;
     }
 
     public async Task<RoomDto[]> GetRoomsAsync()
@@ -101,12 +106,20 @@ public class RoomApiClient
         using (UnityWebRequest request = new UnityWebRequest(baseUrl + path, method))
         {
             request.downloadHandler = new DownloadHandlerBuffer();
+            // 백엔드가 응답하지 않아도 폴링 루프가 영원히 대기하지 않도록 타임아웃을 건다.
+            request.timeout = 10;
 
             if (bodyJson != null)
             {
                 byte[] body = Encoding.UTF8.GetBytes(bodyJson);
                 request.uploadHandler = new UploadHandlerRaw(body);
                 request.SetRequestHeader("Content-Type", "application/json");
+            }
+
+            // 토큰이 설정돼 있으면 인증 헤더를 함께 보냅니다(백엔드 검증 전제).
+            if (!string.IsNullOrWhiteSpace(AuthToken))
+            {
+                request.SetRequestHeader("Authorization", "Bearer " + AuthToken);
             }
 
             UnityWebRequestAsyncOperation operation = request.SendWebRequest();
@@ -123,6 +136,18 @@ public class RoomApiClient
 
             return request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
         }
+    }
+
+    // 방 상태 코드 → 한글 표시 텍스트. (UI 여러 곳에서 공유하는 단일 출처)
+    public static string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "open" => GameLocalization.Get("RoomOpen"),
+            "in_game" => GameLocalization.Get("RoomInGame"),
+            "closed" => GameLocalization.Get("RoomClosed"),
+            _ => string.IsNullOrWhiteSpace(status) ? GameLocalization.Get("RoomUnknown") : status
+        };
     }
 
     private static string NormalizeBaseUrl(string url)

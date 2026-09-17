@@ -6,18 +6,24 @@ public class PlayerMount : MonoBehaviour
     private PlayerController playerController;
     private Rigidbody rb;
     private Collider col;
-    
+    private NetworkObject cachedNetworkObject;
+
     [Header("마운트 상태")]
     public bool isMounted = false;
     private VehicleController currentVehicle;
     private Transform currentSeat;
     private float mountTime;
 
+    // 차량이 좌석 배정 시 소유 클라이언트를 식별하는 데 사용합니다.
+    public ulong OwnerClientId => cachedNetworkObject != null ? cachedNetworkObject.OwnerClientId : 0;
+    public bool IsMountedTo(VehicleController vehicle) => isMounted && currentVehicle == vehicle;
+
     private void Awake()
     {
         playerController = GetComponent<PlayerController>();
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
+        TryGetComponent(out cachedNetworkObject);
     }
 
     public void Mount(VehicleController vehicle, Transform seat)

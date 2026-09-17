@@ -64,6 +64,12 @@ sysinfo.txt
 *.unitypackage.meta
 *.app
 
+# 데디케이티드/스탠드얼론 빌드 출력 (프로젝트 루트에 둔 경우)
+/rolypoly-server/
+/*-server/
+/Builds/
+*.x86_64
+
 # Crashlytics generated file
 crashlytics-build.properties
 
@@ -74,3 +80,12 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /.idea
+
+# macOS
+.DS_Store
+
+# Mono / Unity crash reports
+mono_crash.*
+mono_crash.eda558c06.0.json
+*.json
+mono_crash.eda558c06.0.json

@@ -93,6 +93,10 @@ namespace Michsky.UI.Heat
             {
                 LocalizedObject localizedObject = gameObject.GetComponent<LocalizedObject>();
 
+                // 자식 라벨에 연결된 번역도 사용해 UI 갱신 시 원문으로 덮어쓰지 않습니다.
+                if (localizedObject == null && labelObj != null)
+                    localizedObject = labelObj.GetComponent<LocalizedObject>();
+
                 if (localizedObject == null || !localizedObject.CheckLocalizationStatus()) { useLocalization = false; }
                 else if (localizedObject != null && !string.IsNullOrEmpty(localizedObject.localizationKey))
                 {

@@ -1,8 +1,20 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
+// 서버 권한 잡기 오브젝트.
+//
+// 이 게임의 grabbable 프리팹은 서버 권한 NetworkTransform/NetworkRigidbody를 씁니다.
+// 여러 명이 한 물체를 함께 드는 협동을 지원하려면(소유권 이전 방식으로는 불가) "서버가 추종 물리를 굴리고"
+// NetworkTransform이 모든 클라이언트에 위치를 전파해야 합니다.
+//
+// 역할 분담
+//  • 서버         : 홀더 목록 + 박스 Rigidbody 물리(추종/던지기) + heldCount 동기화
+//  • 소유자 클라  : 아웃라인/기울기/충돌 무시/운반 속도/들고 있는 상태 (PlayerInteractor가 로컬 처리)
+//
+// NetworkObject가 없거나 미스폰이면(구 프리팹/에디터 단독 테스트) 기존처럼 로컬에서 동작합니다.
 [RequireComponent(typeof(Rigidbody))]
-public class GrabbableObject : MonoBehaviour
+public class GrabbableObject : NetworkBehaviour
 {
     [Header("오브젝트 설정")]
     [Tooltip("체크하면 무거운 물체(끌기용), 체크 해제하면 가벼운 물체(들기용)")]
@@ -14,14 +26,31 @@ public class GrabbableObject : MonoBehaviour
     [Tooltip("1명이 추가될 때마다 증가하는 속도 배율 보너스")]
     public float multiPlayerSpeedBonus = 0.4f;
 
+    [Header("잡기 안정화 설정")]
+    [SerializeField] private float heavySingleFollowAcceleration = 12f;
+    [SerializeField] private float heavyMultiFollowAccelerationBonus = 8f;
+    [SerializeField] private float heavyDragDamping = 5f;
+    [SerializeField] private float heavyAngularDamping = 8f;
+    [SerializeField] private float heavyMaxFollowAcceleration = 40f;
+    [SerializeField] private float heldFollowMaxDistance = 4.5f;
+
     private Rigidbody rb;
     private Collider[] colliders;
 
+    // 권한(서버 또는 오프라인) 인스턴스에서만 채워지는 홀더 목록.
     private List<PlayerInteractor> interactors = new List<PlayerInteractor>();
-    private Dictionary<PlayerInteractor, SpringJoint> dragJoints = new Dictionary<PlayerInteractor, SpringJoint>();
 
-    public bool IsBeingHeld => interactors.Count > 0;
-    public int InteractorCount => interactors.Count;
+    private readonly NetworkVariable<int> heldCount =
+        new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private NetworkObject cachedNetworkObject;
+    private bool IsNetworkActive => cachedNetworkObject != null && cachedNetworkObject.IsSpawned;
+    // 박스 물리를 직접 굴릴 권한이 있는 인스턴스인가(서버 또는 오프라인).
+    private bool HasPhysicsAuthority => !IsNetworkActive || IsServer;
+
+    public bool IsBeingHeld => IsNetworkActive ? heldCount.Value > 0 : interactors.Count > 0;
+    public int InteractorCount => IsNetworkActive ? heldCount.Value : interactors.Count;
+    public float HeldFollowMaxDistance => Mathf.Max(0.1f, heldFollowMaxDistance);
 
     // 원본 물리 상태 저장
     private bool originalUseGravity;
@@ -32,24 +61,24 @@ public class GrabbableObject : MonoBehaviour
     private float originalLinearDamping;
     private float originalAngularDamping;
     private RigidbodyConstraints originalConstraints;
-    
+
     private Vector3 localMeshOffset = Vector3.zero;
     private float meshExtentsY = 0f;
 
+    // 킬 크레딧용: 마지막으로 이 물체를 던진 클라이언트(권한 측 기록).
+    private ulong lastThrowerClientId = ulong.MaxValue;
+    private float lastThrowTime = -999f;
+
     private void Awake()
     {
+        TryGetComponent(out cachedNetworkObject);
         rb = GetComponent<Rigidbody>();
         colliders = GetComponentsInChildren<Collider>(true);
-        
-        // 💡 상자 기믹 등에 의해 물리 상태가 강제로 변경되기 전에
-        // 게임 시작 첫 프레임(Awake)에 원래의 완전한 물리 원본 상태를 먼저 캐싱합니다.
         StoreOriginalState();
     }
 
     private void Start()
     {
-        // 유저의 프리팹 구조(부모 피벗과 자식 모델의 위치가 어긋난 경우)를 보정하기 위해
-        // 실제 모델(모든 Collider의 결합된 중심점)을 찾아 로컬 좌표로 저장합니다.
         if (colliders != null && colliders.Length > 0)
         {
             Bounds combinedBounds = new Bounds(transform.position, Vector3.zero);
@@ -74,20 +103,88 @@ public class GrabbableObject : MonoBehaviour
             if (boundsInitialized)
             {
                 localMeshOffset = transform.InverseTransformPoint(combinedBounds.center);
-                meshExtentsY = combinedBounds.extents.y; // 모델의 절반 높이 저장 (머리 겹침 방지용)
+                meshExtentsY = combinedBounds.extents.y;
             }
         }
     }
 
+    // ───────────────────────────────────────────────────────────
+    // PlayerInteractor(소유자)가 호출하는 요청 진입점
+    // ───────────────────────────────────────────────────────────
+    public void RequestAddInteractor(PlayerInteractor interactor)
+    {
+        if (!IsNetworkActive) { AddInteractor(interactor); return; }
+        if (IsServer) AddInteractorByClient(interactor.OwnerClientId);
+        else AddInteractorServerRpc();
+    }
+
+    public void RequestRemoveInteractor(PlayerInteractor interactor, bool isSnapping)
+    {
+        if (!IsNetworkActive) { RemoveInteractor(interactor, isSnapping); return; }
+        if (IsServer) RemoveInteractorByClient(interactor.OwnerClientId, isSnapping);
+        else RemoveInteractorServerRpc(isSnapping);
+    }
+
+    public void RequestThrow(PlayerInteractor interactor, Vector3 linearVelocity, Vector3 angularVelocity)
+    {
+        if (!IsNetworkActive) { ApplyThrow(interactor, linearVelocity, angularVelocity); return; }
+        if (IsServer) ApplyThrowByClient(interactor.OwnerClientId, linearVelocity, angularVelocity);
+        else ThrowServerRpc(linearVelocity, angularVelocity);
+    }
+
+    // 요청자 신원은 클라이언트가 보낸 인자가 아니라 SenderClientId로 판별한다.
+    // (인자로 받으면 타인의 clientId를 넣어 남을 대신 잡기/놓기/던지기 조작이 가능했음)
+    [ServerRpc(RequireOwnership = false)]
+    private void AddInteractorServerRpc(ServerRpcParams rpcParams = default)
+        => AddInteractorByClient(rpcParams.Receive.SenderClientId);
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RemoveInteractorServerRpc(bool isSnapping, ServerRpcParams rpcParams = default)
+        => RemoveInteractorByClient(rpcParams.Receive.SenderClientId, isSnapping);
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ThrowServerRpc(Vector3 linearVelocity, Vector3 angularVelocity, ServerRpcParams rpcParams = default)
+        => ApplyThrowByClient(rpcParams.Receive.SenderClientId, linearVelocity, angularVelocity);
+
+    private void AddInteractorByClient(ulong clientId)
+    {
+        PlayerInteractor pi = ResolveInteractor(clientId);
+        if (pi != null) AddInteractor(pi);
+    }
+
+    private void RemoveInteractorByClient(ulong clientId, bool isSnapping)
+    {
+        PlayerInteractor pi = ResolveInteractor(clientId);
+        if (pi != null) RemoveInteractor(pi, isSnapping);
+    }
+
+    private void ApplyThrowByClient(ulong clientId, Vector3 linearVelocity, Vector3 angularVelocity)
+    {
+        PlayerInteractor pi = ResolveInteractor(clientId);
+        if (pi != null) ApplyThrow(pi, linearVelocity, angularVelocity);
+    }
+
+    private PlayerInteractor ResolveInteractor(ulong clientId)
+    {
+        NetworkManager nm = NetworkManager.Singleton;
+        if (nm != null && nm.ConnectedClients.TryGetValue(clientId, out NetworkClient client) && client.PlayerObject != null)
+        {
+            return client.PlayerObject.GetComponent<PlayerInteractor>();
+        }
+        return null;
+    }
+
+    // ───────────────────────────────────────────────────────────
+    // 권한 인스턴스에서 실행되는 실제 상태/물리 변경
+    // ───────────────────────────────────────────────────────────
     public void AddInteractor(PlayerInteractor interactor)
     {
-        if (interactors.Contains(interactor)) return;
+        if (interactor == null || interactors.Contains(interactor)) return;
 
         interactors.Add(interactor);
 
         if (isHeavy)
         {
-            // 무거운 상자: 같이 끌기 (스프링 조인트 다중 연결)
             rb.isKinematic = false;
             rb.useGravity = true;
 
@@ -109,18 +206,18 @@ public class GrabbableObject : MonoBehaviour
 
                 SpringJoint joint = gameObject.AddComponent<SpringJoint>();
                 joint.connectedBody = dragRb;
-                
+
                 // 다시 false로 변경하여 플레이어의 dragPoint(머리/몸) 쪽으로 착 달라붙게 합니다.
-                joint.autoConfigureConnectedAnchor = false; 
-                joint.connectedAnchor = Vector3.zero; 
-                
+                joint.autoConfigureConnectedAnchor = false;
+                joint.connectedAnchor = Vector3.zero;
+
                 // 부모 피벗이 아닌 실제 자식 모델(Collider)의 중심을 스프링의 끝단으로 설정하여 오프셋 버그 완벽 해결
                 joint.anchor = localMeshOffset;
-                
+
                 // 💡 [수정] 캐릭터 뒤에 찰지게 밀착되어 끌려오도록 거리 소폭 축소 조율 (겹치지 않는 최적선)
                 joint.minDistance = 0.55f; // 플레이어 중심에서 최소 0.55m 거리 유지
                 joint.maxDistance = 0.7f; // 최대 0.7m 범위 내에서 끌려옴
-                
+
                 // 💡 [수정] 강해진 질량과 지면 저항을 끌어당길 수 있도록 스프링 장력과 댐퍼 대폭 상향
                 joint.spring = 1200f;
                 joint.damper = 50f;
@@ -131,108 +228,227 @@ public class GrabbableObject : MonoBehaviour
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             Debug.Log($"📦 무거운 상자를 플레이어가 잡았습니다. (현재 {interactors.Count}명)");
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+            if (interactors.Count == 1) rb.angularVelocity = Vector3.zero;
         }
         else
         {
-            // 가벼운 상자: 같이 들기 (머리 위)
             rb.isKinematic = true;
             rb.useGravity = false;
-            rb.interpolation = RigidbodyInterpolation.None;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
-            Debug.Log($"📦 가벼운 상자를 플레이어가 들었습니다. (현재 {interactors.Count}명)");
         }
 
-        IgnoreCollisionWith(interactor, true);
-        UpdateInteractorsSpeed();
+        if (IsNetworkActive && IsServer) heldCount.Value = interactors.Count;
     }
 
     public void RemoveInteractor(PlayerInteractor interactor, bool isSnapping = false)
     {
-        if (!interactors.Contains(interactor)) return;
+        if (interactor == null || !interactors.Contains(interactor)) return;
 
         interactors.Remove(interactor);
 
-        if (isHeavy && dragJoints.TryGetValue(interactor, out SpringJoint joint))
+        if (interactors.Count == 0 && !isSnapping)
         {
-            if (joint != null) Destroy(joint);
-            dragJoints.Remove(interactor);
-        }
-
-        IgnoreCollisionWith(interactor, false);
-
-        if (interactors.Count == 0)
-        {
-            if (!isSnapping)
+            if (!isHeavy)
+            {
+                EnableDroppedLightPhysics();
+            }
+            else
             {
                 RestoreOriginalState();
-                if (!isHeavy)
-                {
-                    // 물리 엔진 버그 방지 (살짝 위로)
-                    transform.position += Vector3.up * 0.5f;
-                }
-                
-                try
-                {
-                    rb.linearVelocity = Vector3.zero;
-                    rb.angularVelocity = Vector3.zero;
-                }
-                catch { }
             }
-            Debug.Log("📦 상자를 완전히 내려놓았습니다.");
+
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
         }
-        else
-        {
-            UpdateInteractorsSpeed();
-        }
-        
-        // 놓은 사람의 속도 정상화
-        PlayerController pc = interactor.GetComponent<PlayerController>();
-        if (pc != null) pc.ResetCarrySpeedMultiplier();
+
+        if (IsNetworkActive && IsServer) heldCount.Value = interactors.Count;
     }
 
-    private void LateUpdate()
+    private void ApplyThrow(PlayerInteractor interactor, Vector3 linearVelocity, Vector3 angularVelocity)
     {
-        // 1. 플레이어가 너무 멀어지면 강제로 놓도록 거리 제한 추가 (버그 방지)
+        // 킬 크레딧: 던진 사람을 기록해 두었다가 이 물체가 플레이어를 맞히면 공격자로 등록한다.
+        if (interactor != null)
+        {
+            lastThrowerClientId = interactor.OwnerClientId;
+            lastThrowTime = Time.time;
+        }
+
+        // 던지기는 스냅 없이 즉시 손에서 떼고 전방 속도를 부여합니다.
+        RemoveInteractor(interactor, isSnapping: true); // isSnapping=true: 아래에서 물리 직접 세팅
+        interactors.Clear();
+        if (IsNetworkActive && IsServer) heldCount.Value = 0;
+
+        rb.isKinematic = false;
+        rb.useGravity = true;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.linearVelocity = linearVelocity;
+        rb.angularVelocity = angularVelocity;
+    }
+
+    // 스냅존이 박스를 넘겨받을 때(권한 측) 호출.
+    public void DetachForSnap()
+    {
+        interactors.Clear();
+        if (IsNetworkActive && IsServer) heldCount.Value = 0;
+    }
+
+    // 열쇠 소모처럼 오브젝트를 없앨 때. 네트워크에서는 서버만 Despawn할 수 있습니다.
+    public void RequestConsume(PlayerInteractor interactor)
+    {
+        if (!IsNetworkActive) { Destroy(gameObject); return; }
+        if (IsServer) DespawnOnServer();
+        else ConsumeServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ConsumeServerRpc() => DespawnOnServer();
+
+    private void DespawnOnServer()
+    {
+        interactors.Clear();
+        if (heldCount.Value != 0) heldCount.Value = 0;
+
+        if (NetworkObject != null && NetworkObject.IsSpawned) NetworkObject.Despawn(true);
+        else Destroy(gameObject);
+    }
+
+    // 서버가 특정 클라이언트가 이 물체를 들고 있는지 권위 있는 홀더 목록으로 검증합니다.
+    // (예: 문이 "열쇠를 들었다"는 클라이언트의 주장을 서버가 직접 확인할 때 사용)
+    public bool IsHeldByClientOnServer(ulong clientId)
+    {
+        for (int i = 0; i < interactors.Count; i++)
+        {
+            if (interactors[i] != null && interactors[i].OwnerClientId == clientId) return true;
+        }
+        return false;
+    }
+
+    // 서버가 이 물체를 소모(Despawn)합니다. 열쇠 사용처럼 서버에서 직접 호출하는 경로용입니다.
+    public void ServerConsume()
+    {
+        if (!IsServer) return;
+        DespawnOnServer();
+    }
+
+    // 던져지거나 떨어진 물체가 플레이어를 맞혀 넘어뜨리는 판정.
+    // 네트워크에서 이 물체는 서버 권한(원격은 kinematic·속도 0)이므로, 판정은 물리 권한(서버/오프라인)에서만 하고
+    // 실제 넉다운은 피해자 소유자에게 릴레이한다. (오프라인 넉다운은 PlayerController가 직접 처리)
+    private void OnCollisionEnter(Collision collision)
+    {
+        // 오프라인은 PlayerController.EvaluateImpactCollision이 직접 처리하므로 여기서는 네트워크 서버만 담당.
+        if (!IsNetworkActive || !IsServer) return;
+        if (collision.contactCount == 0) return;
+
+        // 들려 있는 물체(운반 중)는 넉다운 대상에서 제외. 던지면 홀더가 먼저 비워지므로 무관.
+        if (heldCount.Value > 0) return;
+
+        // 물체 자신이 충분히 움직이고 있을 때만 판정 — 바닥에 놓인 물체에 플레이어가
+        // 달려와 부딪힌 경우(상대속도만 높음)는 피격이 아니다.
+        if (rb == null || rb.linearVelocity.sqrMagnitude < 4f) return; // 2 m/s 미만
+
+        PlayerController victim = collision.collider.GetComponentInParent<PlayerController>();
+        if (victim == null) return;
+
+        // 최근(6초 내) 던져진 물체라면 던진 사람을 공격자로 등록(킬 크레딧).
+        if (lastThrowerClientId != ulong.MaxValue && Time.time - lastThrowTime <= 6f)
+        {
+            victim.ServerRegisterAttacker(lastThrowerClientId);
+        }
+
+        victim.ServerHandleObjectImpact(rb, true, collision.relativeVelocity.magnitude, collision.GetContact(0).point);
+    }
+
+    private void FixedUpdate()
+    {
+        // 클라이언트는 NetworkTransform이 박스를 옮기므로 물리를 굴리지 않습니다.
+        if (!HasPhysicsAuthority) return;
+
+        // 권한 측에서만 추종 물리. (먼 홀더는 소유자 PlayerInteractor가 스스로 놓도록 처리)
         for (int i = interactors.Count - 1; i >= 0; i--)
         {
-            PlayerInteractor interactor = interactors[i];
-            if (interactor != null)
-            {
-                float dist = Vector3.Distance(transform.position, interactor.transform.position);
-                if (dist > 4.5f) // 물체와 플레이어가 4.5m 이상 멀어지면 끈이 끊어지며 놓음
-                {
-                    interactor.SendMessage("ForceDropHeldObject", SendMessageOptions.DontRequireReceiver);
-                    continue;
-                }
-            }
+            if (interactors[i] == null) interactors.RemoveAt(i);
         }
 
-        // 가벼운 물체: 스케일 버그를 피하기 위해 부모자식 관계를 맺지 않고 매 프레임 강제로 위치 동기화
-        if (isHeavy || interactors.Count == 0) return;
+        if (interactors.Count == 0) return;
 
-        Vector3 center = Vector3.zero;
-        Vector3 forward = Vector3.zero;
+        if (isHeavy) UpdateHeavyDragMotion();
+        else UpdateLightHoldMotion();
+    }
 
-        foreach (var interactor in interactors)
+    private void UpdateHeavyDragMotion()
+    {
+        if (!TryGetAveragePoint(useDragPoint: true, out Vector3 targetPoint, out _, out int validInteractorCount))
         {
-            center += interactor.holdPoint.position;
-            forward += interactor.holdPoint.forward;
+            return;
         }
 
-        center /= interactors.Count;
+        targetPoint.y = rb.worldCenterOfMass.y;
+        Vector3 toTarget = targetPoint - rb.worldCenterOfMass;
+        Vector3 planarVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, Vector3.up);
+        float followAcceleration = heavySingleFollowAcceleration + ((validInteractorCount - 1) * heavyMultiFollowAccelerationBonus);
+        Vector3 desiredAcceleration = (toTarget * Mathf.Max(0f, followAcceleration)) - (planarVelocity * Mathf.Max(0f, heavyDragDamping));
+        float maxFollowAcceleration = Mathf.Max(0f, heavyMaxFollowAcceleration);
+
+        if (maxFollowAcceleration <= 0f)
+        {
+            desiredAcceleration = Vector3.zero;
+        }
+        else if (desiredAcceleration.magnitude > maxFollowAcceleration)
+        {
+            desiredAcceleration = desiredAcceleration.normalized * maxFollowAcceleration;
+        }
+
+        rb.AddForce(desiredAcceleration, ForceMode.Acceleration);
+        rb.AddTorque(-rb.angularVelocity * Mathf.Max(0f, heavyAngularDamping), ForceMode.Acceleration);
+    }
+
+    private void UpdateLightHoldMotion()
+    {
+        if (!TryGetAveragePoint(useDragPoint: false, out Vector3 center, out Vector3 forward, out _))
+        {
+            return;
+        }
+
         if (forward.sqrMagnitude > 0.001f) forward.Normalize();
         else forward = transform.forward;
 
-        // 1. 회전을 먼저 적용
-        transform.rotation = Quaternion.LookRotation(forward);
-        
-        // 2. 부모 피벗이 아니라 실제 모델(자식 콜라이더)이 플레이어의 머리(center)에 오도록 역산하여 위치 적용
-        Vector3 worldMeshOffset = transform.TransformPoint(localMeshOffset) - transform.position;
-        
-        // 3. 상자가 플레이어 머리를 파고들지 않도록, 콜라이더의 절반 높이(meshExtentsY)만큼 강제로 위로 띄워줍니다.
+        Quaternion targetRotation = Quaternion.LookRotation(forward);
+        rb.MoveRotation(targetRotation);
+
+        Vector3 scaledMeshOffset = Vector3.Scale(localMeshOffset, transform.lossyScale);
+        Vector3 worldMeshOffset = targetRotation * scaledMeshOffset;
         Vector3 verticalCorrection = Vector3.up * meshExtentsY;
-        
-        transform.position = center - worldMeshOffset + verticalCorrection;
+
+        rb.MovePosition(center - worldMeshOffset + verticalCorrection);
+    }
+
+    private bool TryGetAveragePoint(bool useDragPoint, out Vector3 center, out Vector3 forward, out int validInteractorCount)
+    {
+        center = Vector3.zero;
+        forward = Vector3.zero;
+        validInteractorCount = 0;
+
+        foreach (var interactor in interactors)
+        {
+            if (interactor == null) continue;
+
+            Transform followPoint = useDragPoint ? interactor.dragPoint : interactor.holdPoint;
+            if (followPoint == null) continue;
+
+            center += followPoint.position;
+            forward += followPoint.forward;
+            validInteractorCount++;
+        }
+
+        if (validInteractorCount == 0) return false;
+
+        center /= validInteractorCount;
+        return true;
     }
 
     private void StoreOriginalState()
@@ -259,38 +475,34 @@ public class GrabbableObject : MonoBehaviour
         rb.constraints = originalConstraints;
     }
 
-    private void IgnoreCollisionWith(PlayerInteractor interactor, bool ignore)
+    private void EnableDroppedLightPhysics()
     {
-        // PlayerInteractor의 Awake 순서 문제로 Collider를 캐싱하지 못한 경우를 대비하여 실시간으로 확실하게 검색
-        Collider[] playerCols = interactor.GetComponentsInChildren<Collider>(true);
-        if (playerCols != null && colliders != null)
-        {
-            foreach (var pCol in playerCols)
-            {
-                if (pCol.isTrigger) continue; // 트리거는 물리 밀어냄이 없으므로 제외
-                
-                foreach (var col in colliders)
-                {
-                    if (col != null && pCol != null) 
-                    {
-                        Physics.IgnoreCollision(pCol, col, ignore);
-                    }
-                }
-            }
-        }
+        rb.isKinematic = false;
+        rb.useGravity = true;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
     }
 
-    private void UpdateInteractorsSpeed()
+    public float GetCarrySpeedMultiplier()
     {
-        float multiplier = baseSpeedMultiplier + (interactors.Count - 1) * multiPlayerSpeedBonus;
-        multiplier = Mathf.Clamp(multiplier, 0.1f, 1f);
+        float multiplier = baseSpeedMultiplier + (InteractorCount - 1) * multiPlayerSpeedBonus;
+        return Mathf.Clamp(multiplier, 0.1f, 1f);
+    }
 
-        foreach (var interactor in interactors)
+    // 소유자 클라이언트가 자기 플레이어와 이 박스의 충돌을 끄고/켜는 데 사용 (각 머신 로컬 처리).
+    public void SetIgnoreCollisionWith(PlayerInteractor interactor, bool ignore)
+    {
+        if (interactor == null || colliders == null) return;
+
+        Collider[] playerCols = interactor.GetComponentsInChildren<Collider>(true);
+        if (playerCols == null) return;
+
+        foreach (var pCol in playerCols)
         {
-            PlayerController pc = interactor.GetComponent<PlayerController>();
-            if (pc != null)
+            if (pCol == null || pCol.isTrigger) continue;
+            foreach (var col in colliders)
             {
-                pc.SetCarrySpeedMultiplier(multiplier);
+                if (col != null) Physics.IgnoreCollision(pCol, col, ignore);
             }
         }
     }

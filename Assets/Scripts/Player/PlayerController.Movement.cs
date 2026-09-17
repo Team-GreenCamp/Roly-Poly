@@ -31,18 +31,42 @@ public partial class PlayerController
     {
         moveInput = moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
 
+        // 토글 스프린트 입력은 프레임마다 한 번만 처리해 FixedUpdate 중복 토글을 막습니다.
+        if (sprintAction != null && GameSettings.UseToggleSprint && sprintAction.WasPressedThisFrame())
+        {
+            sprintToggled = !sprintToggled;
+        }
+        else if (!GameSettings.UseToggleSprint)
+        {
+            sprintToggled = false;
+        }
+
         if (jumpAction != null && jumpAction.WasPressedThisFrame())
         {
-            jumpQueued = true;
+            // 입력은 가변 프레임(Update)에서 받고, 실제 점프는 FixedUpdate에서 처리하므로
+            // 누른 사실을 버퍼 타이머로 기억해 둔다. (착지 직전 입력 유실 방지)
+            jumpBufferTimer = jumpBufferTime;
+        }
+
+        // 돌진 입력도 FixedUpdate에서 임펄스로 처리하므로 눌림만 큐잉한다.
+        if (dashAction != null && dashAction.WasPressedThisFrame() && Time.time - lastDashTime > dashCooldown)
+        {
+            dashQueued = true;
         }
     }
 
     private void ClearGameplayInputState()
     {
         moveInput = Vector2.zero;
-        jumpQueued = false;
+        jumpBufferTimer = 0f;
+        coyoteTimer = 0f;
+        dashQueued = false;
         landingSpeedPreserveTimer = 0f;
         currentHorizontalVelocity = Vector3.zero;
+        currentMoveDirection = Vector3.zero;
+
+        // 조작 불가 상태(넉다운/스턴/탈락/로비)에서는 잡기 대상 아웃라인도 정리한다.
+        ClearGrappleOutline();
     }
 
     private void StopGameplayMotion()
@@ -71,17 +95,29 @@ public partial class PlayerController
         return direction.sqrMagnitude > 1f ? direction.normalized : direction;
     }
 
+    private Camera cachedMovementCamera;
+    private Transform cachedCameraRoot;
+
     private Transform GetMovementReference()
     {
         // 카메라가 실제로 바라보는 방향 기준으로 이동한다.
-        Camera currentCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
-        if (currentCamera != null)
+        // Camera.main(내부 태그 검색)과 FindFirstObjectByType는 비싸므로, 캐시가 비었을 때(파괴/씬 전환)만 다시 찾는다.
+        if (cachedMovementCamera == null)
         {
-            return currentCamera.transform;
+            cachedMovementCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
         }
 
-        Transform cameraRoot = transform.Find("CameraRoot");
-        return cameraRoot != null ? cameraRoot : transform;
+        if (cachedMovementCamera != null)
+        {
+            return cachedMovementCamera.transform;
+        }
+
+        if (cachedCameraRoot == null)
+        {
+            cachedCameraRoot = transform.Find("CameraRoot");
+        }
+
+        return cachedCameraRoot != null ? cachedCameraRoot : transform;
     }
 
     private void ApplyCustomGravity()
@@ -96,10 +132,8 @@ public partial class PlayerController
 
     private void ApplyJump()
     {
-        bool shouldJump = jumpQueued;
-        jumpQueued = false;
-
-        if (!shouldJump || !isGrounded)
+        // 버퍼된 점프 입력이 살아 있고(jumpBufferTimer), 접지/코요테 윈도우 안일 때만 점프한다.
+        if (jumpBufferTimer <= 0f || coyoteTimer <= 0f)
         {
             return;
         }
@@ -107,12 +141,16 @@ public partial class PlayerController
         Vector3 velocity = physicsBody.linearVelocity;
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         physicsBody.linearVelocity = velocity;
+
         isGrounded = false;
+        jumpBufferTimer = 0f; // 입력 버퍼 소모
+        coyoteTimer = 0f;     // 코요테 소모(공중 더블 점프 방지)
     }
 
     private void UpdateMovement()
     {
         Vector3 moveDirection = GetMoveDirection(moveInput);
+        currentMoveDirection = moveDirection;
         float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);
         float targetSpeed = (CanSprint() ? sprintSpeed : walkSpeed) * inputMagnitude * currentCarrySpeedMultiplier;
         float acceleration = isGrounded ? movementAcceleration : airAcceleration;
@@ -142,6 +180,9 @@ public partial class PlayerController
         }
     }
 
+    // yaw는 직접 회전(MoveRotation)으로 제어한다. 토크 PD 방식은 게인이 낮으면 몸이 이동 방향보다
+    // 늦게 돌아 미끄러지듯 보이고, 높이면 목표 주변에서 진동해서 어느 쪽으로 튜닝해도 어색했다.
+    // 스윙-트위스트 분해로 yaw만 교체하므로 오뚝이 기울기(밸런스 물리)는 그대로 유지된다.
     private void ApplyTurnTorque(Vector3 facingDirection)
     {
         Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
@@ -155,19 +196,28 @@ public partial class PlayerController
         float targetYaw = Mathf.Atan2(facingDirection.x, facingDirection.z) * Mathf.Rad2Deg;
         float maxStep = rotationSpeed * Time.fixedDeltaTime;
         float desiredYaw = Mathf.MoveTowardsAngle(currentYaw, targetYaw, maxStep);
-        float yawDelta = Mathf.DeltaAngle(currentYaw, desiredYaw);
-        float desiredYawVelocity = yawDelta * Mathf.Deg2Rad / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
-        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
-        float torque = (desiredYawVelocity - currentYawVelocity) * turnTorque - (currentYawVelocity * turnDamping);
 
-        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
+        // 현재 회전에서 yaw(트위스트) 성분만 목표 yaw로 바꾸고 기울기(스윙)는 보존한다.
+        Quaternion currentTwist = Quaternion.Euler(0f, currentYaw, 0f);
+        Quaternion swing = physicsBody.rotation * Quaternion.Inverse(currentTwist);
+        physicsBody.MoveRotation(swing * Quaternion.Euler(0f, desiredYaw, 0f));
+
+        // 직접 제어와 싸우지 않도록 물리 각속도의 yaw 성분은 제거한다(기울기 각속도는 유지).
+        RemoveYawAngularVelocity(1f);
     }
 
     private void StabilizeIdleYaw()
     {
-        float currentYawVelocity = Vector3.Dot(physicsBody.angularVelocity, Vector3.up);
-        float torque = (-currentYawVelocity * turnDamping);
-        physicsBody.AddTorque(Vector3.up * torque, ForceMode.Acceleration);
+        // 정지 중 외부 충격으로 생긴 yaw 회전은 감쇠로 서서히 멈춘다(즉시 죽이면 밀치기 맞았을 때 뻣뻣해 보임).
+        RemoveYawAngularVelocity(1f - Mathf.Exp(-turnDamping * Time.fixedDeltaTime));
+    }
+
+    private void RemoveYawAngularVelocity(float fraction)
+    {
+        Vector3 angularVelocity = physicsBody.angularVelocity;
+        float yawVelocity = Vector3.Dot(angularVelocity, Vector3.up);
+        angularVelocity -= Vector3.up * (yawVelocity * Mathf.Clamp01(fraction));
+        physicsBody.angularVelocity = angularVelocity;
     }
 
     private void ClampVerticalVelocity()
@@ -184,11 +234,18 @@ public partial class PlayerController
 
     private bool CanSprint()
     {
-        if (sprintAction == null || !sprintAction.IsPressed())
+        if (sprintAction == null)
         {
             return false;
         }
 
-        return moveInput.sqrMagnitude > 0.01f;
+        // 설정에 따라 스프린트 키를 토글 또는 홀드 방식으로 처리합니다.
+        if (GameSettings.UseToggleSprint)
+        {
+            return sprintToggled && moveInput.sqrMagnitude > 0.01f;
+        }
+
+        sprintToggled = false;
+        return sprintAction.IsPressed() && moveInput.sqrMagnitude > 0.01f;
     }
 }

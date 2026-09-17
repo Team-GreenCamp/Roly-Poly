@@ -46,7 +46,7 @@ namespace Michsky.UI.Heat
 
             if (manager.localizedObject != null && manager.useLocalization && !string.IsNullOrEmpty(titleKey) && !string.IsNullOrEmpty(descriptionKey))
             {
-                manager.UpdateUI(manager.localizedObject.GetKeyOutput(titleKey), manager.localizedObject.GetKeyOutput(descriptionKey), cover);
+                manager.UpdateLocalizedUI(titleKey, descriptionKey, cover);
             }
 
             else

@@ -45,10 +45,17 @@ public partial class PlayerController
                 : transform.forward;
             Vector3 landingForce = landingDirection * (Mathf.Abs(previousVerticalVelocity) * landingTorqueMultiplier);
             ApplyExternalImpulse(landingForce, center + (Vector3.up * 0.5f));
+
+            // 높은 곳에서 떨어져 세게 착지하면 잠시 조작을 막고 오뚝이처럼 휘청였다가 복귀한다.
+            StartKnockdown();
         }
 
         lastVerticalVelocity = physicsBody.linearVelocity.y;
         groundedContactTimer = Mathf.Max(0f, groundedContactTimer - Time.fixedDeltaTime);
+
+        // 점프 버퍼/코요테 타임 갱신. (UpdateGroundedState는 일반/넉다운 모두 매 FixedUpdate 호출됨)
+        jumpBufferTimer = Mathf.Max(0f, jumpBufferTimer - Time.fixedDeltaTime);
+        coyoteTimer = isGrounded ? coyoteTime : Mathf.Max(0f, coyoteTimer - Time.fixedDeltaTime);
     }
 
     private float GetWorldRadius()

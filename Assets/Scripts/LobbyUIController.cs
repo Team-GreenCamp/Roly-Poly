@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using HeatBoxButtonManager = Michsky.UI.Heat.BoxButtonManager;
 using HeatButtonManager = Michsky.UI.Heat.ButtonManager;
 using HeatChapterManager = Michsky.UI.Heat.ChapterManager;
 using HeatPanelManager = Michsky.UI.Heat.PanelManager;
+using HeatPanelButton = Michsky.UI.Heat.PanelButton;
 
 [DisallowMultipleComponent]
 public class LobbyUIController : MonoBehaviour
@@ -15,12 +17,22 @@ public class LobbyUIController : MonoBehaviour
     [Header("References")]
     [SerializeField] private NetworkSessionManager sessionManager;
 
+    [Header("Title Transition")]
+    [SerializeField] private string titleSceneName = "Title Scene";
+    [SerializeField] private string backToTitleButtonObjectName = "Back Button";
+    [SerializeField] private CanvasButton backToTitleButton;
+    [SerializeField] private HeatPanelButton backToTitlePanelButton;
+    [SerializeField] private float titleFadeOutDuration = 0.4f;
+    [SerializeField] private float titleFadeInDuration = 0.4f;
+
     [Header("External UI Controls")]
     [SerializeField] private TMP_InputField addressInputField;
     [SerializeField] private CanvasButton leaveButton;
     [SerializeField] private CanvasButton readyButton;
     [SerializeField] private GameObject roomEntryPanel;
     [SerializeField] private TMP_Text roomCodeDisplayText;
+    [SerializeField] private TMP_Text roomNameDisplayText;
+    [SerializeField] private string lobbyButtonPanelObjectName = "Button Panel";
     [SerializeField] private string readyButtonObjectName = "Ready Button";
     [SerializeField] private string startButtonObjectName = "Start Button";
 
@@ -40,17 +52,24 @@ public class LobbyUIController : MonoBehaviour
     [SerializeField] private TMP_InputField roomNameInputField;
     [SerializeField] private Transform roomListContentRoot;
     [SerializeField] private GameObject roomListItemTemplate;
+    [Tooltip("방 목록/입장 관련 안내·오류 메시지를 표시할 라벨(선택). 연결하면 빌드에서도 실패 사유가 화면에 보입니다.")]
+    [SerializeField] private TMP_Text roomListStatusLabel;
     [SerializeField] private List<GameObject> roomListPanelsToCloseOnRoomClick = new List<GameObject>();
     [SerializeField, HideInInspector] private GameObject roomListPanelToCloseOnRoomClick;
 
     [Header("Room List API")]
     [SerializeField] private string backendBaseUrl = "http://localhost:3000";
+    [Tooltip("백엔드 인증 토큰(선택). 입력하면 모든 방 API 요청에 Authorization: Bearer 헤더로 전송됩니다. 백엔드가 검증해야 실제 보안이 적용됩니다.")]
+    [SerializeField] private string backendAuthToken = "";
     [SerializeField] private string defaultRoomName = "Puzzle Room";
     [SerializeField] private string defaultMapId = "local-test";
     [SerializeField] private bool useRelayForRoomList;
     [SerializeField] private float roomJoinConnectionTimeout = 8f;
     [SerializeField] private float roomHeartbeatInterval = 10f;
 
+    private bool isTransitioningToTitle;
+    private bool backButtonRuntimeListenerRegistered;
+    private GameObject backToTitleButtonRoot;
     private bool listenersRegistered;
     private bool isRefreshingRooms;
     private bool isJoiningRoom;
@@ -66,11 +85,13 @@ public class LobbyUIController : MonoBehaviour
     private bool readyButtonRuntimeListenerRegistered;
     private string selectedMapChapterId = string.Empty;
     private string selectedMapSceneName = string.Empty;
+    private string activeBackendRoomName = string.Empty;
 
     private readonly List<GameObject> generatedRoomRows = new List<GameObject>();
     private RoomApiClient roomApiClient;
     private GameObject mapPanelRoot;
     private GameObject chaptersPanelRoot;
+    private GameObject lobbyButtonPanelRoot;
     private GameObject readyButtonRoot;
     private GameObject startButtonRoot;
     private HeatButtonManager readyHeatButton;
@@ -80,6 +101,9 @@ public class LobbyUIController : MonoBehaviour
     private HeatButtonManager mapHeatButton;
     private CanvasButton mapCanvasButton;
     private HeatChapterManager chapterManager;
+    private HeatPanelManager joinPanelManager;
+    private Coroutine reassertPanelStateRoutine;
+    private bool sessionEventsHooked;
 
     [System.Serializable]
     public class MapSelection
@@ -104,23 +128,30 @@ public class LobbyUIController : MonoBehaviour
 
         ApplyDefaultValues();
         ResolveLobbyActionButtons();
+        ResolveBackToTitleButton();
         ResolveMapPanelReferences();
         EnsureDefaultMapSelection();
         HideChaptersPanelForLobbyStart();
-        roomApiClient = new RoomApiClient(backendBaseUrl);
+        roomApiClient = new RoomApiClient(backendBaseUrl, backendAuthToken);
     }
 
     private void OnEnable()
     {
         RegisterListeners();
 
-        if (sessionManager != null)
-        {
-            sessionManager.StateChanged += HandleSessionStateChanged;
-            sessionManager.MapSelectionChanged += HandleMapSelectionChanged;
-        }
+        EnsureSessionManagerCurrent();
+        HookSessionEvents();
 
         RefreshUI();
+
+        // Heat PanelManager가 OnEnable에서 메인 Button Panel을 다시 켜므로(OnEnable 실행 순서 미정),
+        // 모든 OnEnable/Start가 끝난 뒤 몇 프레임에 걸쳐 세션 패널 상태를 다시 강제한다.
+        // (게임에서 로비로 복귀 시 아직 호스팅 중이면 메인 메뉴 대신 대기방 UI가 보이도록)
+        if (reassertPanelStateRoutine != null)
+        {
+            StopCoroutine(reassertPanelStateRoutine);
+        }
+        reassertPanelStateRoutine = StartCoroutine(ReassertLobbyPanelStateRoutine());
 
         if (HasRoomListUI())
         {
@@ -128,15 +159,90 @@ public class LobbyUIController : MonoBehaviour
         }
     }
 
+    private System.Collections.IEnumerator ReassertLobbyPanelStateRoutine()
+    {
+        // 첫 프레임에는 PanelManager.OnEnable이 Button Panel을 켜므로, 그 이후 여러 프레임 동안 다시 적용해 이긴다.
+        // 씬의 Network Manager 사본이 NGO 싱글턴 중복으로 파괴되는 타이밍이 있으므로 매 프레임 참조도 보정한다.
+        for (int i = 0; i < 10; i++)
+        {
+            yield return null;
+            EnsureSessionManagerCurrent();
+            HookSessionEvents();
+            bool isOnline = sessionManager != null && sessionManager.IsOnline;
+            ApplyLobbySessionPanelState(isOnline);
+
+            if (i == 9)
+            {
+                // 참조가 교체됐을 수 있으니 마지막에 전체 UI를 한 번 더 갱신한다.
+                RefreshUI();
+            }
+        }
+        reassertPanelStateRoutine = null;
+    }
+
     private void OnDisable()
     {
         UnregisterListeners();
+        UnhookSessionEvents();
+    }
 
-        if (sessionManager != null)
+    // ─────────────────────────────────────────────────────────────
+    // 세션 매니저 참조 보정
+    // ─────────────────────────────────────────────────────────────
+    // 로비 씬에는 Network Manager 프리팹 사본이 배치돼 있다. 게임에서 로비로 복귀하면
+    // NGO가 기존 싱글턴을 유지하고 씬의 사본(과 그 NetworkSessionManager)을 파괴하는데,
+    // 직렬화된 sessionManager가 그 사본을 가리키면 IsOnline=false로 오판해
+    // 대기방 UI 대신 메인 Button Panel이 표시된다. 살아있는 싱글턴의 NSM으로 교체한다.
+    private void EnsureSessionManagerCurrent()
+    {
+        NetworkSessionManager live = null;
+
+        Unity.Netcode.NetworkManager networkManager = Unity.Netcode.NetworkManager.Singleton;
+        if (networkManager != null)
+        {
+            live = networkManager.GetComponent<NetworkSessionManager>();
+        }
+
+        if (live == null && sessionManager == null)
+        {
+            live = FindFirstObjectByType<NetworkSessionManager>();
+        }
+
+        if (live == null || ReferenceEquals(sessionManager, live))
+        {
+            return;
+        }
+
+        bool rehook = sessionEventsHooked;
+        UnhookSessionEvents();
+        sessionManager = live;
+        if (rehook)
+        {
+            HookSessionEvents();
+        }
+    }
+
+    private void HookSessionEvents()
+    {
+        if (sessionManager == null || sessionEventsHooked)
+        {
+            return;
+        }
+
+        sessionManager.StateChanged += HandleSessionStateChanged;
+        sessionManager.MapSelectionChanged += HandleMapSelectionChanged;
+        sessionEventsHooked = true;
+    }
+
+    private void UnhookSessionEvents()
+    {
+        if (sessionManager != null && sessionEventsHooked)
         {
             sessionManager.StateChanged -= HandleSessionStateChanged;
             sessionManager.MapSelectionChanged -= HandleMapSelectionChanged;
         }
+
+        sessionEventsHooked = false;
     }
 
     private void Update()
@@ -174,6 +280,7 @@ public class LobbyUIController : MonoBehaviour
         }
 
         RegisterMapPanelListeners();
+        RegisterBackToTitleListener();
         listenersRegistered = true;
     }
 
@@ -196,6 +303,7 @@ public class LobbyUIController : MonoBehaviour
         }
 
         UnregisterMapPanelListeners();
+        UnregisterBackToTitleListener();
         listenersRegistered = false;
     }
 
@@ -231,6 +339,11 @@ public class LobbyUIController : MonoBehaviour
         if (chapterManager == null && chaptersPanelRoot != null)
         {
             chapterManager = chaptersPanelRoot.GetComponent<HeatChapterManager>();
+            if (chapterManager != null)
+            {
+                // 챕터 매니저를 처음 찾은 시점에 PLAY→맵 확정 연결을 걸어둔다(패널이 어떻게 열리든 동작).
+                WireChapterConfirmButtons();
+            }
         }
 
         GameObject mapButtonObject = FindSceneGameObjectByName(mapButtonObjectName);
@@ -253,6 +366,7 @@ public class LobbyUIController : MonoBehaviour
         {
             mapCanvasButton = mapButtonObject.GetComponent<CanvasButton>();
         }
+
     }
 
     private void ResolveLobbyActionButtons()
@@ -296,6 +410,81 @@ public class LobbyUIController : MonoBehaviour
         {
             startButtonRoot = startButton.gameObject;
         }
+    }
+
+    private void ResolveBackToTitleButton()
+    {
+        if (backToTitleButtonRoot == null)
+        {
+            backToTitleButtonRoot = FindSceneGameObjectByName(backToTitleButtonObjectName);
+        }
+
+        if (backToTitleButtonRoot != null)
+        {
+            if (backToTitlePanelButton == null)
+            {
+                backToTitlePanelButton = backToTitleButtonRoot.GetComponent<HeatPanelButton>();
+            }
+
+            if (backToTitleButton == null)
+            {
+                backToTitleButton = backToTitleButtonRoot.GetComponent<CanvasButton>();
+            }
+        }
+        else
+        {
+            if (backToTitlePanelButton != null)
+            {
+                backToTitleButtonRoot = backToTitlePanelButton.gameObject;
+            }
+            else if (backToTitleButton != null)
+            {
+                backToTitleButtonRoot = backToTitleButton.gameObject;
+            }
+        }
+    }
+
+    private void RegisterBackToTitleListener()
+    {
+        ResolveBackToTitleButton();
+
+        if (backButtonRuntimeListenerRegistered)
+        {
+            return;
+        }
+
+        if (backToTitlePanelButton != null)
+        {
+            backToTitlePanelButton.onClick.RemoveListener(HandleBackToTitleClicked);
+            backToTitlePanelButton.onClick.AddListener(HandleBackToTitleClicked);
+            backButtonRuntimeListenerRegistered = true;
+        }
+        else if (backToTitleButton != null)
+        {
+            backToTitleButton.onClick.RemoveListener(HandleBackToTitleClicked);
+            backToTitleButton.onClick.AddListener(HandleBackToTitleClicked);
+            backButtonRuntimeListenerRegistered = true;
+        }
+    }
+
+    private void UnregisterBackToTitleListener()
+    {
+        if (!backButtonRuntimeListenerRegistered)
+        {
+            return;
+        }
+
+        if (backToTitlePanelButton != null)
+        {
+            backToTitlePanelButton.onClick.RemoveListener(HandleBackToTitleClicked);
+        }
+
+        if (backToTitleButton != null)
+        {
+            backToTitleButton.onClick.RemoveListener(HandleBackToTitleClicked);
+        }
+
+        backButtonRuntimeListenerRegistered = false;
     }
 
     private void RegisterMapPanelListeners()
@@ -381,6 +570,41 @@ public class LobbyUIController : MonoBehaviour
         if (chapterManager != null)
         {
             chapterManager.InitializeChapters();
+            WireChapterConfirmButtons();
+        }
+    }
+
+    // Heat ChapterManager는 각 챕터 패널의 PLAY/Continue 버튼을 chapters[i].onPlay/onContinue 이벤트에 연결하는데,
+    // 이 이벤트들이 인스펙터에서 비어 있어 눌러도 맵이 선택되지 않는다.
+    // 여기서 각 챕터의 onPlay/onContinue에 ConfirmSelectedMap을 런타임으로 연결한다(중복 방지).
+    private void WireChapterConfirmButtons()
+    {
+        if (chapterManager == null || chapterManager.chapters == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < chapterManager.chapters.Count; i++)
+        {
+            HeatChapterManager.ChapterItem chapter = chapterManager.chapters[i];
+            if (chapter == null)
+            {
+                continue;
+            }
+
+            if (chapter.onPlay == null)
+            {
+                chapter.onPlay = new UnityEngine.Events.UnityEvent();
+            }
+            chapter.onPlay.RemoveListener(ConfirmSelectedMap);
+            chapter.onPlay.AddListener(ConfirmSelectedMap);
+
+            if (chapter.onContinue == null)
+            {
+                chapter.onContinue = new UnityEngine.Events.UnityEvent();
+            }
+            chapter.onContinue.RemoveListener(ConfirmSelectedMap);
+            chapter.onContinue.AddListener(ConfirmSelectedMap);
         }
     }
 
@@ -389,12 +613,15 @@ public class LobbyUIController : MonoBehaviour
         ResolveMapPanelReferences();
 
         bool canInteract = CanInteractWithMapButton();
-        if (mapHeatButton != null)
+
+        // Heat UI의 Interactable()은 내부에서 애니메이션 코루틴을 시작하므로
+        // 비활성 오브젝트에 호출하면 "Coroutine couldn't be started" 에러가 난다. 활성일 때만 호출.
+        if (mapHeatButton != null && mapHeatButton.gameObject.activeInHierarchy)
         {
             mapHeatButton.Interactable(canInteract);
         }
 
-        if (mapBoxButton != null)
+        if (mapBoxButton != null && mapBoxButton.gameObject.activeInHierarchy)
         {
             mapBoxButton.Interactable(canInteract);
         }
@@ -469,6 +696,7 @@ public class LobbyUIController : MonoBehaviour
         }
 
         defaultMapId = mapId.Trim();
+        UpdateMapButtonDescription();
         selectedMapChapterId = string.IsNullOrWhiteSpace(chapterId) ? string.Empty : chapterId.Trim();
         if (!string.IsNullOrWhiteSpace(sceneName))
         {
@@ -562,6 +790,8 @@ public class LobbyUIController : MonoBehaviour
 
     private void ApplyMapButtonBackground(MapSelection selection, string chapterId)
     {
+        UpdateMapButtonDescription();
+
         Sprite background = selection != null ? selection.buttonBackground : null;
         if (background == null)
         {
@@ -575,6 +805,57 @@ public class LobbyUIController : MonoBehaviour
 
         // 선택 확정 후 로비의 Map Button 배경을 선택한 맵 이미지로 갱신합니다.
         mapBoxButton.SetBackground(background);
+
+        // 원본 비율로 영역을 꽉 채우고, 넘치는 가장자리는 기존 배경 마스크로 자릅니다.
+        CanvasImage image = mapBoxButton.backgroundObj;
+        if (image != null)
+        {
+            image.type = CanvasImage.Type.Simple;
+            image.preserveAspect = true;
+            image.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            if (!image.TryGetComponent<UnityEngine.UI.AspectRatioFitter>(out var fitter))
+                fitter = image.gameObject.AddComponent<UnityEngine.UI.AspectRatioFitter>();
+            fitter.aspectRatio = background.rect.width / background.rect.height;
+            fitter.aspectMode = UnityEngine.UI.AspectRatioFitter.AspectMode.EnvelopeParent;
+        }
+    }
+
+    private void UpdateMapButtonDescription()
+    {
+        if (mapBoxButton == null)
+        {
+            return;
+        }
+
+        string mapId = defaultMapId;
+        if (string.IsNullOrWhiteSpace(mapId))
+        {
+            mapId = NormalizeMapId(selectedMapChapterId);
+        }
+
+        if (string.IsNullOrWhiteSpace(mapId))
+        {
+            return;
+        }
+
+        // 맵별 번역 키를 먼저 지정해 Heat의 언어 변경 갱신도 같은 이름을 사용하게 합니다.
+        mapBoxButton.descriptionLocalizationKey = GetMapDescriptionLocalizationKey(mapId);
+        string mapName = GameLocalization.MapName(mapId);
+        if (!string.Equals(mapBoxButton.buttonDescription, mapName, System.StringComparison.Ordinal))
+        {
+            mapBoxButton.SetDescription(mapName);
+        }
+    }
+
+    private static string GetMapDescriptionLocalizationKey(string mapId)
+    {
+        return mapId switch
+        {
+            "chapter-1" => "MapSurvival",
+            "chapter-2" => "MapSumo",
+            "chapter-3" => "MapFalling",
+            _ => "MapUnspecified"
+        };
     }
 
     private Sprite GetChapterBackground(string chapterId)
@@ -698,7 +979,9 @@ public class LobbyUIController : MonoBehaviour
         }
 
         EnsureDefaultMapSelection();
-        ShowLoading("방을 만드는 중입니다...");
+        // 입력 패널이 닫히기 전에 방 이름을 보관합니다.
+        string requestedRoomName = GetRoomName();
+        ShowLoading("LobbyCreating");
 
         try
         {
@@ -714,9 +997,18 @@ public class LobbyUIController : MonoBehaviour
             if (sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
             {
                 PublishCurrentMapSelectionIfHost();
+                // 백엔드 등록이 지연되거나 실패해도 생성한 방 이름을 표시합니다.
+                activeBackendRoomName = requestedRoomName;
+                RefreshUI();
                 ShowWaitingRoomAfterHostStarted();
-                await RegisterHostedRoomAsync();
+                await RegisterHostedRoomAsync(requestedRoomName);
             }
+        }
+        catch (System.Exception exception)
+        {
+            // async void라 예외가 새어나가면 추적이 어려우므로 여기서 잡아 사용자에게 표시합니다.
+            SetRoomListStatus("LobbyCreateFailed", exception.Message);
+            Debug.LogException(exception);
         }
         finally
         {
@@ -739,47 +1031,80 @@ public class LobbyUIController : MonoBehaviour
         string joinCode = GetJoinCode();
         if (string.IsNullOrWhiteSpace(joinCode))
         {
-            SetRoomListStatus("입장할 룸 코드를 입력해주세요.");
+            // 참가 코드를 입력하지 않았으면 접속을 시도하지 않습니다.
+            SetRoomListStatus("LobbyEnterCode");
             return;
         }
 
+        bool joinSucceeded = false;
         try
         {
-            ShowLoading("방 정보를 확인하는 중입니다...");
-            RoomApiClient.RoomDto room = await FindOpenRoomByCodeAsync(joinCode);
-            if (room != null)
-            {
-                await JoinBackendRoomAsync(room, "룸 코드로 방에 접속하는 중입니다...");
-                return;
-            }
-
             isJoiningRoom = true;
             RefreshUI();
-            ShowLoading("방에 접속하는 중입니다...");
-            SetRoomListStatus("일치하는 공개 방이 없어 직접 접속을 시도합니다...");
+            ShowLoading("LobbyChecking");
+            // 유효한 코드일 때만 로딩과 입력 패널 전환을 시작합니다.
+            ResolveJoinPanelManager()?.HideCurrentPanel();
 
-            if (useRelayForRoomList)
+            RoomApiClient.RoomDto room = null;
+            try
             {
-                await RunAsync(sessionManager.StartClientAsync(joinCode));
+                room = await FindOpenRoomByCodeAsync(joinCode);
+            }
+            catch (System.Exception lookupException)
+            {
+                // 백엔드 방 목록 조회에 실패해도 직접 접속은 계속 시도합니다.
+                Debug.LogWarning($"[Lobby] 방 목록 조회에 실패해 직접 접속을 시도합니다: {lookupException.Message}");
+            }
+
+            if (room != null)
+            {
+                joinSucceeded = await JoinBackendRoomAsync(room, "LobbyJoiningCode");
             }
             else
             {
-                await RunAsync(sessionManager.StartLocalClientAsync(joinCode));
-            }
+                UpdateLoadingMessage("LobbyJoining");
+                SetRoomListStatus("LobbyDirectJoin");
 
-            if (sessionManager.IsOnline)
-            {
-                await RefreshRoomsAsync();
+                if (useRelayForRoomList)
+                {
+                    await RunAsync(sessionManager.StartClientAsync(joinCode));
+                }
+                else
+                {
+                    await RunAsync(sessionManager.StartLocalClientAsync(joinCode));
+                }
+
+                // 잘못된 코드면 세션이 온라인이 되지 않거나 접속이 끝까지 완료되지 않습니다.
+                joinSucceeded = sessionManager.IsOnline && await WaitForClientConnectionAsync();
+
+                if (joinSucceeded)
+                {
+                    await RefreshRoomsAsync();
+                }
             }
         }
         catch (System.Exception exception)
         {
-            SetRoomListStatus($"룸 코드 입장 실패: {exception.Message}");
+            joinSucceeded = false;
+            SetRoomListStatus("LobbyCodeFailed", exception.Message);
         }
         finally
         {
             isJoiningRoom = false;
-            HideLoading();
+            ForceHideLoading();
+
+            if (!joinSucceeded)
+            {
+                // 잘못된 코드 등으로 접속에 실패하면 세션을 정리하고 입력 패널로 다시 돌아갑니다.
+                if (sessionManager.IsOnline && !sessionManager.IsHost)
+                {
+                    sessionManager.Shutdown();
+                }
+
+                ReopenJoinPanel();
+                SetRoomListStatus("LobbyCheckCode");
+            }
+
             RefreshUI();
         }
     }
@@ -801,16 +1126,24 @@ public class LobbyUIController : MonoBehaviour
             return;
         }
 
-        await JoinBackendRoomAsync(room, "방에 접속하는 중입니다...");
+        bool joined = await JoinBackendRoomAsync(room, "LobbyJoining");
+
+        if (!joined)
+        {
+            // RoomListItemView가 접속 전에 방 목록 패널을 닫으므로, 실패 시 다시 열어 빈 화면에 갇히지 않게 한다.
+            ReopenJoinPanel();
+            SetRoomListStatus("LobbyRetry");
+        }
     }
 
-    private async Task JoinBackendRoomAsync(RoomApiClient.RoomDto room, string loadingMessage)
+    private async Task<bool> JoinBackendRoomAsync(RoomApiClient.RoomDto room, string loadingMessage)
     {
         if (sessionManager == null || room == null)
         {
-            return;
+            return false;
         }
 
+        bool joined = false;
         try
         {
             isJoiningRoom = true;
@@ -828,19 +1161,19 @@ public class LobbyUIController : MonoBehaviour
             }
             else
             {
-                SetRoomListStatus($"지원하지 않는 접속 방식입니다: {room.connectionType}");
-                return;
+                SetRoomListStatus("LobbyUnsupported", room.connectionType);
+                return false;
             }
 
             if (!await WaitForClientConnectionAsync())
             {
-                SetRoomListStatus("네트워크 방 접속에 실패했습니다.");
+                SetRoomListStatus("LobbyNetworkFailed");
                 if (sessionManager.IsOnline && !sessionManager.IsHost)
                 {
                     sessionManager.Shutdown();
                 }
 
-                return;
+                return false;
             }
 
             // 실제 네트워크 접속을 시작한 뒤에만 백엔드 인원을 올립니다.
@@ -848,12 +1181,15 @@ public class LobbyUIController : MonoBehaviour
             activeBackendRoomId = joinedRoom.id;
             activeBackendRoomOwnedByHost = false;
             backendConnectedPlayerCount = joinedRoom.currentPlayers;
+            activeBackendRoomName = joinedRoom.name;
             RefreshUI();
             await RefreshRoomsAsync();
+            joined = true;
         }
         catch (System.Exception exception)
         {
-            SetRoomListStatus($"방 입장 실패: {exception.Message}");
+            joined = false;
+            SetRoomListStatus("LobbyJoinFailed", exception.Message);
 
             if (sessionManager.IsOnline && !sessionManager.IsHost)
             {
@@ -866,6 +1202,39 @@ public class LobbyUIController : MonoBehaviour
             HideLoading();
             RefreshUI();
         }
+
+        return joined;
+    }
+
+    public async void HandleBackToTitleClicked()
+    {
+        if (isTransitioningToTitle)
+        {
+            return;
+        }
+
+        isTransitioningToTitle = true;
+
+        if (backToTitleButton != null)
+        {
+            backToTitleButton.interactable = false;
+        }
+
+        try
+        {
+            if (sessionManager != null && sessionManager.IsOnline)
+            {
+                await ReleaseBackendRoomAsync();
+                sessionManager.Shutdown();
+            }
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning($"[Lobby] 타이틀 이동 중 세션 정리 예외: {exception.Message}");
+        }
+
+        string targetScene = string.IsNullOrWhiteSpace(titleSceneName) ? "Title Scene" : titleSceneName.Trim();
+        SceneFader.LoadSceneWithFade(targetScene, titleFadeOutDuration, titleFadeInDuration);
     }
 
     public async void HandleLeaveClicked()
@@ -878,6 +1247,7 @@ public class LobbyUIController : MonoBehaviour
         await ReleaseBackendRoomAsync();
         sessionManager.Shutdown();
         backendConnectedPlayerCount = -1;
+        activeBackendRoomName = string.Empty;
         isReady = false;
         RefreshUI();
         await RefreshRoomsAsync(true);
@@ -903,14 +1273,17 @@ public class LobbyUIController : MonoBehaviour
     {
         if (sessionManager == null)
         {
+            Debug.Log("[LobbyStart] Start clicked, but NetworkSessionManager is null.");
             return;
         }
 
         if (!sessionManager.CanHostStartGame)
         {
+            Debug.Log($"[LobbyStart] Start blocked. isHost={sessionManager.IsHost}, connected={sessionManager.ConnectedPlayerCount}, notReady=[{string.Join(", ", sessionManager.GetNotReadyRequiredClientIds())}]");
             return;
         }
 
+        Debug.Log($"[LobbyStart] Start accepted. scene={sessionManager.CurrentGameSceneName}");
         bool didStartGame = sessionManager.StartGame();
 
         if (didStartGame && activeBackendRoomId > 0 && sessionManager.IsHost)
@@ -966,7 +1339,7 @@ public class LobbyUIController : MonoBehaviour
         return false;
     }
 
-    private async Task RegisterHostedRoomAsync()
+    private async Task RegisterHostedRoomAsync(string roomName)
     {
         EnsureDefaultMapSelection();
 
@@ -975,7 +1348,7 @@ public class LobbyUIController : MonoBehaviour
             // 방 목록에서 선택 입장할 수 있도록 현재 접속 정보를 백엔드에 저장합니다.
             RoomApiClient.RoomDto room = await GetRoomApiClient().CreateRoomAsync(new RoomApiClient.CreateRoomRequest
             {
-                name = GetRoomName(),
+                name = roomName,
                 connectionType = useRelayForRoomList ? "relay" : "local",
                 connectionValue = useRelayForRoomList ? sessionManager.CurrentJoinCode : sessionManager.LocalConnectionValue,
                 mapId = defaultMapId,
@@ -988,6 +1361,7 @@ public class LobbyUIController : MonoBehaviour
             activeBackendRoomOwnedByHost = true;
             nextRoomHeartbeatTime = Time.unscaledTime + Mathf.Max(1f, roomHeartbeatInterval);
             backendConnectedPlayerCount = room.currentPlayers;
+            activeBackendRoomName = string.IsNullOrWhiteSpace(room.name) ? roomName : room.name;
             Debug.Log($"방이 등록되었습니다: {room.name}");
             RefreshUI();
             await RefreshRoomsAsync();
@@ -1009,6 +1383,7 @@ public class LobbyUIController : MonoBehaviour
         bool releaseAsHost = activeBackendRoomOwnedByHost;
         activeBackendRoomId = 0;
         activeBackendRoomOwnedByHost = false;
+        activeBackendRoomName = string.Empty;
 
         try
         {
@@ -1122,20 +1497,20 @@ public class LobbyUIController : MonoBehaviour
         {
             if (showLoading)
             {
-                ShowLoading("방 목록을 불러오는 중입니다...");
+                ShowLoading("LobbyLoading");
             }
 
-            SetRoomListStatus("방 목록을 불러오는 중입니다...");
+            SetRoomListStatus("LobbyLoading");
             RoomApiClient.RoomDto[] rooms = await GetRoomApiClient().GetRoomsAsync();
             SyncBackendPlayerCount(rooms);
             RebuildRoomList(rooms);
-            SetRoomListStatus(rooms.Length == 0 ? "표시할 공개 방이 없습니다." : $"공개 방 {rooms.Length}개");
+            SetRoomListStatus(rooms.Length == 0 ? "LobbyNoRooms" : "LobbyRoomCount", rooms.Length);
         }
         catch (System.Exception exception)
         {
             RebuildRoomList(System.Array.Empty<RoomApiClient.RoomDto>());
             Debug.LogWarning($"방 목록 로드 실패: {exception.Message}");
-            SetRoomListStatus($"방 목록 로드 실패: {exception.Message}");
+            SetRoomListStatus("LobbyLoadFailed", exception.Message);
         }
         finally
         {
@@ -1178,13 +1553,20 @@ public class LobbyUIController : MonoBehaviour
             addressInputField.interactable = !isBusy;
         }
 
-        if (roomCodeDisplayText != null)
+            if (roomCodeDisplayText != null)
         {
             // Relay 접속 코드를 대기 패널에서 바로 확인할 수 있게 표시합니다.
             roomCodeDisplayText.text = GetDisplayedRoomCode();
         }
 
+        if (roomNameDisplayText != null)
+        {
+            // 대기실 상단에는 실제 백엔드 방 이름을 표시하고, 이름이 없으면 번역된 기본 문구를 사용합니다.
+            roomNameDisplayText.text = isOnline ? GetDisplayedRoomName() : string.Empty;
+        }
+
         UpdateMapButtonInteractable();
+        UpdateMapButtonDescription();
 
         if (roomEntryPanel != null)
         {
@@ -1192,11 +1574,19 @@ public class LobbyUIController : MonoBehaviour
             roomEntryPanel.SetActive(isOnline);
         }
 
-        if (wasOnline && !isOnline && activeBackendRoomId > 0)
+        ApplyLobbySessionPanelState(isOnline);
+
+        if (wasOnline && !isOnline)
         {
-            _ = ReleaseBackendRoomAsync();
-            backendConnectedPlayerCount = -1;
+            // 온라인→오프라인 전환 시 로컬 준비 상태는 항상 초기화한다(백엔드 방 유무와 무관).
+            // 그렇지 않으면 다음 방에서 Ready 토글이 true에서 시작해 두 번 눌러야 준비된다.
             isReady = false;
+
+            if (activeBackendRoomId > 0)
+            {
+                _ = ReleaseBackendRoomAsync();
+                backendConnectedPlayerCount = -1;
+            }
         }
 
         wasOnline = isOnline;
@@ -1232,7 +1622,8 @@ public class LobbyUIController : MonoBehaviour
             canvasButton.interactable = interactable;
         }
 
-        if (heatButton != null)
+        // Heat UI의 Interactable()은 내부에서 코루틴을 시작하므로 활성 오브젝트에만 호출한다.
+        if (heatButton != null && heatButton.gameObject.activeInHierarchy)
         {
             heatButton.Interactable(interactable);
         }
@@ -1240,20 +1631,42 @@ public class LobbyUIController : MonoBehaviour
 
     private void ShowWaitingRoomAfterHostStarted()
     {
+        ApplyLobbySessionPanelState(true);
+    }
+
+    private void ApplyLobbySessionPanelState(bool isOnline)
+    {
         if (roomEntryPanel != null)
         {
-            // 외부 UI 에셋의 패널 전환은 Inspector 이벤트가 맡고, 입장 정보 영역만 동기화합니다.
-            roomEntryPanel.SetActive(true);
+            roomEntryPanel.SetActive(isOnline);
+        }
+
+        GameObject buttonPanel = ResolveLobbyButtonPanelRoot();
+        if (buttonPanel != null)
+        {
+            // 게임 클리어 후 로비 씬이 다시 로드되어도 세션이 살아 있으면 처음 버튼 패널 대신 대기방 UI를 보여줍니다.
+            buttonPanel.SetActive(!isOnline);
         }
     }
 
-    private void ShowLoading(string message)
+    private GameObject ResolveLobbyButtonPanelRoot()
+    {
+        if (lobbyButtonPanelRoot != null)
+        {
+            return lobbyButtonPanelRoot;
+        }
+
+        lobbyButtonPanelRoot = FindSceneGameObjectByName(lobbyButtonPanelObjectName);
+        return lobbyButtonPanelRoot;
+    }
+
+    private void ShowLoading(string key, params object[] arguments)
     {
         loadingRequestCount++;
 
         if (loadingMessageText != null)
         {
-            loadingMessageText.text = message;
+            GameLocalization.Set(loadingMessageText, key, arguments);
         }
 
         if (loadingRoot == null)
@@ -1306,6 +1719,56 @@ public class LobbyUIController : MonoBehaviour
         return loadingRoot != null && loadingRoot.GetComponent("UIPopup") != null;
     }
 
+    private void UpdateLoadingMessage(string key, params object[] arguments)
+    {
+        // 로딩 요청 카운트를 늘리지 않고 메시지만 갱신합니다.
+        if (loadingMessageText != null)
+        {
+            GameLocalization.Set(loadingMessageText, key, arguments);
+        }
+    }
+
+    private void ForceHideLoading()
+    {
+        // 누적 카운트와 무관하게 로딩 팝업을 확실히 닫습니다.
+        loadingRequestCount = 0;
+
+        if (loadingRoot == null)
+        {
+            return;
+        }
+
+        // UIPopup이면 PlayOut으로 isOn 상태까지 동기화해야 다음에 다시 열 수 있습니다.
+        if (HasLoadingPopup())
+        {
+            loadingRoot.SendMessage("PlayOut", SendMessageOptions.DontRequireReceiver);
+        }
+        else
+        {
+            loadingRoot.SetActive(false);
+        }
+    }
+
+    private void ReopenJoinPanel()
+    {
+        HeatPanelManager panelManager = ResolveJoinPanelManager();
+        if (panelManager != null)
+        {
+            // 확인 버튼이 닫은 입력 패널을 다시 표시해 이전 화면으로 되돌립니다.
+            panelManager.ShowCurrentPanel();
+        }
+    }
+
+    private HeatPanelManager ResolveJoinPanelManager()
+    {
+        if (joinPanelManager == null)
+        {
+            joinPanelManager = GetComponent<HeatPanelManager>();
+        }
+
+        return joinPanelManager;
+    }
+
     private int GetMaxPlayers()
     {
         return sessionManager != null ? sessionManager.MaxPlayers : 0;
@@ -1325,7 +1788,7 @@ public class LobbyUIController : MonoBehaviour
     {
         if (roomApiClient == null)
         {
-            roomApiClient = new RoomApiClient(backendBaseUrl);
+            roomApiClient = new RoomApiClient(backendBaseUrl, backendAuthToken);
         }
 
         return roomApiClient;
@@ -1375,12 +1838,12 @@ public class LobbyUIController : MonoBehaviour
         TMP_Text[] texts = row.GetComponentsInChildren<TMP_Text>(true);
         if (texts.Length > 0)
         {
-            texts[0].text = string.IsNullOrWhiteSpace(room.name) ? "이름 없는 방" : room.name;
+            texts[0].text = string.IsNullOrWhiteSpace(room.name) ? GameLocalization.Get("RoomUnnamed") : room.name;
         }
 
         if (texts.Length > 1)
         {
-            string mapText = string.IsNullOrWhiteSpace(room.mapId) ? "맵 미지정" : room.mapId;
+            string mapText = GameLocalization.MapName(room.mapId);
             texts[1].text = $"{room.currentPlayers} / {room.maxPlayers}  {GetRoomStatusText(room.status)}  {mapText}";
         }
 
@@ -1467,8 +1930,15 @@ public class LobbyUIController : MonoBehaviour
         generatedRoomRows.Clear();
     }
 
-    private void SetRoomListStatus(string message)
+    private void SetRoomListStatus(string key, params object[] arguments)
     {
+        string message = GameLocalization.Get(key, arguments);
+        // 라벨이 연결돼 있으면 화면에도 표시(빌드에서 사용자 피드백). 없으면 기존처럼 콘솔에만 남긴다.
+        if (roomListStatusLabel != null)
+        {
+            GameLocalization.Set(roomListStatusLabel, key, arguments);
+        }
+
         if (!string.IsNullOrWhiteSpace(message))
         {
             Debug.Log(message, this);
@@ -1496,8 +1966,41 @@ public class LobbyUIController : MonoBehaviour
             {
                 activeBackendRoomId = rooms[i].id;
                 backendConnectedPlayerCount = rooms[i].currentPlayers;
+                // 이름이 누락된 응답으로 이미 확보한 방 이름을 지우지 않습니다.
+                if (!string.IsNullOrWhiteSpace(rooms[i].name))
+                    activeBackendRoomName = rooms[i].name;
+
+                // 게임 씬 전환으로 이 컨트롤러가 재생성되면 호스트 소유 플래그가 유실된다.
+                // 호스트(서버)면 소유권을 복구해 하트비트를 재개하고, 방이 in_game으로 남아 있으면 open으로 되돌린다.
+                if (sessionManager != null && sessionManager.IsServer)
+                {
+                    if (!activeBackendRoomOwnedByHost)
+                    {
+                        activeBackendRoomOwnedByHost = true;
+                        nextRoomHeartbeatTime = Time.unscaledTime + Mathf.Max(1f, roomHeartbeatInterval);
+                    }
+
+                    if (rooms[i].status == "in_game")
+                    {
+                        _ = RestoreRoomToOpenAsync(rooms[i].id);
+                    }
+                }
+
                 return;
             }
+        }
+    }
+
+    // 로비로 복귀했는데 방 상태가 in_game으로 남아 있으면 다시 대기중(open)으로 되돌린다.
+    private async Task RestoreRoomToOpenAsync(long roomId)
+    {
+        try
+        {
+            await GetRoomApiClient().SetRoomStatusAsync(roomId, "open");
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogWarning($"방 상태 복구 실패: {exception.Message}");
         }
     }
 
@@ -1542,20 +2045,18 @@ public class LobbyUIController : MonoBehaviour
         return string.IsNullOrWhiteSpace(joinCode) ? "-" : joinCode;
     }
 
+    private string GetDisplayedRoomName()
+    {
+        return string.IsNullOrWhiteSpace(activeBackendRoomName)
+            ? GameLocalization.Get("RoomUnnamed")
+            : activeBackendRoomName.Trim();
+    }
+
     private static string NormalizeRoomCode(string joinCode)
     {
         return string.IsNullOrWhiteSpace(joinCode) ? string.Empty : joinCode.Trim().ToUpperInvariant();
     }
 
-    private static string GetRoomStatusText(string status)
-    {
-        return status switch
-        {
-            "open" => "대기중",
-            "in_game" => "진행중",
-            "closed" => "닫힘",
-            _ => string.IsNullOrWhiteSpace(status) ? "알 수 없음" : status
-        };
-    }
+    private static string GetRoomStatusText(string status) => RoomApiClient.GetStatusText(status);
 
 }

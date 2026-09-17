@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -699,10 +699,6 @@ MonoBehaviour:
       value: Continue your journey
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
-    - key: NewGameTitle
-      value: New Game
-      audioValue: {fileID: 0}
-      spriteValue: {fileID: 0}
     - key: NewGameDescription
       value: A fresh start
       audioValue: {fileID: 0}
@@ -765,5 +761,359 @@ MonoBehaviour:
       spriteValue: {fileID: 0}
     - key: LoadTitle
       value: Load
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudCollapse
+      value: "\u26A0 The floor is collapsing! Move to the central safe zone!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudCollapseTimer
+      value: "\u26A0 Outer edges collapse in {0}s!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudKill
+      value: "Player {0} \u25B6 Player {1} knocked off!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudFall
+      value: Player {0} fell...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSurvivalRule
+      value: "Coins decide at time limit"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSurvivalBonusRule
+      value: "Outer pink coins: 3 points!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSurvivalBonus
+      value: "Time left: {0}s | Outer pink coins: 3 points!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSurvivalTimer
+      value: "Time left: {0}s | Coins decide at time limit"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceTimer
+      value: "TIME {0}s  |  FINISHED {1}/{2}"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceFinished
+      value: "FINISHED! Waiting for racers... {0}s"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudAlive
+      value: Alive {0}/{1}
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudWaiting
+      value: Waiting for players {0}/{1}
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudGo
+      value: GO!
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudEliminated
+      value: Eliminated! Switching to spectator mode shortly.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSpectating
+      value: 'Spectating: {0}   (Left click: next / Tab: previous)'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudYouWin
+      value: YOU WIN!
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudPlayerWins
+      value: Player {0} WINS!
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudWins
+      value: '  ({0} total wins)'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudWinner
+      value: '{0}{1}
+
+        Returning to lobby shortly...'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: ClearTitle
+      value: CLEAR
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: ReturningLobby
+      value: Returning to lobby...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyCreating
+      value: Creating room...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyCreateFailed
+      value: 'Failed to create room: {0}'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyEnterCode
+      value: Enter a room code.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyChecking
+      value: Checking room information...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyJoiningCode
+      value: Joining room with code...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyJoining
+      value: Joining room...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyDirectJoin
+      value: No matching public room. Trying a direct connection...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyCodeFailed
+      value: 'Failed to join with code: {0}'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyCheckCode
+      value: Could not join the room. Check your join code.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyRetry
+      value: Could not join the room. Please try again.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyUnsupported
+      value: 'Unsupported connection type: {0}'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyNetworkFailed
+      value: Failed to connect to the network room.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyJoinFailed
+      value: 'Failed to join room: {0}'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyLoading
+      value: Loading room list...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyNoRooms
+      value: No public rooms to display.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyRoomCount
+      value: '{0} public rooms'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: LobbyLoadFailed
+      value: 'Failed to load room list: {0}'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: RoomUnnamed
+      value: Unnamed room
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapUnspecified
+      value: No map selected
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: RoomOpen
+      value: Waiting
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: RoomInGame
+      value: In progress
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: RoomClosed
+      value: Closed
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: RoomUnknown
+      value: Unknown
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapSurvival
+      value: Survival
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapSumo
+      value: "Obstacle Race"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapFalling
+      value: Falling Floors
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIRefresh
+      value: Refresh
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIJoin
+      value: Join
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIName
+      value: Name
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIAlive
+      value: Alive
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UITotal
+      value: Total
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UICoin
+      value: Coins
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIWin
+      value: WIN
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UILose
+      value: LOSE
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIEliminated
+      value: ELIMINATED
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIHud
+      value: UI & HUD
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIJoinable
+      value: joinable
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIInGame
+      value: in game
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIFiveSeconds
+      value: Returning to lobby in 5 seconds
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIButton
+      value: Button
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIKey
+      value: Key
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UISaveSlot
+      value: Save Slot Title
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UISampleItem
+      value: Sample Item 1
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIHost
+      value: Host
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIHostDesc
+      value: Create a room and invite friends
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIJoinDesc
+      value: Enter a room code to join
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIRoomsDesc
+      value: Find and join public rooms
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIMap
+      value: Map
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIMapName
+      value: map name
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIRooms
+      value: room list
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIStart
+      value: start
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIBack
+      value: back
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIRoom
+      value: Room
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UICode
+      value: Code
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIEnterCode
+      value: enter room code
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UINickname
+      value: Enter Nickname
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIEnterName
+      value: enter room name
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UILoading
+      value: Loading...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIPlaceholder
+      value: Placeholder...
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIQuest
+      value: Quest text here
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UITitle
+      value: Title
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIDescription
+      value: Description
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: UIChapterTitle
+      value: Chapter Title
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapSurvivalDesc
+      value: "Stepped tiles disappear and regenerate. Be the last survivor, or lead in coins when the 2-minute timer ends."
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapSumoDesc
+      value: "Dodge moving obstacles and race to the finish. Falling returns you to the last checkpoint."
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapFallingDesc
+      value: Outlast everyone on floors that collapse layer by layer.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: Key #174
+      value: 
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}

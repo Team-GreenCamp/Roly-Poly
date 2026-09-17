@@ -943,6 +943,7 @@ GameObject:
   - component: {fileID: 1907077939296885916}
   - component: {fileID: 8145336182508615867}
   - component: {fileID: 482707797473522393}
+  - component: {fileID: 1204823797666535622}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -1018,7 +1019,7 @@ MonoBehaviour:
   useCustomContent: 0
   useCustomTextSize: 0
   checkForDoubleClick: 1
-  useLocalization: 0
+  useLocalization: 1
   bypassUpdateOnEnable: 0
   useUINavigation: 0
   navigationMode: 3
@@ -1184,6 +1185,33 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1204823797666535622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2197741619662966753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc2fc407cf287745b4df9913e70134e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Michsky.UI.Heat.LocalizedObject
+  localizationSettings: {fileID: 11400000, guid: 2cbd73cf0fc79bf4ab2e27e18b1ba7c8, type: 2}
+  textObj: {fileID: 0}
+  audioObj: {fileID: 0}
+  imageObj: {fileID: 0}
+  tableIndex: 0
+  localizationKey: UIJoin
+  objectType: 2
+  updateMode: 0
+  rebuildLayoutOnUpdate: 0
+  forceAddToManager: 0
+  showOutputOnEditor: 0
+  onLanguageChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  isInitialized: 0
 --- !u!1 &2642958868565767889
 GameObject:
   m_ObjectHideFlags: 0

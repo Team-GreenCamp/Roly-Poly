@@ -105,7 +105,12 @@ public partial class PlayerController
             timeSinceLargeTilt = 0f;
         }
 
+        // 충격으로 흔들리는 동안에도 균형 토크를 즉시 적용한다. 무게중심이 낮은 오뚝이처럼
+        // 곧바로 세워지면서 좌우로 출렁이게 하기 위함이다. (예전에는 knockdown 동안 토크를 멈춰
+        // 그냥 쓰러져 있다가 일어나는 느낌이라 오뚝이 흔들림이 보이지 않았다.)
+        // 부스트는 크게 기운 채 오래 누워 있을 때만 켜서, 작은 충격은 부드럽게 출렁이게 둔다.
         float recoveryMultiplier = timeSinceLargeTilt >= recoveryDelay ? recoveryTorqueMultiplier : 1f;
+
         Vector3 uprightAxis = Vector3.Cross(transform.up, Vector3.up);
         Vector3 tiltAngularVelocity = Vector3.ProjectOnPlane(physicsBody.angularVelocity, Vector3.up);
 
@@ -114,5 +119,46 @@ public partial class PlayerController
             (tiltAngularVelocity * (uprightDamping * recoveryMultiplier));
 
         physicsBody.AddTorque(correctiveTorque, ForceMode.Acceleration);
+    }
+
+    private void StartKnockdown()
+    {
+        if (isKnockedDown)
+        {
+            knockdownTimer = 0f;
+            return;
+        }
+
+        // 넘어짐 중에는 입력만 막고 Rigidbody는 계속 물리/회전하도록 둡니다.
+        isKnockedDown = true;
+        knockdownTimer = 0f;
+        timeSinceLargeTilt = recoveryDelay;
+        ClearGameplayInputState();
+    }
+
+    private void UpdateKnockdownRecovery()
+    {
+        if (!isKnockedDown)
+        {
+            return;
+        }
+
+        knockdownTimer += Time.fixedDeltaTime;
+        float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
+        float tiltAngularSpeed = Vector3.ProjectOnPlane(physicsBody.angularVelocity, Vector3.up).magnitude;
+
+        if (knockdownTimer < knockdownMinimumDuration)
+        {
+            return;
+        }
+
+        if (tiltAngle > knockdownUprightAngle || tiltAngularSpeed > knockdownRecoveryAngularSpeed)
+        {
+            return;
+        }
+
+        isKnockedDown = false;
+        knockdownTimer = 0f;
+        ClearGameplayInputState();
     }
 }
