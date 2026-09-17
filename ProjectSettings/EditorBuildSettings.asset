@@ -23,6 +23,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Obstacle Race.unity
     guid: f2ad4925d8f1d764c93dabafb7985d1b
+  - enabled: 1
+    path: Assets/Scenes/Door Dash.unity
+    guid: 6c741130e68fce048afd8c4b86cdb0aa
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

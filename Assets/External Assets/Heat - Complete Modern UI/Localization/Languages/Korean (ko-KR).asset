@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -751,27 +751,30 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalRule
-      value: "시간 종료 시 코인 순위로 결정"
+      value: "\uC2DC\uAC04 \uC885\uB8CC \uC2DC \uCF54\uC778 \uC21C\uC704\uB85C \uACB0\uC815"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalBonusRule
-      value: "외곽 핑크 코인 3점!"
+      value: "\uC678\uACFD \uD551\uD06C \uCF54\uC778 3\uC810!"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalBonus
-      value: "\ub0a8\uc740 \uc2dc\uac04 {0}\ucd08 | \uc678\uacfd \ud551\ud06c \ucf54\uc778 3\uc810!"
+      value: "\uB0A8\uC740 \uC2DC\uAC04 {0}\uCD08 | \uC678\uACFD \uD551\uD06C \uCF54\uC778
+        3\uC810!"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalTimer
-      value: "\ub0a8\uc740 \uc2dc\uac04 {0}\ucd08 | \uc2dc\uac04 \uc885\ub8cc \uc2dc \ucf54\uc778 \uc21c\uc704\ub85c \uacb0\uc815"
+      value: "\uB0A8\uC740 \uC2DC\uAC04 {0}\uCD08 | \uC2DC\uAC04 \uC885\uB8CC \uC2DC
+        \uCF54\uC778 \uC21C\uC704\uB85C \uACB0\uC815"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceTimer
-      value: "\ub0a8\uc740 \uc2dc\uac04 {0}\ucd08  |  \uc644\uc8fc {1}/{2}"
+      value: "\uB0A8\uC740 \uC2DC\uAC04 {0}\uCD08  |  \uC644\uC8FC {1}/{2}"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceFinished
-      value: "\uc644\uc8fc! \ub2e4\ub978 \ucc38\uac00\uc790\ub97c \uae30\ub2e4\ub9ac\ub294 \uc911... {0}\ucd08"
+      value: "\uC644\uC8FC! \uB2E4\uB978 \uCC38\uAC00\uC790\uB97C \uAE30\uB2E4\uB9AC\uB294
+        \uC911... {0}\uCD08"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudAlive
@@ -920,7 +923,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumo
-      value: "\uc7a5\uc560\ubb3c \ub808\uc774\uc2a4"
+      value: "\uC7A5\uC560\uBB3C \uB808\uC774\uC2A4"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFalling
@@ -1076,20 +1079,15 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSurvivalDesc
-      value: "\ubc1f\uc73c\uba74 \uc0ac\ub77c\uc9c0\ub294 \ubc1c\ud310\uc740 \uc7a0\uc2dc \ud6c4 \uc7ac\uc0dd\uc131\ub429\ub2c8\ub2e4. \ucd5c\ud6c4 \uc0dd\uc874\uc790\uac00 \uc2b9\ub9ac\ud558\uba70, 2\ubd84\uc774 \uc9c0\ub098\uba74 \ucf54\uc778 \uc810\uc218\ub85c \uc2b9\uc790\ub97c \uacb0\uc815\ud569\ub2c8\ub2e4."
+      value: "\uBC1F\uC73C\uBA74 \uC0AC\uB77C\uC9C0\uB294 \uBC1C\uD310\uC740 \uC7A0\uC2DC
+        \uD6C4 \uC7AC\uC0DD\uC131\uB429\uB2C8\uB2E4. \uCD5C\uD6C4 \uC0DD\uC874\uC790\uAC00
+        \uC2B9\uB9AC\uD558\uBA70, 2\uBD84\uC774 \uC9C0\uB098\uBA74 \uCF54\uC778 \uC810\uC218\uB85C
+        \uC2B9\uC790\uB97C \uACB0\uC815\uD569\uB2C8\uB2E4."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc
-      value: "\uc6c0\uc9c1\uc774\ub294 \uc7a5\uc560\ubb3c\uc744 \ud53c\ud574 \uacb0\uc2b9\uc120\uae4c\uc9c0 \ub2ec\ub9ac\uc138\uc694. \ub5a8\uc5b4\uc9c0\uba74 \ub9c8\uc9c0\ub9c9 \uccb4\ud06c\ud3ec\uc778\ud2b8\uc5d0\uc11c \ub2e4\uc2dc \uc2dc\uc791\ud569\ub2c8\ub2e4."
-        \uC810\uC810 \uC881\uC544\uC9C4\uB2E4"
-      audioValue: {fileID: 0}
-      spriteValue: {fileID: 0}
-    - key: MapFallingDesc
-      value: "\uCE35\uCE35\uC774 \uBB34\uB108\uC9C0\uB294 \uBC14\uB2E5\uC5D0\uC11C
-        \uB05D\uAE4C\uC9C0 \uBC84\uD2F0\uAE30"
-      audioValue: {fileID: 0}
-      spriteValue: {fileID: 0}
-    - key: Key #174
-      value: 
+      value: "\uC6C0\uC9C1\uC774\uB294 \uC7A5\uC560\uBB3C\uC744 \uD53C\uD574 \uACB0\uC2B9\uC120\uAE4C\uC9C0
+        \uB2EC\uB9AC\uC138\uC694. \uB5A8\uC5B4\uC9C0\uBA74 \uB9C8\uC9C0\uB9C9 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uC5D0\uC11C
+        \uB2E4\uC2DC \uC2DC\uC791\uD569\uB2C8\uB2E4."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}

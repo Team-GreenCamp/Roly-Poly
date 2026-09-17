@@ -64,6 +64,7 @@ public class GrabbableObject : NetworkBehaviour
 
     private Vector3 localMeshOffset = Vector3.zero;
     private float meshExtentsY = 0f;
+    private readonly Dictionary<PlayerInteractor, SpringJoint> dragJoints = new Dictionary<PlayerInteractor, SpringJoint>();
 
     // 킬 크레딧용: 마지막으로 이 물체를 던진 클라이언트(권한 측 기록).
     private ulong lastThrowerClientId = ulong.MaxValue;
@@ -249,6 +250,12 @@ public class GrabbableObject : NetworkBehaviour
         if (interactor == null || !interactors.Contains(interactor)) return;
 
         interactors.Remove(interactor);
+
+        if (isHeavy && dragJoints.TryGetValue(interactor, out SpringJoint joint))
+        {
+            if (joint != null) Destroy(joint);
+            dragJoints.Remove(interactor);
+        }
 
         if (interactors.Count == 0 && !isSnapping)
         {

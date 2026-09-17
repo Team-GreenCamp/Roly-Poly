@@ -7,6 +7,7 @@ public partial class SurvivalGameManager
     [Header("Obstacle Race")]
     [SerializeField] private bool raceMode;
     [SerializeField] private float raceTimeLimit = 180f;
+    [SerializeField] private Vector3[] customRaceGates;
     private readonly List<ulong> raceFinishOrder = new();
     private readonly Dictionary<ulong, int> raceProgress = new();
     private readonly Dictionary<ulong, double> raceRespawnTimes = new();
@@ -20,6 +21,8 @@ public partial class SurvivalGameManager
     public double RaceRemaining => raceDeadline.Value <= 0 ? raceTimeLimit :
         System.Math.Max(0, raceDeadline.Value - NetworkManager.ServerTime.Time);
 
+    private Vector3[] ActiveGates => (customRaceGates != null && customRaceGates.Length > 0) ? customRaceGates : RaceGates;
+
     // U자 코스를 순서대로 통과해야 완주로 인정합니다. 서버가 동기화된 위치로 판정합니다.
     private static readonly Vector3[] RaceGates = {
         new(-12, 1.5f, 18), new(-12, 1.5f, 38), new(-12, 1.5f, 58),
@@ -31,6 +34,8 @@ public partial class SurvivalGameManager
     {
         if (!IsSpawned || !IsServer || State != MatchState.Playing) return;
         if (raceDeadline.Value == 0) raceDeadline.Value = NetworkManager.ServerTime.Time + raceTimeLimit;
+        var activeGates = ActiveGates;
+        if (activeGates == null || activeGates.Length == 0) return;
         foreach (ulong id in new List<ulong>(aliveClients))
         {
             if (!NetworkManager.ConnectedClients.TryGetValue(id, out var client) || client.PlayerObject == null) continue;
@@ -43,14 +48,19 @@ public partial class SurvivalGameManager
                 if (!raceRespawnTimes.TryGetValue(id, out double last) || now - last > 2)
                 {
                     raceRespawnTimes[id] = now;
-                    RaceRespawnClientRpc(id, progress == 0 ? new Vector3(-12, 1.5f, 0) : RaceGates[progress - 1], progress >= 4);
+                    bool returning = (customRaceGates == null || customRaceGates.Length == 0) && progress >= 4;
+                    Vector3 respawnPos = progress == 0 ? (activeGates[0] + Vector3.back * 6f) : activeGates[progress - 1];
+                    RaceRespawnClientRpc(id, respawnPos, returning);
                 }
                 continue;
             }
-            Vector3 delta = position - RaceGates[progress];
-            if (Mathf.Abs(delta.x) > 5 || Mathf.Abs(delta.z) > 3 || position.y < 0 || position.y > 5) continue;
+            if (progress >= activeGates.Length) continue;
+            Vector3 delta = position - activeGates[progress];
+            float maxDx = (customRaceGates != null && customRaceGates.Length > 0) ? 9f : 5f;
+            float maxDz = (customRaceGates != null && customRaceGates.Length > 0) ? 4f : 3f;
+            if (Mathf.Abs(delta.x) > maxDx || Mathf.Abs(delta.z) > maxDz || position.y < -1 || position.y > 6) continue;
             raceProgress[id] = ++progress;
-            if (progress != RaceGates.Length) continue;
+            if (progress != activeGates.Length) continue;
             raceFinishOrder.Add(id);
             raceFinishCount.Value = raceFinishOrder.Count;
             aliveClients.Remove(id);
