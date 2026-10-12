@@ -17,7 +17,8 @@ public partial class SurvivalGameManager
     public bool IsRace => raceMode;
     public int RaceFinishCount => raceFinishCount.Value;
     public bool LocalRaceFinished => localRaceFinished;
-    public double RaceRemaining => raceDeadline.Value <= 0 ? raceTimeLimit :
+    // 세션 종료와 로비 전환 사이에도 HUD가 남은 시간을 안전하게 읽을 수 있게 합니다.
+    public double RaceRemaining => NetworkManager == null || raceDeadline.Value <= 0 ? raceTimeLimit :
         System.Math.Max(0, raceDeadline.Value - NetworkManager.ServerTime.Time);
 
     // U자 코스를 순서대로 통과해야 완주로 인정합니다. 서버가 동기화된 위치로 판정합니다.

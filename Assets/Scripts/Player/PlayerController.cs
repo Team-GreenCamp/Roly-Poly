@@ -178,7 +178,8 @@ public partial class PlayerController : NetworkBehaviour
             return;
         }
 
-        if (!gameplayInputEnabled)
+        // 메뉴는 로컬 입력만 막고 중력·피격 등 네트워크 물리는 유지합니다.
+        if (!gameplayInputEnabled || InGamePauseMenu.IsOpen)
         {
             ClearGameplayInputState();
             return;

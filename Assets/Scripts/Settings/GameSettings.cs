@@ -21,6 +21,9 @@ public static class GameSettings
     private const string FrameRateKey = "HorizontalSelector_FrameRate";
     private const string AnisotropicFilteringKey = "HorizontalSelector_AnisotropicFiltering";
     private const string TextureQualityKey = "HorizontalSelector_TextureQuality";
+    private const string DisplayWidthKey = "Display_Width";
+    private const string DisplayHeightKey = "Display_Height";
+    private const string DisplayModeKey = "Display_Mode";
     private const string HintsKey = "Switch_EnableHints";
     private const string SubtitlesKey = "Switch_EnableSubtitles";
     private const string ReverseLookKey = "Switch_ReverseLook";
@@ -39,6 +42,8 @@ public static class GameSettings
     public static bool UseToggleSprint => PlayerPrefs.GetInt(SprintModeKey, 0) == 0;
     public static bool HintsEnabled => ReadBool(HintsKey, true);
     public static bool SubtitlesEnabled => ReadBool(SubtitlesKey, true);
+    public static Vector2Int DisplayResolution => new(PlayerPrefs.GetInt(DisplayWidthKey, Screen.width), PlayerPrefs.GetInt(DisplayHeightKey, Screen.height));
+    public static int WindowModeIndex => Mathf.Clamp(PlayerPrefs.GetInt(DisplayModeKey, Screen.fullScreenMode == FullScreenMode.Windowed ? 0 : 1), 0, 1);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
@@ -46,6 +51,7 @@ public static class GameSettings
         // 씬 전환 뒤 새로 생성된 카메라와 UI에도 설정을 다시 적용합니다.
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         SceneManager.sceneLoaded += HandleSceneLoaded;
+        ApplyDisplaySettings();
         ApplyRuntimeSettings();
     }
 
@@ -146,6 +152,29 @@ public static class GameSettings
         ApplyTextureQuality(index);
     }
 
+    public static void SetDisplayResolution(Vector2Int resolution)
+    {
+        // 선택한 해상도를 저장하고 현재 화면에 바로 반영합니다.
+        PlayerPrefs.SetInt(DisplayWidthKey, resolution.x);
+        PlayerPrefs.SetInt(DisplayHeightKey, resolution.y);
+        PlayerPrefs.Save();
+        ApplyDisplaySettings();
+    }
+
+    public static void SetWindowMode(int index)
+    {
+        // 0은 창모드, 1은 전체화면 창모드입니다.
+        if (!PlayerPrefs.HasKey(DisplayWidthKey))
+        {
+            PlayerPrefs.SetInt(DisplayWidthKey, Screen.width);
+            PlayerPrefs.SetInt(DisplayHeightKey, Screen.height);
+        }
+
+        PlayerPrefs.SetInt(DisplayModeKey, Mathf.Clamp(index, 0, 1));
+        PlayerPrefs.Save();
+        ApplyDisplaySettings();
+    }
+
     public static void SetHintsEnabled(bool enabled)
     {
         // 힌트 텍스트 표시 여부를 저장하고 현재 씬에 적용합니다.
@@ -177,6 +206,20 @@ public static class GameSettings
     private static void ApplyFrameRate(int index)
     {
         Application.targetFrameRate = FrameRates[ClampIndex(index, FrameRates.Length)];
+    }
+
+    private static void ApplyDisplaySettings()
+    {
+        if (!PlayerPrefs.HasKey(DisplayWidthKey) && !PlayerPrefs.HasKey(DisplayModeKey))
+        {
+            return;
+        }
+
+        Vector2Int resolution = DisplayResolution;
+        FullScreenMode mode = PlayerPrefs.HasKey(DisplayModeKey)
+            ? (WindowModeIndex == 0 ? FullScreenMode.Windowed : FullScreenMode.FullScreenWindow)
+            : Screen.fullScreenMode;
+        Screen.SetResolution(resolution.x, resolution.y, mode);
     }
 
     private static void ApplyVSync(bool enabled)

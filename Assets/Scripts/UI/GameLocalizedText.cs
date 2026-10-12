@@ -7,9 +7,15 @@ using UnityEngine;
 public sealed class GameLocalizedText : MonoBehaviour
 {
     private TMP_Text target;
-    private string key;
-    private object[] arguments;
+    [SerializeField] private string key;
+    private object[] arguments = System.Array.Empty<object>();
     private LocalizationLanguage language;
+
+    private void OnEnable()
+    {
+        // 프리팹에 지정한 메뉴 문구도 현재 언어로 표시합니다.
+        if (!string.IsNullOrEmpty(key)) Refresh();
+    }
 
     public void Set(string newKey, params object[] newArguments)
     {

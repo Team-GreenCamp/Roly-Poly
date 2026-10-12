@@ -34,7 +34,8 @@ public class SpectatorController : MonoBehaviour
 
     private void Update()
     {
-        if (!spectating)
+        // 메뉴 클릭이 관전 대상 변경으로 전달되지 않게 합니다.
+        if (!spectating || InGamePauseMenu.IsOpen)
         {
             return;
         }

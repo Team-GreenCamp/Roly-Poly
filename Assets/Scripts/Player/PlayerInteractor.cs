@@ -153,6 +153,13 @@ public class PlayerInteractor : MonoBehaviour
             }
         }
 
+        // 피격·소모된 물체 정리는 유지하고 메뉴 아래의 상호작용 입력만 차단합니다.
+        if (InGamePauseMenu.IsOpen)
+        {
+            holdTimer = 0f;
+            return;
+        }
+
         CheckForInteractable();
         HandleCharacterTilt();
 
@@ -184,7 +191,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnThrowStarted(InputAction.CallbackContext context)
     {
-        if (playerController != null && !playerController.HasInputAuthority)
+        if (InGamePauseMenu.IsOpen || (playerController != null && !playerController.HasInputAuthority))
         {
             return;
         }
@@ -204,7 +211,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnInteractStarted(InputAction.CallbackContext context)
     {
-        if (playerController != null && !playerController.HasInputAuthority)
+        if (InGamePauseMenu.IsOpen || (playerController != null && !playerController.HasInputAuthority))
         {
             return;
         }

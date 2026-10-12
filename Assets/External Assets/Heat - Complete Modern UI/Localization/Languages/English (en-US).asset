@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -780,27 +780,27 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalRule
-      value: "Coins decide at time limit"
+      value: Coins decide at time limit
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalBonusRule
-      value: "Outer pink coins: 3 points!"
+      value: 'Outer pink coins: 3 points!'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalBonus
-      value: "Time left: {0}s | Outer pink coins: 3 points!"
+      value: 'Time left: {0}s | Outer pink coins: 3 points!'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalTimer
-      value: "Time left: {0}s | Coins decide at time limit"
+      value: 'Time left: {0}s | Coins decide at time limit'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceTimer
-      value: "TIME {0}s  |  FINISHED {1}/{2}"
+      value: TIME {0}s  |  FINISHED {1}/{2}
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceFinished
-      value: "FINISHED! Waiting for racers... {0}s"
+      value: FINISHED! Waiting for racers... {0}s
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudAlive
@@ -946,7 +946,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumo
-      value: "Obstacle Race"
+      value: Obstacle Race
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFalling
@@ -1102,11 +1102,13 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSurvivalDesc
-      value: "Stepped tiles disappear and regenerate. Be the last survivor, or lead in coins when the 2-minute timer ends."
+      value: Stepped tiles disappear and regenerate. Be the last survivor, or lead
+        in coins when the 2-minute timer ends.
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc
-      value: "Dodge moving obstacles and race to the finish. Falling returns you to the last checkpoint."
+      value: Dodge moving obstacles and race to the finish. Falling returns you to
+        the last checkpoint.
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFallingDesc
@@ -1115,5 +1117,32 @@ MonoBehaviour:
       spriteValue: {fileID: 0}
     - key: Key #174
       value: 
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuTitle
+      value: Game Menu
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuLeaveLobby
+      value: Leave to Lobby
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuBack
+      value: Back
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuHostNotice
+      value: 'Leaving as host disconnects the other players.
+
+        The match continues
+        while this menu is open.'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuOnlineNotice
+      value: The multiplayer match continues while this menu is open.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuEscapeHint
+      value: "Esc  \xB7  Return to game"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
