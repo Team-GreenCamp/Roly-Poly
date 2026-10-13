@@ -148,7 +148,7 @@ public class PlayerClimber : MonoBehaviour
         {
             // OnTriggerEnter에서 닿자마자 자동으로 매달리게 변경되었습니다.
             // 만약 점프해서 강제로 떨어졌는데 아직 트리거 안에 있다면, 이동키(W/위)를 누르면 다시 매달립니다.
-            if (overlappingLedges.Count > 0 && moveAction != null)
+            if (!InGamePauseMenu.IsOpen && overlappingLedges.Count > 0 && moveAction != null)
             {
                 Vector2 input = moveAction.action.ReadValue<Vector2>();
                 if (input.y > 0.1f) // 앞/위 방향키를 누를 때 다시 매달리기
@@ -161,7 +161,7 @@ public class PlayerClimber : MonoBehaviour
         }
 
         // 2. 매달린 상태일 때: 점프키로 떨어지기
-        if (jumpAction != null && jumpAction.action.WasPressedThisFrame())
+        if (!InGamePauseMenu.IsOpen && jumpAction != null && jumpAction.action.WasPressedThisFrame())
         {
             StopHanging();
             return;
@@ -170,7 +170,8 @@ public class PlayerClimber : MonoBehaviour
         // 매달린 상태에서 이동 처리
         if (moveAction != null && currentLedge != null)
         {
-            Vector2 input = moveAction.action.ReadValue<Vector2>();
+            // 메뉴 중에도 몽키바의 자동 이동은 계속하고 방향키 입력만 무시합니다.
+            Vector2 input = InGamePauseMenu.IsOpen ? Vector2.zero : moveAction.action.ReadValue<Vector2>();
             bool isMonkeyBar = currentLedge.CompareTag(monkeyBarTag);
 
             // 몽키바는 입력과 무관하게 자동 이동, 사다리는 입력이 있을 때만 이동

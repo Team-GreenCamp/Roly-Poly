@@ -18,7 +18,8 @@ public partial class SurvivalGameManager
     public bool IsRace => raceMode;
     public int RaceFinishCount => raceFinishCount.Value;
     public bool LocalRaceFinished => localRaceFinished;
-    public double RaceRemaining => raceDeadline.Value <= 0 ? raceTimeLimit :
+    // 세션 종료와 로비 전환 사이에도 HUD가 남은 시간을 안전하게 읽을 수 있게 합니다.
+    public double RaceRemaining => NetworkManager == null || raceDeadline.Value <= 0 ? raceTimeLimit :
         System.Math.Max(0, raceDeadline.Value - NetworkManager.ServerTime.Time);
 
     private Vector3[] ActiveGates => (customRaceGates != null && customRaceGates.Length > 0) ? customRaceGates : RaceGates;

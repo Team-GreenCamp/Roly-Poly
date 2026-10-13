@@ -191,7 +191,7 @@ public partial class PlayerController
                     GameFeedback.HitAt(BodyCenter);
                     break;
                 case AnimRoll:
-                    GameFeedback.DashAt(transform.position);
+                    GameFeedback.DashAt(transform.position, transform.forward);
                     break;
                 case AnimAttack:
                     GameFeedback.SwingAt(BodyCenter);

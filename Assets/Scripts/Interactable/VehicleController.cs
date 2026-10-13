@@ -181,7 +181,7 @@ public class VehicleController : NetworkBehaviour, IInteractable
 
     private void HandleExitInput()
     {
-        if (exitAction == null || !exitAction.action.WasPressedThisFrame()) return;
+        if (InGamePauseMenu.IsOpen || exitAction == null || !exitAction.action.WasPressedThisFrame()) return;
 
         if (!IsNetworkActive)
         {
@@ -232,7 +232,7 @@ public class VehicleController : NetworkBehaviour, IInteractable
         if (!IsNetworkActive)
         {
             // 오프라인: 운전석(0번)이 차 있으면 로컬 입력 사용
-            currentInput = (passengers != null && passengers.Length > 0 && passengers[0] != null && moveAction != null)
+            currentInput = (!InGamePauseMenu.IsOpen && passengers != null && passengers.Length > 0 && passengers[0] != null && moveAction != null)
                 ? moveAction.action.ReadValue<Vector2>()
                 : Vector2.zero;
             return;
@@ -244,7 +244,8 @@ public class VehicleController : NetworkBehaviour, IInteractable
             return;
         }
 
-        Vector2 input = moveAction != null ? moveAction.action.ReadValue<Vector2>() : Vector2.zero;
+        // 메뉴를 연 운전자만 0 입력을 보내 다른 클라이언트의 차량 조작은 유지합니다.
+        Vector2 input = !InGamePauseMenu.IsOpen && moveAction != null ? moveAction.action.ReadValue<Vector2>() : Vector2.zero;
         if ((input - lastSentInput).sqrMagnitude > 0.0001f)
         {
             lastSentInput = input;

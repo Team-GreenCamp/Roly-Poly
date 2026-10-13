@@ -1,13 +1,16 @@
+using System.Collections.Generic;
 using Michsky.UI.Heat;
 using UnityEngine;
 
 /// <summary>
-/// Title Scene의 Heat UI 컨트롤을 실제 게임 설정에 연결합니다.
+/// 타이틀과 인게임 메뉴의 Heat UI 컨트롤을 실제 게임 설정에 연결합니다.
 /// </summary>
 [DefaultExecutionOrder(-500)]
 [DisallowMultipleComponent]
 public sealed class TitleSettingsController : MonoBehaviour
 {
+    private readonly List<Vector2Int> displayResolutions = new();
+
     private void Awake()
     {
         // 자식 컨트롤을 이름으로 연결해 기존 씬 디자인을 그대로 유지합니다.
@@ -64,6 +67,16 @@ public sealed class TitleSettingsController : MonoBehaviour
                 case "Frame Rate":
                     ConfigureSelector(selector, "FrameRate", GameSettings.SetFrameRate);
                     break;
+                case "Resolution":
+                    ConfigureResolutionSelector(selector);
+                    break;
+                case "Window Mode":
+                    // 화면 모드는 해상도와 별도로 저장하므로 Heat UI의 인덱스 저장을 끕니다.
+                    selector.saveSelected = false;
+                    selector.invokeOnAwake = false;
+                    selector.defaultIndex = GameSettings.WindowModeIndex;
+                    selector.onValueChanged.AddListener(GameSettings.SetWindowMode);
+                    break;
                 case "Anisotropic Filtering":
                     ConfigureSelector(selector, "AnisotropicFiltering", GameSettings.SetAnisotropicFiltering);
                     break;
@@ -72,6 +85,44 @@ public sealed class TitleSettingsController : MonoBehaviour
                     break;
             }
         }
+    }
+
+    private void ConfigureResolutionSelector(HorizontalSelector selector)
+    {
+        // 주사율 중복을 빼고 현재 창 크기도 선택 목록에 표시합니다.
+        displayResolutions.Clear();
+        displayResolutions.Add(new Vector2Int(Screen.width, Screen.height));
+        Vector2Int selected = GameSettings.DisplayResolution;
+        if (!displayResolutions.Contains(selected))
+        {
+            displayResolutions.Add(selected);
+        }
+
+        foreach (Resolution resolution in Screen.resolutions)
+        {
+            Vector2Int size = new(resolution.width, resolution.height);
+            if (!displayResolutions.Contains(size))
+            {
+                displayResolutions.Add(size);
+            }
+        }
+
+        selector.items.Clear();
+        for (int i = 0; i < displayResolutions.Count; i++)
+        {
+            Vector2Int size = displayResolutions[i];
+            selector.items.Add(new HorizontalSelector.Item { itemTitle = $"{size.x} x {size.y}" });
+            if (size == selected)
+            {
+                selector.defaultIndex = i;
+            }
+        }
+
+        selector.saveSelected = false;
+        selector.invokeOnAwake = false;
+        selector.enableIndicator = false;
+        selector.useLocalization = false;
+        selector.onValueChanged.AddListener(index => GameSettings.SetDisplayResolution(displayResolutions[index]));
     }
 
     private void BindSwitches()

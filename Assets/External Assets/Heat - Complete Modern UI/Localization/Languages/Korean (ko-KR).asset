@@ -1091,3 +1091,36 @@ MonoBehaviour:
         \uB2E4\uC2DC \uC2DC\uC791\uD569\uB2C8\uB2E4."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: GameMenuTitle
+      value: "\uAC8C\uC784 \uBA54\uB274"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuLeaveLobby
+      value: "\uB85C\uBE44\uB85C \uB098\uAC00\uAE30"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuBack
+      value: "\uB3CC\uC544\uAC00\uAE30"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuHostNotice
+      value: "\uD638\uC2A4\uD2B8\uAC00 \uB098\uAC00\uBA74 \uB2E4\uB978 \uD50C\uB808\uC774\uC5B4\uC758
+        \uC5F0\uACB0\uB3C4 \uC885\uB8CC\uB429\uB2C8\uB2E4.\n\uBA54\uB274\uB97C \uC5F4\uC5B4\uB3C4
+        \uAC8C\uC784\uC740 \uACC4\uC18D \uC9C4\uD589\uB429\uB2C8\uB2E4."
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuOnlineNotice
+      value: "\uBA54\uB274\uB97C \uC5F4\uC5B4\uB3C4 \uBA40\uD2F0\uD50C\uB808\uC774
+        \uAC8C\uC784\uC740 \uACC4\uC18D \uC9C4\uD589\uB429\uB2C8\uB2E4."
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: GameMenuEscapeHint
+      value: "Esc  \xB7  \uAC8C\uC784\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapFallingDesc
+      value: "\uCE35\uCE35\uC774 \uBB34\uB108\uC9C0\uB294 \uBC14\uB2E5\uC5D0\uC11C
+        \uB05D\uAE4C\uC9C0 \uBC84\uD2F0\uAE30"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+
