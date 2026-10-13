@@ -130,12 +130,21 @@ public class DoorDashGate : NetworkBehaviour
         else
         {
             // 가짜 문: 플레이어를 뒤로 강하게 튕겨냄 (우당탕탕 물리 연출)
-            if (playerBody != null && !playerBody.isKinematic)
-            {
-                Vector3 bounceDirection = (collision.transform.position - transform.position);
-                bounceDirection.y = 0.35f;
-                bounceDirection.Normalize();
+            Vector3 bounceDirection = (collision.transform.position - transform.position);
+            bounceDirection.y = 0.35f;
+            bounceDirection.Normalize();
 
+            if (playerController != null)
+            {
+                // PlayerController의 오뚝이 충격 시스템을 활용하여 휘청거리며 튕겨나가는 연출 적용
+                if (playerBody != null && !playerBody.isKinematic)
+                {
+                    playerBody.linearVelocity = Vector3.zero;
+                }
+                playerController.ApplyWobbleImpulse(bounceDirection, fakeBounceForce * 1.8f);
+            }
+            else if (playerBody != null && !playerBody.isKinematic)
+            {
                 playerBody.linearVelocity = Vector3.zero;
                 playerBody.AddForce(bounceDirection * fakeBounceForce, ForceMode.VelocityChange);
             }
@@ -194,16 +203,24 @@ public class DoorDashGate : NetworkBehaviour
         }
         else
         {
+            transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             StabilizeDoor();
         }
     }
 
     private void StabilizeDoor()
     {
-        if (doorBody != null && !doorBody.isKinematic)
+        if (doorBody != null)
         {
             doorBody.linearDamping = 3f;
             doorBody.angularDamping = 5f;
+            // 문이 완전히 넘어진 후에는 바닥에 고정하고 플레이어 발걸림 방지
+            doorBody.isKinematic = true;
+        }
+
+        if (TryGetComponent<Collider>(out var col))
+        {
+            col.isTrigger = true;
         }
     }
 }
