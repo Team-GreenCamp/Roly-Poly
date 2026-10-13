@@ -114,6 +114,9 @@ public class DoorDashGate : NetworkBehaviour
             impactDir = (transform.position - collision.transform.position).normalized;
         }
 
+        Vector3 contactPoint = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
+        GameFeedback.HitAt(contactPoint);
+
         if (isRealDoor)
         {
             if (!IsNetworkActive)

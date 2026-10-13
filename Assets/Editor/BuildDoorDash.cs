@@ -133,6 +133,9 @@ public static class BuildDoorDash
             }
         }
 
+        // 8. 게임 피드백(SFX/VFX) 자동 연결
+        GameFeedbackAutoWire.Wire();
+
         // 씬 저장 및 Build Settings 등록
         EditorSceneManager.SaveScene(scene);
         if (!EditorBuildSettings.scenes.Any(s => s.path == Path))
