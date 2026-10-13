@@ -56,11 +56,30 @@ public partial class SurvivalGameManager
                 continue;
             }
             if (progress >= activeGates.Length) continue;
-            Vector3 delta = position - activeGates[progress];
-            float maxDx = (customRaceGates != null && customRaceGates.Length > 0) ? 9f : 5f;
-            float maxDz = (customRaceGates != null && customRaceGates.Length > 0) ? 4f : 3f;
-            if (Mathf.Abs(delta.x) > maxDx || Mathf.Abs(delta.z) > maxDz || position.y < -1 || position.y > 6) continue;
-            raceProgress[id] = ++progress;
+
+            if (customRaceGates != null && customRaceGates.Length > 0)
+            {
+                // 직선 코스 (Door Dash 등): 코스 폭 및 높이 범위 내에서 게이트 Z 라인을 지나가면 통과 인정
+                float maxDx = 9.5f;
+                if (Mathf.Abs(position.x) > maxDx || position.y < -1 || position.y > 6) continue;
+                if (position.z < activeGates[progress].z - 1.5f) continue;
+
+                // 고속 이동(대시 등) 시 게이트 누락 방지를 위해 현재 Z 위치까지의 게이트 일괄 갱신
+                while (progress < activeGates.Length && position.z >= activeGates[progress].z - 1.5f)
+                {
+                    progress++;
+                }
+                raceProgress[id] = progress;
+            }
+            else
+            {
+                // U자 곡선 코스 (기존 Obstacle Race): 반경 중심 박스 검사
+                Vector3 delta = position - activeGates[progress];
+                float maxDx = 5f;
+                float maxDz = 3f;
+                if (Mathf.Abs(delta.x) > maxDx || Mathf.Abs(delta.z) > maxDz || position.y < -1 || position.y > 6) continue;
+                raceProgress[id] = ++progress;
+            }
             if (progress != activeGates.Length) continue;
             raceFinishOrder.Add(id);
             raceFinishCount.Value = raceFinishOrder.Count;
