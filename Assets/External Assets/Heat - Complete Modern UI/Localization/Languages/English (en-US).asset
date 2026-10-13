@@ -1146,3 +1146,12 @@ MonoBehaviour:
       value: "Esc  \xB7  Return to game"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: MapDoorDash
+      value: Door Dash
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapDoorDashDesc
+      value: Break through the real doors and dash to the finish line!
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+

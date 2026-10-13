@@ -228,4 +228,131 @@ public static class BuildDoorDash
         || obj.name.StartsWith("Barrel ") || obj.name.StartsWith("SM_")
         || obj.name.StartsWith("PressurePlate") || obj.name == "HeavyObject"
         || obj.name.StartsWith("ArenaTile");
+
+    [MenuItem("Tools/Battle Royal/Register Door Dash to Lobby")]
+    public static void RegisterToLobby()
+    {
+        string lobbyScenePath = "Assets/Scenes/Lobby Scene.unity";
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(lobbyScenePath) == null)
+        {
+            Debug.LogError($"[Lobby] 로비 씬 파일을 찾을 수 없습니다: {lobbyScenePath}");
+            return;
+        }
+
+        var previousScene = SceneManager.GetActiveScene();
+        var lobbyScene = EditorSceneManager.OpenScene(lobbyScenePath, OpenSceneMode.Additive);
+        SceneManager.SetActiveScene(lobbyScene);
+
+        bool modified = false;
+
+        // 1. LobbyUIController의 mapSelections에 Chapter 4 (Door Dash) 추가
+        var lobbyControllers = lobbyScene.GetRootGameObjects()
+            .SelectMany(g => g.GetComponentsInChildren<LobbyUIController>(true))
+            .ToList();
+
+        foreach (var controller in lobbyControllers)
+        {
+            var serialized = new SerializedObject(controller);
+            var mapSelectionsProp = serialized.FindProperty("mapSelections");
+            if (mapSelectionsProp != null)
+            {
+                bool exists = false;
+                for (int i = 0; i < mapSelectionsProp.arraySize; i++)
+                {
+                    var elem = mapSelectionsProp.GetArrayElementAtIndex(i);
+                    var sceneNameProp = elem.FindPropertyRelative("sceneName");
+                    if (sceneNameProp != null && sceneNameProp.stringValue == "Door Dash")
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    int newIndex = mapSelectionsProp.arraySize;
+                    mapSelectionsProp.InsertArrayElementAtIndex(newIndex);
+                    var newElem = mapSelectionsProp.GetArrayElementAtIndex(newIndex);
+                    newElem.FindPropertyRelative("chapterId").stringValue = "Chapter 4";
+                    newElem.FindPropertyRelative("mapId").stringValue = "chapter-4";
+                    newElem.FindPropertyRelative("sceneName").stringValue = "Door Dash";
+
+                    // 이전 챕터의 배경 스프라이트를 기본값으로 복사
+                    if (newIndex > 0)
+                    {
+                        var prevElem = mapSelectionsProp.GetArrayElementAtIndex(newIndex - 1);
+                        newElem.FindPropertyRelative("buttonBackground").objectReferenceValue =
+                            prevElem.FindPropertyRelative("buttonBackground").objectReferenceValue;
+                    }
+
+                    serialized.ApplyModifiedProperties();
+                    modified = true;
+                    Debug.Log("✅ [LobbyUIController] Door Dash 맵 선택 항목(Chapter 4)이 등록되었습니다.");
+                }
+            }
+        }
+
+        // 2. Heat ChapterManager의 chapters 목록에 Chapter 4 추가
+        var chapterManagers = lobbyScene.GetRootGameObjects()
+            .SelectMany(g => g.GetComponentsInChildren<Michsky.UI.Heat.ChapterManager>(true))
+            .ToList();
+
+        foreach (var cm in chapterManagers)
+        {
+            var serializedCm = new SerializedObject(cm);
+            var chaptersProp = serializedCm.FindProperty("chapters");
+            if (chaptersProp != null)
+            {
+                bool exists = false;
+                for (int i = 0; i < chaptersProp.arraySize; i++)
+                {
+                    var item = chaptersProp.GetArrayElementAtIndex(i);
+                    var idProp = item.FindPropertyRelative("chapterID");
+                    if (idProp != null && (idProp.stringValue == "Chapter 4" || idProp.stringValue == "Door Dash"))
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    int newIndex = chaptersProp.arraySize;
+                    chaptersProp.InsertArrayElementAtIndex(newIndex);
+                    var newItem = chaptersProp.GetArrayElementAtIndex(newIndex);
+                    newItem.FindPropertyRelative("chapterID").stringValue = "Chapter 4";
+                    newItem.FindPropertyRelative("title").stringValue = "도어 대시";
+                    newItem.FindPropertyRelative("titleKey").stringValue = "MapDoorDash";
+                    newItem.FindPropertyRelative("description").stringValue = "진짜 문을 찾아 부시고 결승선까지 달리세요!";
+                    newItem.FindPropertyRelative("descriptionKey").stringValue = "MapDoorDashDesc";
+                    newItem.FindPropertyRelative("defaultState").enumValueIndex = 1; // Unlocked
+
+                    if (newIndex > 0)
+                    {
+                        var prevItem = chaptersProp.GetArrayElementAtIndex(newIndex - 1);
+                        newItem.FindPropertyRelative("background").objectReferenceValue =
+                            prevItem.FindPropertyRelative("background").objectReferenceValue;
+                    }
+
+                    serializedCm.ApplyModifiedProperties();
+                    modified = true;
+                    Debug.Log("✅ [ChapterManager] Chapter 4 (도어 대시) 챕터 항목이 등록되었습니다.");
+                }
+            }
+        }
+
+        if (modified)
+        {
+            EditorSceneManager.SaveScene(lobbyScene);
+            AssetDatabase.SaveAssets();
+            Debug.Log("🎉 [Lobby Scene] Door Dash 로비 등록이 완료 및 저장되었습니다!");
+        }
+        else
+        {
+            Debug.Log("ℹ️ [Lobby Scene] Door Dash 항목이 이미 등록되어 있습니다.");
+        }
+
+        SceneManager.SetActiveScene(previousScene);
+        EditorSceneManager.CloseScene(lobbyScene, true);
+    }
 }

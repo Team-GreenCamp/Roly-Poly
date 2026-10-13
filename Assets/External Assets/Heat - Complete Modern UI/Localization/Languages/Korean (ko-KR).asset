@@ -1123,4 +1123,13 @@ MonoBehaviour:
         \uB05D\uAE4C\uC9C0 \uBC84\uD2F0\uAE30"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: MapDoorDash
+      value: "\uB3C4\uC5B4 \uB300\uC2DC"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: MapDoorDashDesc
+      value: "\uC9C4\uC9DC \uBB38\uC744 \uCC3E\uC544 \uBD80\uC2DC\uACE0 \uACB0\uC2B9\uC120\uAE4C\uC9C0 \uB2EC\uB9AC\uC138\uC694!"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+
 
