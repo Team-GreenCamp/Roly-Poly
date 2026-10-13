@@ -136,6 +136,14 @@ public static class BuildDoorDash
         // 8. 게임 피드백(SFX/VFX) 자동 연결
         GameFeedbackAutoWire.Wire();
 
+        // 9. 인게임 일시정지 메뉴 프리팹 (ESC 메뉴) 배치
+        var pauseMenuPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/InGamePauseMenu.prefab");
+        if (pauseMenuPrefab != null && !scene.GetRootGameObjects().Any(g => g.name == "InGamePauseMenu"))
+        {
+            var menuObj = (GameObject)PrefabUtility.InstantiatePrefab(pauseMenuPrefab, scene);
+            menuObj.name = "InGamePauseMenu";
+        }
+
         // 씬 저장 및 Build Settings 등록
         EditorSceneManager.SaveScene(scene);
         if (!EditorBuildSettings.scenes.Any(s => s.path == Path))
