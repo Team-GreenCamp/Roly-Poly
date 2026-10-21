@@ -1,6 +1,7 @@
 ﻿using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 // 서바이벌 매치 HUD (아레나 씬 Canvas에 부착, 순수 로컬).
 // 상태 표시는 SurvivalGameManager의 NetworkVariable을 매 프레임 폴링한다
@@ -41,10 +42,20 @@ public class SurvivalHudController : MonoBehaviour
     [SerializeField] private TMP_Text suddenDeathText;
     [Tooltip("서든데스(붕괴 시작) 몇 초 전부터 경고 타이머를 표시할지.")]
     [SerializeField] private float suddenDeathWarnSeconds = 15f;
+    [Tooltip("안내 띠의 강조 막대(선택). 붕괴 경고 중에는 경고색으로 바뀐다.")]
+    [SerializeField] private Image suddenDeathAccent;
 
     [Header("제한시간 (상단 중앙, 선택)")]
     [SerializeField] private GameObject matchTimerPanel;
     [SerializeField] private TMP_Text matchTimerText;
+    [SerializeField] private TMP_Text matchTimerLabel;
+    [Tooltip("남은 시간 진행 바(Image Type=Filled, 선택).")]
+    [SerializeField] private Image matchTimerFill;
+    [Tooltip("상단 강조선 등 경고 시 색이 바뀌는 장식(선택).")]
+    [SerializeField] private Image matchTimerAccent;
+    [SerializeField] private float matchTimerTotalSeconds = 120f;
+    [SerializeField] private Color hudAccentColor = new Color(1f, 0.686f, 0f, 1f);   // Heat UI Accent
+    [SerializeField] private Color hudWarningColor = new Color(1f, 0.294f, 0.294f, 1f); // Heat UI Negative
 
     [Header("코인 점수 (우상단 고정 UI)")]
     [SerializeField] private GameObject coinPanel;
@@ -80,6 +91,7 @@ public class SurvivalHudController : MonoBehaviour
         SetActiveSafe(alivePanel, false);
         SetActiveSafe(coinPanel, false);
         SetActiveSafe(matchTimerPanel, false);
+        if (matchTimerLabel != null) GameLocalization.Set(matchTimerLabel, "HudTimeLeft");
         SetActiveSafe(countdownPanel, false);
         SetActiveSafe(eliminatedPanel, false);
         SetActiveSafe(winnerPanel, false);
@@ -118,9 +130,34 @@ public class SurvivalHudController : MonoBehaviour
         bool show = state == SurvivalGameManager.MatchState.Playing && gameManager.IsTimedCoinSurvival;
         SetActiveSafe(matchTimerPanel, show);
         if (!show || matchTimerText == null) return;
-        int seconds = Mathf.Max(0, Mathf.CeilToInt((float)gameManager.SurvivalRemaining));
+        float remaining = Mathf.Max(0f, (float)gameManager.SurvivalRemaining);
+        int seconds = Mathf.CeilToInt(remaining);
+        bool warning = seconds <= 30;
         matchTimerText.text = $"{seconds / 60:00}:{seconds % 60:00}";
-        matchTimerText.color = seconds <= 30 ? new Color(1f, .78f, .3f) : Color.white;
+        matchTimerText.color = warning ? hudWarningColor : Color.white;
+
+        // 마지막 10초는 숫자를 초마다 맥박처럼 키워 긴박감을 준다.
+        float pulse = seconds <= 10 ? 1f + 0.12f * Mathf.Pow(1f - (remaining - Mathf.Floor(remaining)), 3f) : 1f;
+        matchTimerText.rectTransform.localScale = new Vector3(pulse, pulse, 1f);
+
+        if (matchTimerFill != null)
+        {
+            matchTimerFill.fillAmount = Mathf.Clamp01(remaining / Mathf.Max(1f, matchTimerTotalSeconds));
+            matchTimerFill.color = warning ? hudWarningColor : hudAccentColor;
+        }
+
+        if (matchTimerAccent != null)
+        {
+            matchTimerAccent.color = warning ? hudWarningColor : hudAccentColor;
+        }
+    }
+
+    private void SetSuddenDeathAccent(bool warning)
+    {
+        if (suddenDeathAccent != null)
+        {
+            suddenDeathAccent.color = warning ? hudWarningColor : hudAccentColor;
+        }
     }
 
     private void UpdateSuddenDeathText(SurvivalGameManager.MatchState state)
@@ -141,6 +178,7 @@ public class SurvivalHudController : MonoBehaviour
         {
             GameLocalization.Set(suddenDeathText, gameManager.LocalRaceFinished ? "HudRaceFinished" : "HudRaceTimer",
                 Mathf.CeilToInt((float)gameManager.RaceRemaining), gameManager.RaceFinishCount, gameManager.TotalPlayerCount);
+            SetSuddenDeathAccent(false);
             SetActiveSafe(SuddenDeathRoot, true);
             return;
         }
@@ -153,6 +191,7 @@ public class SurvivalHudController : MonoBehaviour
                 ? (separateTimer ? "HudSurvivalBonusRule" : "HudSurvivalBonus")
                 : (separateTimer ? "HudSurvivalRule" : "HudSurvivalTimer");
             GameLocalization.Set(suddenDeathText, key, Mathf.CeilToInt((float)gameManager.SurvivalRemaining));
+            SetSuddenDeathAccent(false);
             SetActiveSafe(SuddenDeathRoot, true);
             return;
         }
@@ -166,6 +205,7 @@ public class SurvivalHudController : MonoBehaviour
             }
 
             GameLocalization.Set(suddenDeathText, "HudCollapse");
+            SetSuddenDeathAccent(true);
             SetActiveSafe(SuddenDeathRoot, true);
             return;
         }
@@ -174,6 +214,7 @@ public class SurvivalHudController : MonoBehaviour
         if (remaining <= suddenDeathWarnSeconds)
         {
             GameLocalization.Set(suddenDeathText, "HudCollapseTimer", Mathf.CeilToInt((float)remaining));
+            SetSuddenDeathAccent(true);
             SetActiveSafe(SuddenDeathRoot, true);
         }
         else

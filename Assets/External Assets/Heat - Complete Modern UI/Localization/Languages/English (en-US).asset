@@ -783,6 +783,10 @@ MonoBehaviour:
       value: Coins decide at time limit
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HudTimeLeft
+      value: TIME LEFT
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: HudSurvivalBonusRule
       value: 'Outer pink coins: 3 points!'
       audioValue: {fileID: 0}

@@ -754,6 +754,10 @@ MonoBehaviour:
       value: "\uC2DC\uAC04 \uC885\uB8CC \uC2DC \uCF54\uC778 \uC21C\uC704\uB85C \uACB0\uC815"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HudTimeLeft
+      value: "\uB0A8\uC740 \uC2DC\uAC04"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: HudSurvivalBonusRule
       value: "\uC678\uACFD \uD551\uD06C \uCF54\uC778 3\uC810!"
       audioValue: {fileID: 0}
