@@ -737,9 +737,31 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
                 body.angularVelocity = previousAngularVelocity;
             }
         }
-        else
+
+        // Rigidbody 값은 다음 물리 스텝에야 Transform에 반영되므로 즉시 맞춰 둔다.
+        // (그래야 직후 BindLocalCamera가 옛 방향이 아닌 스폰 방향 기준으로 카메라를 정렬한다)
+        transform.SetPositionAndRotation(targetPosition, targetRotation);
+
+        // 스폰 방향은 카메라 연결 뒤(원격 클라는 RPC로)에 도착할 수 있으니 여기서도 등 뒤로 다시 맞춘다.
+        if (IsOwner)
         {
-            transform.SetPositionAndRotation(targetPosition, targetRotation);
+            AlignCameraBehind(targetRotation);
+        }
+    }
+
+    private void AlignCameraBehind(Quaternion rotation)
+    {
+        if (boundCamera == null || boundCamera.Follow != cameraRoot)
+        {
+            return;
+        }
+
+        var orbitalFollow = boundCamera.GetComponent<CinemachineOrbitalFollow>();
+        if (orbitalFollow != null &&
+            orbitalFollow.TrackerSettings.BindingMode == Unity.Cinemachine.TargetTracking.BindingMode.WorldSpace)
+        {
+            orbitalFollow.HorizontalAxis.Value = orbitalFollow.HorizontalAxis.ClampValue(rotation.eulerAngles.y);
+            boundCamera.PreviousStateIsValid = false;
         }
     }
 
