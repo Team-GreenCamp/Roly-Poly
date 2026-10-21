@@ -1,9 +1,6 @@
-using System.Collections.Generic;
-using TMPro;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 /// <summary>
 /// 저장된 사용자 설정을 모든 게임 씬에 적용하는 전역 진입점입니다.
@@ -15,7 +12,6 @@ public static class GameSettings
     private const string SfxVolumeKey = "Slider_SFXVolume";
     private const string UiVolumeKey = "Slider_UIVolume";
     private const string CameraSensitivityKey = "Slider_CameraSensitivity";
-    private const string UiScaleKey = "HorizontalSelector_UI Scale";
     private const string SprintModeKey = "HorizontalSelector_SprintMode";
     private const string FrameRateKey = "HorizontalSelector_FrameRate";
     private const string AnisotropicFilteringKey = "HorizontalSelector_AnisotropicFiltering";
@@ -23,13 +19,10 @@ public static class GameSettings
     private const string DisplayWidthKey = "Display_Width";
     private const string DisplayHeightKey = "Display_Height";
     private const string DisplayModeKey = "Display_Mode";
-    private const string HintsKey = "Switch_EnableHints";
     private const string ReverseLookKey = "Switch_ReverseLook";
     private const string VSyncKey = "Switch_VSync";
 
-    private static readonly float[] ScaleValues = { 0.25f, 0.5f, 1f, 1.5f, 2f };
     private static readonly int[] FrameRates = { -1, 30, 60, 144, 240 };
-    private static readonly Dictionary<CanvasScaler, Vector2> CanvasReferenceResolutions = new();
 
     public static float MasterVolume => PlayerPrefs.GetFloat(MasterVolumeKey, 1f);
     public static float MusicVolume => PlayerPrefs.GetFloat(MusicVolumeKey, 1f);
@@ -37,7 +30,6 @@ public static class GameSettings
     public static float UiVolume => PlayerPrefs.GetFloat(UiVolumeKey, 1f);
     public static float CameraSensitivity => PlayerPrefs.GetFloat(CameraSensitivityKey, 2f);
     public static bool UseToggleSprint => PlayerPrefs.GetInt(SprintModeKey, 0) == 0;
-    public static bool HintsEnabled => ReadBool(HintsKey, true);
     public static Vector2Int DisplayResolution => new(PlayerPrefs.GetInt(DisplayWidthKey, Screen.width), PlayerPrefs.GetInt(DisplayHeightKey, Screen.height));
     public static int WindowModeIndex => Mathf.Clamp(PlayerPrefs.GetInt(DisplayModeKey, Screen.fullScreenMode == FullScreenMode.Windowed ? 0 : 1), 0, 1);
 
@@ -64,8 +56,6 @@ public static class GameSettings
         ApplyVSync(ReadBool(VSyncKey, false));
         ApplyAnisotropicFiltering(PlayerPrefs.GetInt(AnisotropicFilteringKey, 2));
         ApplyTextureQuality(PlayerPrefs.GetInt(TextureQualityKey, 3));
-        ApplyUiScale(PlayerPrefs.GetInt(UiScaleKey, 2));
-        ApplyHintSettings();
         ApplyCameraSettings();
     }
 
@@ -100,14 +90,6 @@ public static class GameSettings
         // Cinemachine Look 축의 감도를 즉시 갱신합니다.
         PlayerPrefs.SetFloat(CameraSensitivityKey, Mathf.Clamp(value, 0.1f, 5f));
         ApplyCameraSettings();
-    }
-
-    public static void SetUiScale(int index)
-    {
-        // 모든 CanvasScaler의 기준 해상도를 조절해 UI 크기를 변경합니다.
-        index = ClampIndex(index, ScaleValues.Length);
-        PlayerPrefs.SetInt(UiScaleKey, index);
-        ApplyUiScale(index);
     }
 
     public static void SetSprintMode(int index)
@@ -161,13 +143,6 @@ public static class GameSettings
         PlayerPrefs.SetInt(DisplayModeKey, Mathf.Clamp(index, 0, 1));
         PlayerPrefs.Save();
         ApplyDisplaySettings();
-    }
-
-    public static void SetHintsEnabled(bool enabled)
-    {
-        // 힌트 텍스트 표시 여부를 저장하고 현재 씬에 적용합니다.
-        WriteBool(HintsKey, enabled);
-        ApplyHintSettings();
     }
 
     public static void SetReverseLook(bool enabled)
@@ -224,29 +199,6 @@ public static class GameSettings
         QualitySettings.globalTextureMipmapLimit = 3 - Mathf.Clamp(index, 0, 3);
     }
 
-    private static void ApplyUiScale(int index)
-    {
-        float scale = ScaleValues[ClampIndex(index, ScaleValues.Length)];
-        CanvasScaler[] scalers = Object.FindObjectsByType<CanvasScaler>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-
-        foreach (CanvasScaler scaler in scalers)
-        {
-            if (scaler.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize)
-            {
-                scaler.scaleFactor = scale;
-                continue;
-            }
-
-            if (!CanvasReferenceResolutions.TryGetValue(scaler, out Vector2 baseResolution))
-            {
-                baseResolution = scaler.referenceResolution;
-                CanvasReferenceResolutions[scaler] = baseResolution;
-            }
-
-            scaler.referenceResolution = baseResolution / scale;
-        }
-    }
-
     private static void ApplyCameraSettings()
     {
         float sensitivity = CameraSensitivity;
@@ -272,34 +224,6 @@ public static class GameSettings
                 }
             }
         }
-    }
-
-    private static void ApplyHintSettings()
-    {
-        // 설정 패널 자체를 제외하고 이름에 Hint가 있는 텍스트만 제어합니다.
-        foreach (TMP_Text text in Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-        {
-            if (text.name.Contains("Hint", System.StringComparison.OrdinalIgnoreCase) && !IsInsideSettingsPanel(text.transform))
-            {
-                text.gameObject.SetActive(HintsEnabled);
-            }
-        }
-    }
-
-    private static bool IsInsideSettingsPanel(Transform target)
-    {
-        // Settings 조상 아래의 미리보기/라벨은 전역 표시 설정에서 제외합니다.
-        while (target != null)
-        {
-            if (target.name == "Settings")
-            {
-                return true;
-            }
-
-            target = target.parent;
-        }
-
-        return false;
     }
 
     private static bool ReadBool(string key, bool defaultValue)

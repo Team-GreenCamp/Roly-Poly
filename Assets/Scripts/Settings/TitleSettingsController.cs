@@ -62,12 +62,6 @@ public sealed class TitleSettingsController : MonoBehaviour
                     // 언어 목록과 선택 복원은 씬의 LocalizationManager가 처리합니다.
                     selector.saveSelected = false;
                     break;
-                case "UI Scale":
-                    ConfigureSelector(selector, "UI Scale", GameSettings.SetUiScale);
-                    break;
-                case "Subtitle Scale":
-                    HideUnsupportedOption(selector.transform.parent);
-                    break;
                 case "Sprint Mode":
                     ConfigureSelector(selector, "SprintMode", GameSettings.SetSprintMode);
                     break;
@@ -138,12 +132,6 @@ public sealed class TitleSettingsController : MonoBehaviour
         {
             switch (toggle.transform.parent.name)
             {
-                case "Enable Hints":
-                    ConfigureSwitch(toggle, "EnableHints", GameSettings.SetHintsEnabled);
-                    break;
-                case "Enable Subtitles":
-                    HideUnsupportedOption(toggle.transform.parent);
-                    break;
                 case "Reverse Look":
                     ConfigureSwitch(toggle, "ReverseLook", GameSettings.SetReverseLook);
                     break;
@@ -151,15 +139,6 @@ public sealed class TitleSettingsController : MonoBehaviour
                     ConfigureSwitch(toggle, "VSync", GameSettings.SetVSync);
                     break;
             }
-        }
-    }
-
-    // 게임에 자막 텍스트가 없어 동작하지 않는 옵션은 행 전체를 숨깁니다(씬 디자인은 그대로 유지).
-    private static void HideUnsupportedOption(Transform optionRow)
-    {
-        if (optionRow != null)
-        {
-            optionRow.gameObject.SetActive(false);
         }
     }
 

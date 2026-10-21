@@ -366,8 +366,6 @@ public class SurvivalHudController : MonoBehaviour
 
         if (show && spectateHintText != null)
         {
-            // 힌트 표시 설정에 따라 관전 조작 안내를 숨길 수 있습니다.
-            spectateHintText.gameObject.SetActive(GameSettings.HintsEnabled);
             spectateHintText.text = string.IsNullOrEmpty(spectateTargetName)
                 ? GameLocalization.Get("HudEliminated")
                 : GameLocalization.Get("HudSpectating", spectateTargetName);
