@@ -216,6 +216,8 @@ MonoBehaviour:
   - key: LobbyUnsupported
   - key: LobbyNetworkFailed
   - key: LobbyJoinFailed
+  - key: DisconnectLost
+  - key: DisconnectWithReason
   - key: LobbyLoading
   - key: LobbyNoRooms
   - key: LobbyRoomCount

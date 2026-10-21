@@ -901,6 +901,14 @@ MonoBehaviour:
       value: 'Failed to join room: {0}'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: DisconnectLost
+      value: Disconnected from the server.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: DisconnectWithReason
+      value: 'Disconnected: {0}'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
     - key: LobbyLoading
       value: Loading room list...
       audioValue: {fileID: 0}

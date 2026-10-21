@@ -77,6 +77,9 @@ public class NetworkSessionManager : MonoBehaviour
     private bool callbacksRegistered;
     private bool namedMessagesRegistered;
     private bool isShuttingDown;
+    // 직접 Shutdown()을 호출해 나간 경우. NGO의 Shutdown은 지연 처리되어 끊김 콜백이 isShuttingDown 해제 뒤에
+    // 올 수 있으므로, 다음 세션을 시작할 때까지 유지해 '연결 끊김' 안내가 뜨지 않게 한다.
+    private bool localShutdownRequested;
     private bool gameStartRequested;
     private Coroutine gameSceneLoadRoutine;
     private Coroutine gameStartBroadcastRoutine;
@@ -352,6 +355,7 @@ public class NetworkSessionManager : MonoBehaviour
         }
 
         isShuttingDown = true;
+        localShutdownRequested = true;
         UnregisterSceneCallbacks();
         UnregisterNamedMessageHandlers();
         StopGameStartRoutines();
@@ -611,6 +615,7 @@ public class NetworkSessionManager : MonoBehaviour
             return false;
         }
 
+        localShutdownRequested = false;
         return true;
     }
 
@@ -865,7 +870,8 @@ public class NetworkSessionManager : MonoBehaviour
 
         if (networkManager.LocalClientId == clientId)
         {
-            if (!isShuttingDown)
+            bool unexpected = !isShuttingDown && !localShutdownRequested;
+            if (unexpected)
             {
                 SetStatus("세션 연결이 종료되었습니다.");
             }
@@ -873,6 +879,13 @@ public class NetworkSessionManager : MonoBehaviour
             CurrentJoinCode = string.Empty;
             // 로컬 연결이 끊기면 CustomMessagingManager도 함께 파괴되므로 다음 세션에서 다시 등록되도록 리셋한다.
             UnregisterNamedMessageHandlers();
+
+            // 호스트 이탈·네트워크 끊김·입장 거절처럼 직접 나가지 않았는데 끊긴 클라이언트에게 이유를 보여주고,
+            // 게임 씬에 있었다면 로비로 돌려보낸다(그대로 두면 오프라인 상태로 아레나에 갇힌다).
+            if (unexpected && !networkManager.IsServer)
+            {
+                NotifyConnectionLost();
+            }
 
             return;
         }
@@ -883,6 +896,18 @@ public class NetworkSessionManager : MonoBehaviour
             SetStatus($"플레이어가 로비에서 나갔습니다. 현재 인원: {ConnectedPlayerCount}");
             NotifyStateChanged();
         }
+    }
+
+    private void NotifyConnectionLost()
+    {
+        string reason = networkManager != null ? networkManager.DisconnectReason : string.Empty;
+        string message = string.IsNullOrWhiteSpace(reason)
+            ? GameLocalization.Get("DisconnectLost")
+            : GameLocalization.Get("DisconnectWithReason", reason.Trim());
+
+        // 로비에서 끊긴 경우(입장 거절 등)는 그 자리에서 안내만 하고, 게임 씬이면 로비로 복귀한다.
+        bool inLobby = SceneManager.GetActiveScene().name == lobbySceneName;
+        ConnectionLostNotice.Show(message, inLobby ? null : lobbySceneName);
     }
 
     private void HandleNetworkSceneEvent(SceneEvent sceneEvent)
