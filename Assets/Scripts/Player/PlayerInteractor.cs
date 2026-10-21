@@ -153,6 +153,15 @@ public class PlayerInteractor : MonoBehaviour
             }
         }
 
+        // 카운트다운/완주/시상식 등 조작 잠금 중에는 들고 있던 물체를 놓고 상호작용을 막습니다.
+        if (playerController != null && !playerController.IsGameplayInputEnabled)
+        {
+            ClearCurrentInteractionTargets();
+            ForceDropHeldObject();
+            holdTimer = 0f;
+            return;
+        }
+
         // 피격·소모된 물체 정리는 유지하고 메뉴 아래의 상호작용 입력만 차단합니다.
         if (InGamePauseMenu.IsOpen)
         {
@@ -191,7 +200,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnThrowStarted(InputAction.CallbackContext context)
     {
-        if (InGamePauseMenu.IsOpen || (playerController != null && !playerController.HasInputAuthority))
+        if (InGamePauseMenu.IsOpen || (playerController != null && (!playerController.HasInputAuthority || !playerController.IsGameplayInputEnabled)))
         {
             return;
         }
@@ -211,7 +220,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnInteractStarted(InputAction.CallbackContext context)
     {
-        if (InGamePauseMenu.IsOpen || (playerController != null && !playerController.HasInputAuthority))
+        if (InGamePauseMenu.IsOpen || (playerController != null && (!playerController.HasInputAuthority || !playerController.IsGameplayInputEnabled)))
         {
             return;
         }

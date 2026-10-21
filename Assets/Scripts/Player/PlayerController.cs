@@ -99,6 +99,8 @@ public partial class PlayerController : NetworkBehaviour
     // 소유자(또는 네트워크 세션이 없는 단일 플레이) 인스턴스에서만 입력을 처리해야 하는지 여부.
     // PlayerInteractor / PlayerClimber 등 비-NetworkBehaviour 입력 스크립트가 공유한다.
     public bool HasInputAuthority => CanProcessInput();
+    // 카운트다운/완주/시상식 등 게임 규칙상 조작이 잠겨 있는지. 상호작용·등반 스크립트도 이 값을 따른다.
+    public bool IsGameplayInputEnabled => gameplayInputEnabled;
     private Vector2 moveInput;
 
     private float currentCarrySpeedMultiplier = 1f;

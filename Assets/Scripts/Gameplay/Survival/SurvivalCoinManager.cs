@@ -56,6 +56,9 @@ public class SurvivalCoinManager : NetworkBehaviour
     private readonly Dictionary<ulong, int> scores = new Dictionary<ulong, int>();
     // 로컬에서 줍기 요청을 보낸 코인(응답 전 중복 RPC 방지).
     private readonly HashSet<int> pendingPickups = new HashSet<int>();
+    // 서버가 거절한 코인은 잠시 뒤 다시 요청한다(거절 직후 매 프레임 RPC를 보내지 않도록).
+    private readonly Dictionary<int, float> pickupRetryAt = new Dictionary<int, float>();
+    private const float PickupRetryDelay = 0.3f;
 
     // 마지막 30초에는 외곽에 최대 8개의 3점 코인을 추가합니다.
     private bool bonusStarted;
@@ -282,7 +285,8 @@ public class SurvivalCoinManager : NetworkBehaviour
         pickupBuffer.Clear();
         foreach (KeyValuePair<int, CoinData> entry in activeCoins)
         {
-            if (pendingPickups.Contains(entry.Key))
+            if (pendingPickups.Contains(entry.Key)
+                || (pickupRetryAt.TryGetValue(entry.Key, out float retryAt) && Time.unscaledTime < retryAt))
             {
                 continue;
             }
@@ -326,18 +330,19 @@ public class SurvivalCoinManager : NetworkBehaviour
         if (match == null || match.State != SurvivalGameManager.MatchState.Playing
             || match.IsEliminated(senderClientId) || (match.IsTimedCoinSurvival && match.SurvivalRemaining <= 0)
             || !NetworkManager.ConnectedClients.TryGetValue(senderClientId, out var sender) || sender.PlayerObject == null
-            || (coin.platform != null && coin.platform.HasPhysicallyDropped)) return;
+            || (coin.platform != null && coin.platform.HasPhysicallyDropped))
+        {
+            RejectPickup(coinId, senderClientId);
+            return;
+        }
 
         // 위치 검증: NOA 동기화로 서버에도 플레이어 트랜스폼이 반영되므로 거리로 판별한다.
         // (지연 동안의 이동을 감안해 넉넉한 반경. 신원은 SenderClientId라 남의 코인 대리 획득은 불가.)
-        if (NetworkManager.ConnectedClients.TryGetValue(senderClientId, out NetworkClient client)
-            && client.PlayerObject != null)
+        float sqrDistance = (sender.PlayerObject.transform.position - coin.position).sqrMagnitude;
+        if (sqrDistance > serverValidationRadius * serverValidationRadius)
         {
-            float sqrDistance = (client.PlayerObject.transform.position - coin.position).sqrMagnitude;
-            if (sqrDistance > serverValidationRadius * serverValidationRadius)
-            {
-                return;
-            }
+            RejectPickup(coinId, senderClientId);
+            return;
         }
 
         scores.TryGetValue(senderClientId, out int score);
@@ -379,6 +384,29 @@ public class SurvivalCoinManager : NetworkBehaviour
         pendingPickups.Remove(coinId);
     }
 
+    // 서버가 줍기를 거절하면 요청한 클라의 대기 표시를 풀어야 다시 주울 수 있다.
+    // (풀지 않으면 핑이 높아 거리 검증에 한 번 걸린 코인을 그 플레이어는 끝까지 못 줍는다)
+    private void RejectPickup(int coinId, ulong clientId)
+    {
+        ClientRpcParams target = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { clientId }
+            }
+        };
+        PickupRejectedClientRpc(coinId, target);
+    }
+
+    [ClientRpc]
+    private void PickupRejectedClientRpc(int coinId, ClientRpcParams rpcParams = default)
+    {
+        if (pendingPickups.Remove(coinId))
+        {
+            pickupRetryAt[coinId] = Time.unscaledTime + PickupRetryDelay;
+        }
+    }
+
     [ClientRpc]
     private void ClearAllCoinsClientRpc()
     {
@@ -408,6 +436,7 @@ public class SurvivalCoinManager : NetworkBehaviour
 
     private void RemoveCoinLocal(int coinId)
     {
+        pickupRetryAt.Remove(coinId);
         if (!activeCoins.TryGetValue(coinId, out CoinData coin))
         {
             return;
@@ -433,6 +462,7 @@ public class SurvivalCoinManager : NetworkBehaviour
 
         activeCoins.Clear();
         pendingPickups.Clear();
+        pickupRetryAt.Clear();
     }
 
     private GameObject CreateCoinVisual(Vector3 position, int value)
