@@ -639,15 +639,16 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        Vector3 targetPosition = spawnCenterOffset + GetSpawnOffset(OwnerClientId);
+        ulong spawnSlot = (ulong)GetServerSpawnSlot();
+        Vector3 targetPosition = spawnCenterOffset + GetSpawnOffset(spawnSlot);
         Quaternion targetRotation = transform.rotation;
 
-        if (TryGetLobbySpawnPose(out Vector3 lobbyPosition, out Quaternion lobbyRotation))
+        if (TryGetLobbySpawnPose(spawnSlot, out Vector3 lobbyPosition, out Quaternion lobbyRotation))
         {
             targetPosition = lobbyPosition;
             targetRotation = lobbyRotation;
         }
-        else if (TryGetSceneSpawnPose(out Vector3 scenePosition, out Quaternion sceneRotation))
+        else if (TryGetSceneSpawnPose(spawnSlot, out Vector3 scenePosition, out Quaternion sceneRotation))
         {
             targetPosition = scenePosition;
             targetRotation = sceneRotation;
@@ -742,7 +743,50 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
     }
 
-    private bool TryGetLobbySpawnPose(out Vector3 position, out Quaternion rotation)
+    // 서버: 클라이언트별 스폰 슬롯. clientId는 재접속할 때마다 계속 증가하므로 그대로 나머지 연산하면
+    // 남아 있는 플레이어와 자리가 겹친다. 현재 접속자가 쓰지 않는 가장 작은 슬롯을 배정하고,
+    // 씬이 바뀌어도 같은 슬롯을 유지한다.
+    private static readonly Dictionary<ulong, int> serverSpawnSlots = new Dictionary<ulong, int>();
+    private static readonly List<ulong> staleSpawnSlotClients = new List<ulong>();
+
+    private int GetServerSpawnSlot()
+    {
+        NetworkManager networkManager = NetworkManager;
+        if (networkManager == null || !networkManager.IsServer)
+        {
+            return (int)OwnerClientId;
+        }
+
+        // 나간 클라이언트의 슬롯은 반납한다.
+        staleSpawnSlotClients.Clear();
+        foreach (ulong clientId in serverSpawnSlots.Keys)
+        {
+            if (!networkManager.ConnectedClients.ContainsKey(clientId))
+            {
+                staleSpawnSlotClients.Add(clientId);
+            }
+        }
+        for (int i = 0; i < staleSpawnSlotClients.Count; i++)
+        {
+            serverSpawnSlots.Remove(staleSpawnSlotClients[i]);
+        }
+
+        if (serverSpawnSlots.TryGetValue(OwnerClientId, out int slot))
+        {
+            return slot;
+        }
+
+        slot = 0;
+        while (serverSpawnSlots.ContainsValue(slot))
+        {
+            slot++;
+        }
+
+        serverSpawnSlots[OwnerClientId] = slot;
+        return slot;
+    }
+
+    private bool TryGetLobbySpawnPose(ulong spawnSlot, out Vector3 position, out Quaternion rotation)
     {
         position = Vector3.zero;
         rotation = Quaternion.identity;
@@ -753,10 +797,10 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         LobbySpawnPointGroup spawnPointGroup = FindLobbySpawnPointGroup(SceneManager.GetActiveScene());
-        return spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(OwnerClientId, out position, out rotation);
+        return spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(spawnSlot, out position, out rotation);
     }
 
-    private bool TryGetSceneSpawnPose(out Vector3 position, out Quaternion rotation)
+    private bool TryGetSceneSpawnPose(ulong spawnSlot, out Vector3 position, out Quaternion rotation)
     {
         position = Vector3.zero;
         rotation = Quaternion.identity;
@@ -768,12 +812,12 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         Scene activeScene = SceneManager.GetActiveScene();
         LobbySpawnPointGroup spawnPointGroup = FindLobbySpawnPointGroup(activeScene);
-        if (spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(OwnerClientId, out position, out rotation))
+        if (spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(spawnSlot, out position, out rotation))
         {
             return true;
         }
 
-        Transform spawnPoint = FindNamedSceneSpawnPoint(activeScene, OwnerClientId);
+        Transform spawnPoint = FindNamedSceneSpawnPoint(activeScene, spawnSlot);
         if (spawnPoint == null)
         {
             return false;

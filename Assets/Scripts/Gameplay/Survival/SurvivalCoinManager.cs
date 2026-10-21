@@ -49,6 +49,7 @@ public class SurvivalCoinManager : NetworkBehaviour
         public int value;
         public GameObject visual;
         public FallingPlatform platform; // 서버 전용: 발판이 무너지면 코인을 회수하기 위한 추적
+        public bool isBonus; // 서버 전용: 보너스 웨이브 코인(외곽 3점 코인과 값이 같아 값으로는 구분 불가)
     }
 
     // 서버·클라 공통 상태(서버는 권한 원본, 클라는 ClientRpc로 따라온다).
@@ -176,7 +177,7 @@ public class SurvivalCoinManager : NetworkBehaviour
     private void SpawnWaveOnServer(bool bonus = false)
     {
         int bonusCount = 0;
-        foreach (var coin in activeCoins.Values) if (coin.value == 3 && IsBonusTime) bonusCount++;
+        foreach (var coin in activeCoins.Values) if (coin.isBonus) bonusCount++;
         int toSpawn = bonus ? 8 - bonusCount : maxActiveCoins - activeCoins.Count;
         if (toSpawn <= 0)
         {
@@ -228,6 +229,7 @@ public class SurvivalCoinManager : NetworkBehaviour
             if (activeCoins.TryGetValue(id, out CoinData coin))
             {
                 coin.platform = platform;
+                coin.isBonus = bonus;
             }
             SpawnCoinClientRpc(id, position, value);
             toSpawn--;

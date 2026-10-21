@@ -20,6 +20,13 @@ public sealed class TitleSettingsController : MonoBehaviour
         GameSettings.ApplyRuntimeSettings();
     }
 
+    private void OnDisable()
+    {
+        // 슬라이더는 드래그 중 매 프레임 값을 쓰므로 그때마다 저장하지 않고, 창을 닫거나 씬을 떠날 때 한 번 저장한다.
+        // (종료 시 자동 저장에만 기대면 크래시 때 바꾼 설정이 사라진다)
+        PlayerPrefs.Save();
+    }
+
     private void BindSliders()
     {
         foreach (SliderManager slider in GetComponentsInChildren<SliderManager>(true))
