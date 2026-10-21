@@ -29,6 +29,15 @@ public class SurvivalHudController : MonoBehaviour
     [SerializeField] private GameObject eliminatedPanel;
     [SerializeField] private TMP_Text spectateHintText;
 
+    [Header("관전 바 (하단 중앙, 선택)")]
+    [Tooltip("연결하면 관전 중에는 안내 문구 대신 이 바를 표시한다.")]
+    [SerializeField] private GameObject spectatePanel;
+    [SerializeField] private TMP_Text spectateLabelText;
+    [SerializeField] private TMP_Text spectateNameText;
+    [SerializeField] private TMP_Text spectateAliveText;
+    [SerializeField] private Button spectatePrevButton;
+    [SerializeField] private Button spectateNextButton;
+
     [Header("승자 패널")]
     [SerializeField] private GameObject winnerPanel;
     [SerializeField] private TMP_Text winnerText;
@@ -94,6 +103,7 @@ public class SurvivalHudController : MonoBehaviour
         if (matchTimerLabel != null) GameLocalization.Set(matchTimerLabel, "HudTimeLeft");
         SetActiveSafe(countdownPanel, false);
         SetActiveSafe(eliminatedPanel, false);
+        SetActiveSafe(spectatePanel, false);
         SetActiveSafe(winnerPanel, false);
         SetActiveSafe(actionTextWin, false);
         SetActiveSafe(actionTextLose, false);
@@ -267,6 +277,8 @@ public class SurvivalHudController : MonoBehaviour
         if (spectator != null)
         {
             spectator.OnSpectateTargetChanged += HandleSpectateTargetChanged;
+            if (spectatePrevButton != null) spectatePrevButton.onClick.AddListener(spectator.Previous);
+            if (spectateNextButton != null) spectateNextButton.onClick.AddListener(spectator.Next);
         }
 
         return true;
@@ -282,6 +294,8 @@ public class SurvivalHudController : MonoBehaviour
         if (spectator != null)
         {
             spectator.OnSpectateTargetChanged -= HandleSpectateTargetChanged;
+            if (spectatePrevButton != null) spectatePrevButton.onClick.RemoveListener(spectator.Previous);
+            if (spectateNextButton != null) spectateNextButton.onClick.RemoveListener(spectator.Next);
             spectator = null;
         }
     }
@@ -403,7 +417,19 @@ public class SurvivalHudController : MonoBehaviour
     private void UpdateEliminatedPanel(SurvivalGameManager.MatchState state)
     {
         bool show = gameManager.LocalEliminated && state != SurvivalGameManager.MatchState.Finished;
-        SetActiveSafe(eliminatedPanel, show);
+
+        // 관전 바가 연결돼 있고 볼 대상이 있으면 안내 문구 대신 바를 띄운다.
+        bool showBar = show && spectatePanel != null && spectator != null && spectator.IsSpectating
+            && !string.IsNullOrEmpty(spectateTargetName);
+        SetActiveSafe(spectatePanel, showBar);
+        SetActiveSafe(eliminatedPanel, show && !showBar);
+        if (showBar)
+        {
+            if (spectateLabelText != null) GameLocalization.Set(spectateLabelText, "HudSpectatingLabel");
+            if (spectateNameText != null) spectateNameText.text = spectateTargetName;
+            if (spectateAliveText != null) GameLocalization.Set(spectateAliveText, "HudSpectateAlive", gameManager.AliveCount);
+            return;
+        }
 
         if (show && spectateHintText != null)
         {

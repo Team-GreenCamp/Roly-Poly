@@ -798,8 +798,15 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSpectating
-      value: "\uAD00\uC804 \uC911: {0}   (\uC88C\uD074\uB9AD: \uB2E4\uC74C / Tab:
-        \uC774\uC804)"
+      value: "\uAD00\uC804 \uC911: {0}   (A/D \uB610\uB294 \uD074\uB9AD\uC73C\uB85C \uC804\uD658)"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSpectatingLabel
+      value: "\uAD00\uC804 \uC911"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSpectateAlive
+      value: "\uC0DD\uC874 {0}\uBA85"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudYouWin

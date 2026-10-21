@@ -824,7 +824,15 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSpectating
-      value: 'Spectating: {0}   (Left click: next / Tab: previous)'
+      value: 'Spectating: {0}   (A/D or click to switch)'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSpectatingLabel
+      value: SPECTATING
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSpectateAlive
+      value: '{0} ALIVE'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudYouWin

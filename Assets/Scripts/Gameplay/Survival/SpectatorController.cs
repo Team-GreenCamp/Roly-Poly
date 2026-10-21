@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 // 탈락한 로컬 플레이어의 관전 카메라 (순수 로컬 연출, NetworkBehaviour 아님).
@@ -13,12 +14,25 @@ using UnityEngine.InputSystem;
 [DisallowMultipleComponent]
 public class SpectatorController : MonoBehaviour
 {
-    // HUD가 "관전 중: Player N" 표시를 갱신할 때 사용.
+    // HUD가 관전 대상 닉네임 표시를 갱신할 때 사용.
     public event Action<string> OnSpectateTargetChanged;
 
     private CinemachineCamera spectateCamera;
     private NetworkOwnedObjectActivator currentTarget;
     private bool spectating;
+
+    public bool IsSpectating => spectating && currentTarget != null;
+
+    // HUD의 이전/다음 버튼에서도 호출한다.
+    public void Next()
+    {
+        if (spectating) CycleTarget(1);
+    }
+
+    public void Previous()
+    {
+        if (spectating) CycleTarget(-1);
+    }
 
     private void Awake()
     {
@@ -40,11 +54,19 @@ public class SpectatorController : MonoBehaviour
             return;
         }
 
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        Keyboard keyboard = Keyboard.current;
+        // 관전 바 버튼을 누른 클릭은 버튼이 처리하므로 여기서 한 번 더 넘기지 않는다.
+        bool pointerOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        bool next = (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && !pointerOverUi)
+            || (keyboard != null && (keyboard.dKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame));
+        bool previous = keyboard != null
+            && (keyboard.aKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame || keyboard.tabKey.wasPressedThisFrame);
+
+        if (next)
         {
             CycleTarget(1);
         }
-        else if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+        else if (previous)
         {
             CycleTarget(-1);
         }
@@ -105,7 +127,7 @@ public class SpectatorController : MonoBehaviour
             spectateCamera.LookAt = followTarget;
         }
 
-        OnSpectateTargetChanged?.Invoke($"Player {target.OwnerClientId + 1}");
+        OnSpectateTargetChanged?.Invoke(target.DisplayName);
     }
 
     private static List<NetworkOwnedObjectActivator> CollectAlivePlayers()
