@@ -16,7 +16,6 @@ public static class GameSettings
     private const string UiVolumeKey = "Slider_UIVolume";
     private const string CameraSensitivityKey = "Slider_CameraSensitivity";
     private const string UiScaleKey = "HorizontalSelector_UI Scale";
-    private const string SubtitleScaleKey = "HorizontalSelector_SubtitleScale";
     private const string SprintModeKey = "HorizontalSelector_SprintMode";
     private const string FrameRateKey = "HorizontalSelector_FrameRate";
     private const string AnisotropicFilteringKey = "HorizontalSelector_AnisotropicFiltering";
@@ -25,14 +24,12 @@ public static class GameSettings
     private const string DisplayHeightKey = "Display_Height";
     private const string DisplayModeKey = "Display_Mode";
     private const string HintsKey = "Switch_EnableHints";
-    private const string SubtitlesKey = "Switch_EnableSubtitles";
     private const string ReverseLookKey = "Switch_ReverseLook";
     private const string VSyncKey = "Switch_VSync";
 
     private static readonly float[] ScaleValues = { 0.25f, 0.5f, 1f, 1.5f, 2f };
     private static readonly int[] FrameRates = { -1, 30, 60, 144, 240 };
     private static readonly Dictionary<CanvasScaler, Vector2> CanvasReferenceResolutions = new();
-    private static readonly Dictionary<TMP_Text, float> SubtitleBaseSizes = new();
 
     public static float MasterVolume => PlayerPrefs.GetFloat(MasterVolumeKey, 1f);
     public static float MusicVolume => PlayerPrefs.GetFloat(MusicVolumeKey, 1f);
@@ -41,7 +38,6 @@ public static class GameSettings
     public static float CameraSensitivity => PlayerPrefs.GetFloat(CameraSensitivityKey, 2f);
     public static bool UseToggleSprint => PlayerPrefs.GetInt(SprintModeKey, 0) == 0;
     public static bool HintsEnabled => ReadBool(HintsKey, true);
-    public static bool SubtitlesEnabled => ReadBool(SubtitlesKey, true);
     public static Vector2Int DisplayResolution => new(PlayerPrefs.GetInt(DisplayWidthKey, Screen.width), PlayerPrefs.GetInt(DisplayHeightKey, Screen.height));
     public static int WindowModeIndex => Mathf.Clamp(PlayerPrefs.GetInt(DisplayModeKey, Screen.fullScreenMode == FullScreenMode.Windowed ? 0 : 1), 0, 1);
 
@@ -69,7 +65,6 @@ public static class GameSettings
         ApplyAnisotropicFiltering(PlayerPrefs.GetInt(AnisotropicFilteringKey, 2));
         ApplyTextureQuality(PlayerPrefs.GetInt(TextureQualityKey, 3));
         ApplyUiScale(PlayerPrefs.GetInt(UiScaleKey, 2));
-        ApplySubtitleSettings();
         ApplyHintSettings();
         ApplyCameraSettings();
     }
@@ -113,13 +108,6 @@ public static class GameSettings
         index = ClampIndex(index, ScaleValues.Length);
         PlayerPrefs.SetInt(UiScaleKey, index);
         ApplyUiScale(index);
-    }
-
-    public static void SetSubtitleScale(int index)
-    {
-        // 이름에 Subtitle이 포함된 텍스트의 글자 크기를 변경합니다.
-        PlayerPrefs.SetInt(SubtitleScaleKey, ClampIndex(index, ScaleValues.Length));
-        ApplySubtitleSettings();
     }
 
     public static void SetSprintMode(int index)
@@ -180,13 +168,6 @@ public static class GameSettings
         // 힌트 텍스트 표시 여부를 저장하고 현재 씬에 적용합니다.
         WriteBool(HintsKey, enabled);
         ApplyHintSettings();
-    }
-
-    public static void SetSubtitlesEnabled(bool enabled)
-    {
-        // 자막 텍스트 표시 여부를 저장하고 현재 씬에 적용합니다.
-        WriteBool(SubtitlesKey, enabled);
-        ApplySubtitleSettings();
     }
 
     public static void SetReverseLook(bool enabled)
@@ -302,28 +283,6 @@ public static class GameSettings
             {
                 text.gameObject.SetActive(HintsEnabled);
             }
-        }
-    }
-
-    private static void ApplySubtitleSettings()
-    {
-        float scale = ScaleValues[ClampIndex(PlayerPrefs.GetInt(SubtitleScaleKey, 2), ScaleValues.Length)];
-
-        foreach (TMP_Text text in Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-        {
-            if (!text.name.Contains("Subtitle", System.StringComparison.OrdinalIgnoreCase) || IsInsideSettingsPanel(text.transform))
-            {
-                continue;
-            }
-
-            if (!SubtitleBaseSizes.TryGetValue(text, out float baseSize))
-            {
-                baseSize = text.fontSize;
-                SubtitleBaseSizes[text] = baseSize;
-            }
-
-            text.fontSize = baseSize * scale;
-            text.gameObject.SetActive(SubtitlesEnabled);
         }
     }
 

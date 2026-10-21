@@ -66,7 +66,7 @@ public sealed class TitleSettingsController : MonoBehaviour
                     ConfigureSelector(selector, "UI Scale", GameSettings.SetUiScale);
                     break;
                 case "Subtitle Scale":
-                    ConfigureSelector(selector, "SubtitleScale", GameSettings.SetSubtitleScale);
+                    HideUnsupportedOption(selector.transform.parent);
                     break;
                 case "Sprint Mode":
                     ConfigureSelector(selector, "SprintMode", GameSettings.SetSprintMode);
@@ -142,7 +142,7 @@ public sealed class TitleSettingsController : MonoBehaviour
                     ConfigureSwitch(toggle, "EnableHints", GameSettings.SetHintsEnabled);
                     break;
                 case "Enable Subtitles":
-                    ConfigureSwitch(toggle, "EnableSubtitles", GameSettings.SetSubtitlesEnabled);
+                    HideUnsupportedOption(toggle.transform.parent);
                     break;
                 case "Reverse Look":
                     ConfigureSwitch(toggle, "ReverseLook", GameSettings.SetReverseLook);
@@ -151,6 +151,15 @@ public sealed class TitleSettingsController : MonoBehaviour
                     ConfigureSwitch(toggle, "VSync", GameSettings.SetVSync);
                     break;
             }
+        }
+    }
+
+    // 게임에 자막 텍스트가 없어 동작하지 않는 옵션은 행 전체를 숨깁니다(씬 디자인은 그대로 유지).
+    private static void HideUnsupportedOption(Transform optionRow)
+    {
+        if (optionRow != null)
+        {
+            optionRow.gameObject.SetActive(false);
         }
     }
 
