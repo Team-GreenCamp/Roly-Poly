@@ -90,6 +90,8 @@ curl -s http://localhost:3000/rooms
 
 `connectionType`은 로컬 개발에서는 `local`, Unity Relay를 붙일 때는 `relay`로 사용합니다.
 
+`currentPlayers`를 `0`으로 보내면 방이 삭제됩니다. 데디케이티드 서버처럼 비어 있어도 방을 유지해야 하면 `"keepWhenEmpty": true`를 함께 보냅니다.
+
 ## 현재 Unity 기본값
 
 Unity 로비는 기본적으로 로컬 모드로 방 목록을 사용합니다.

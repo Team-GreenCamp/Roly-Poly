@@ -41,10 +41,15 @@ public class InteractableOutlineHighlight : MonoBehaviour
             return;
         }
 
+        bool wasHighlighted = isHighlighted;
         isHighlighted = shouldHighlight;
         if (shouldHighlight)
         {
-            CacheOriginalOutlineState();
+            // 이미 하이라이트 중(조준 → 집기)이면 하이라이트 상태를 원래 상태로 덮어쓰지 않는다.
+            if (!wasHighlighted)
+            {
+                CacheOriginalOutlineState();
+            }
             ApplyHighlightStyle();
             outline.enabled = true;
         }

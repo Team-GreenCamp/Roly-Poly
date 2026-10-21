@@ -241,6 +241,12 @@ public partial class SurvivalGameManager : NetworkBehaviour
             yield return null;
         }
 
+        // 카운트다운 중 이탈로 이미 매치가 끝났으면 Playing으로 덮어쓰지 않는다(승수/로비 복귀 중복 방지).
+        if (State != MatchState.Countdown)
+        {
+            yield break;
+        }
+
         matchState.Value = (byte)MatchState.Playing;
 
         if (timedCoinSurvival) survivalDeadline.Value = NetworkManager.ServerTime.Time + 120;

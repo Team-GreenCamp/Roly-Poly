@@ -81,10 +81,12 @@ public class RoomApiClient
         return await SetRoomStatusAsync(roomId, "closed");
     }
 
-    public async Task<RoomDto> SetRoomPlayerCountAsync(long roomId, int currentPlayers)
+    public async Task<RoomDto> SetRoomPlayerCountAsync(long roomId, int currentPlayers, bool keepWhenEmpty = false)
     {
         // 호스트가 알고 있는 실제 접속자 수를 백엔드 방 목록에 반영합니다.
-        string json = await SendAsync("PATCH", $"/rooms/{roomId}", $"{{\"currentPlayers\":{currentPlayers}}}");
+        // keepWhenEmpty가 false면 백엔드는 0명이 된 방을 삭제합니다(데디케이티드 서버는 true).
+        string keep = keepWhenEmpty ? ",\"keepWhenEmpty\":true" : string.Empty;
+        string json = await SendAsync("PATCH", $"/rooms/{roomId}", $"{{\"currentPlayers\":{currentPlayers}{keep}}}");
         return string.IsNullOrWhiteSpace(json) ? null : JsonUtility.FromJson<RoomDto>(json);
     }
 

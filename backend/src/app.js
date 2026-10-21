@@ -286,8 +286,9 @@ app.patch('/rooms/:id', async (req, res, next) => {
         return res.status(404).json({ message: 'room not found' });
       }
 
-      if (currentPlayers === 0) {
+      if (currentPlayers === 0 && req.body.keepWhenEmpty !== true) {
         // 호스트 세션이 종료되면 실제 접속자가 없으므로 방 목록에서 제거한다.
+        // 데디케이티드 서버는 비어 있어도 방이 유지돼야 하므로 keepWhenEmpty: true를 보낸다.
         await pool.query('DELETE FROM rooms WHERE id = ?', [roomId]);
         return res.status(204).send();
       }
