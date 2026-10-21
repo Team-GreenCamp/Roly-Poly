@@ -6,6 +6,8 @@ const app = express();
 app.use(express.json());
 
 const staleOpenRoomSeconds = 30;
+// 게임 중에는 로비 하트비트가 멈추므로 in_game/closed 방은 경기 시간보다 넉넉히 기다린 뒤 정리한다.
+const staleInactiveRoomSeconds = 15 * 60;
 
 // DB 행을 API 응답 형태로 맞춘다.
 function toRoom(row) {
@@ -41,10 +43,13 @@ app.get('/health', async (req, res) => {
 
 app.get('/rooms', async (req, res, next) => {
   try {
-    // 호스트 heartbeat가 끊긴 공개 방은 실제 세션이 끝난 방으로 보고 목록에서 제거한다.
+    // 호스트 heartbeat가 끊긴 방은 실제 세션이 끝난 방으로 보고 정리한다.
+    // in_game으로 남은 채 호스트가 사라진 방도 DB에 영구히 남지 않게 함께 정리한다.
     await pool.query(
-      'DELETE FROM rooms WHERE status = ? AND updated_at < DATE_SUB(NOW(), INTERVAL ? SECOND)',
-      ['open', staleOpenRoomSeconds]
+      `DELETE FROM rooms
+       WHERE (status = 'open' AND updated_at < DATE_SUB(NOW(), INTERVAL ? SECOND))
+          OR (status <> 'open' AND updated_at < DATE_SUB(NOW(), INTERVAL ? SECOND))`,
+      [staleOpenRoomSeconds, staleInactiveRoomSeconds]
     );
 
     const [rows] = await pool.query(
@@ -108,9 +113,12 @@ app.post('/rooms/:id/join', async (req, res, next) => {
     return res.status(400).json({ message: 'invalid room id' });
   }
 
-  const connection = await pool.getConnection();
+  let connection;
 
   try {
+    // 연결 획득 실패도 catch에서 처리해야 Express 4에서 unhandled rejection으로 프로세스가 죽지 않는다.
+    connection = await pool.getConnection();
+
     // 입장 중에는 해당 방을 잠금 상태로 확인한다.
     await connection.beginTransaction();
 
@@ -140,10 +148,15 @@ app.post('/rooms/:id/join', async (req, res, next) => {
     await connection.commit();
     res.json(toRoom(updated));
   } catch (error) {
-    await connection.rollback();
+    if (connection) {
+      // 롤백 실패가 원래 오류를 덮거나 다시 throw되지 않게 한다.
+      await connection.rollback().catch(() => {});
+    }
     next(error);
   } finally {
-    connection.release();
+    if (connection) {
+      connection.release();
+    }
   }
 });
 
@@ -154,9 +167,12 @@ app.post('/rooms/:id/leave', async (req, res, next) => {
     return res.status(400).json({ message: 'invalid room id' });
   }
 
-  const connection = await pool.getConnection();
+  let connection;
 
   try {
+    // 연결 획득 실패도 catch에서 처리해야 Express 4에서 unhandled rejection으로 프로세스가 죽지 않는다.
+    connection = await pool.getConnection();
+
     // 나가기 처리도 같은 방식으로 잠금을 건다.
     await connection.beginTransaction();
 
@@ -190,10 +206,15 @@ app.post('/rooms/:id/leave', async (req, res, next) => {
     await connection.commit();
     res.json(toRoom(updated));
   } catch (error) {
-    await connection.rollback();
+    if (connection) {
+      // 롤백 실패가 원래 오류를 덮거나 다시 throw되지 않게 한다.
+      await connection.rollback().catch(() => {});
+    }
     next(error);
   } finally {
-    connection.release();
+    if (connection) {
+      connection.release();
+    }
   }
 });
 

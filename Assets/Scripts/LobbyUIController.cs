@@ -86,6 +86,13 @@ public class LobbyUIController : MonoBehaviour
     private string selectedMapChapterId = string.Empty;
     private string selectedMapSceneName = string.Empty;
     private string activeBackendRoomName = string.Empty;
+    private bool hasCarriedBackendRoom;
+
+    // 게임 씬을 다녀오면 이 컨트롤러가 새로 만들어지므로, 백엔드 방 정보를 씬 전환 사이에 보관한다.
+    // (보관하지 않으면 in_game 방을 open으로 되돌리지도, 해제하지도 못해 DB에 남는다)
+    private static long carriedBackendRoomId;
+    private static bool carriedBackendRoomOwnedByHost;
+    private static string carriedBackendRoomName = string.Empty;
 
     private readonly List<GameObject> generatedRoomRows = new List<GameObject>();
     private RoomApiClient roomApiClient;
@@ -133,6 +140,60 @@ public class LobbyUIController : MonoBehaviour
         EnsureDefaultMapSelection();
         HideChaptersPanelForLobbyStart();
         roomApiClient = new RoomApiClient(backendBaseUrl, backendAuthToken);
+        TakeCarriedBackendRoom();
+    }
+
+    private void OnDestroy()
+    {
+        // 세션이 유지된 채 게임 씬으로 넘어가는 경우에만 방 정보를 다음 로비로 넘긴다.
+        bool keepRoom = activeBackendRoomId > 0 && sessionManager != null && sessionManager.IsOnline;
+        carriedBackendRoomId = keepRoom ? activeBackendRoomId : 0;
+        carriedBackendRoomOwnedByHost = keepRoom && activeBackendRoomOwnedByHost;
+        carriedBackendRoomName = keepRoom ? activeBackendRoomName : string.Empty;
+    }
+
+    private void TakeCarriedBackendRoom()
+    {
+        if (carriedBackendRoomId <= 0)
+        {
+            return;
+        }
+
+        activeBackendRoomId = carriedBackendRoomId;
+        activeBackendRoomOwnedByHost = carriedBackendRoomOwnedByHost;
+        activeBackendRoomName = carriedBackendRoomName ?? string.Empty;
+        hasCarriedBackendRoom = true;
+
+        carriedBackendRoomId = 0;
+        carriedBackendRoomOwnedByHost = false;
+        carriedBackendRoomName = string.Empty;
+    }
+
+    // 세션 매니저 참조가 보정된 뒤 한 번 호출: 게임에서 돌아온 방을 다시 대기중으로 되돌리거나 정리한다.
+    private void ResumeCarriedBackendRoom()
+    {
+        if (!hasCarriedBackendRoom)
+        {
+            return;
+        }
+
+        hasCarriedBackendRoom = false;
+        if (activeBackendRoomId <= 0)
+        {
+            return;
+        }
+
+        if (sessionManager == null || !sessionManager.IsOnline)
+        {
+            _ = ReleaseBackendRoomAsync();
+            return;
+        }
+
+        if (activeBackendRoomOwnedByHost && sessionManager.IsServer)
+        {
+            _ = RestoreRoomToOpenAsync(activeBackendRoomId);
+            nextRoomHeartbeatTime = Time.unscaledTime;
+        }
     }
 
     private void OnEnable()
@@ -175,6 +236,7 @@ public class LobbyUIController : MonoBehaviour
             {
                 // 참조가 교체됐을 수 있으니 마지막에 전체 UI를 한 번 더 갱신한다.
                 RefreshUI();
+                ResumeCarriedBackendRoom();
             }
         }
         reassertPanelStateRoutine = null;
@@ -1176,12 +1238,13 @@ public class LobbyUIController : MonoBehaviour
                 return false;
             }
 
-            // 실제 네트워크 접속을 시작한 뒤에만 백엔드 인원을 올립니다.
-            RoomApiClient.RoomDto joinedRoom = await GetRoomApiClient().JoinRoomAsync(room.id);
-            activeBackendRoomId = joinedRoom.id;
+            // 인원 수는 호스트(데디 서버)가 실제 접속자 수로 갱신하는 값만 기준으로 삼는다.
+            // 여기서 join으로 따로 올리면 호스트 갱신과 경쟁해 마지막 자리 입장이 409로 끊긴다.
+            // 정원 초과는 서버의 ConnectionApproval이 막는다.
+            activeBackendRoomId = room.id;
             activeBackendRoomOwnedByHost = false;
-            backendConnectedPlayerCount = joinedRoom.currentPlayers;
-            activeBackendRoomName = joinedRoom.name;
+            backendConnectedPlayerCount = room.currentPlayers;
+            activeBackendRoomName = room.name;
             RefreshUI();
             await RefreshRoomsAsync();
             joined = true;
@@ -1385,18 +1448,16 @@ public class LobbyUIController : MonoBehaviour
         activeBackendRoomOwnedByHost = false;
         activeBackendRoomName = string.Empty;
 
+        // 클라이언트가 나간 인원은 호스트(데디 서버)가 접속자 수로 갱신하므로 따로 보내지 않는다.
+        if (!releaseAsHost)
+        {
+            return;
+        }
+
         try
         {
-            if (releaseAsHost)
-            {
-                // 호스트 세션이 끝나면 남은 클라이언트도 유지될 수 없으므로 방을 0명 처리합니다.
-                await GetRoomApiClient().SetRoomPlayerCountAsync(roomId, 0);
-            }
-            else
-            {
-                // 마지막 인원이 나가면 백엔드에서 방을 자동 삭제합니다.
-                await GetRoomApiClient().LeaveRoomAsync(roomId);
-            }
+            // 호스트 세션이 끝나면 남은 클라이언트도 유지될 수 없으므로 방을 0명 처리합니다.
+            await GetRoomApiClient().SetRoomPlayerCountAsync(roomId, 0);
         }
         catch (System.Exception exception)
         {
@@ -1465,11 +1526,12 @@ public class LobbyUIController : MonoBehaviour
         }
 
         isSyncingBackendPlayerCount = true;
+        long roomId = activeBackendRoomId;
 
         try
         {
             // Netcode의 실제 서버 접속자 수를 방 목록 인원으로 맞춥니다.
-            RoomApiClient.RoomDto room = await GetRoomApiClient().SetRoomPlayerCountAsync(activeBackendRoomId, playerCount);
+            RoomApiClient.RoomDto room = await GetRoomApiClient().SetRoomPlayerCountAsync(roomId, playerCount);
             if (room != null)
             {
                 backendConnectedPlayerCount = room.currentPlayers;
@@ -1478,6 +1540,7 @@ public class LobbyUIController : MonoBehaviour
         catch (System.Exception exception)
         {
             Debug.LogWarning($"방 인원 동기화 실패: {exception.Message}");
+            HandleHostedRoomMissing(roomId, exception);
         }
         finally
         {
@@ -2001,7 +2064,27 @@ public class LobbyUIController : MonoBehaviour
         catch (System.Exception exception)
         {
             Debug.LogWarning($"방 상태 복구 실패: {exception.Message}");
+            HandleHostedRoomMissing(roomId, exception);
         }
+    }
+
+    // 긴 경기 동안 백엔드가 방을 정리했으면(404) 같은 이름으로 다시 등록한다.
+    private void HandleHostedRoomMissing(long roomId, System.Exception exception)
+    {
+        if (exception == null || !exception.Message.StartsWith("404"))
+        {
+            return;
+        }
+
+        if (roomId <= 0 || roomId != activeBackendRoomId || !activeBackendRoomOwnedByHost || sessionManager == null || !sessionManager.IsServer)
+        {
+            return;
+        }
+
+        string roomName = string.IsNullOrWhiteSpace(activeBackendRoomName) ? GetRoomName() : activeBackendRoomName.Trim();
+        activeBackendRoomId = 0;
+        activeBackendRoomOwnedByHost = false;
+        _ = RegisterHostedRoomAsync(roomName);
     }
 
     private async Task<RoomApiClient.RoomDto> FindOpenRoomByCodeAsync(string joinCode)
