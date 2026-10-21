@@ -84,6 +84,8 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float knockdownImpactSpeedThreshold = 7f;
     [SerializeField] private float knockdownThrownObjectSpeedThreshold = 5.5f;
     [SerializeField] private float knockdownFallingObjectSpeedThreshold = 5f;
+    [Tooltip("레이스 장애물 피격 후 다시 맞을 수 있기까지의 시간(초).")]
+    [SerializeField] private float obstacleHitCooldown = 0.8f;
 
     [Header("Slope")]
     [SerializeField] private float slideSlopeAngle = 32f;

@@ -22,11 +22,17 @@ public partial class SurvivalGameManager
         System.Math.Max(0, raceDeadline.Value - NetworkManager.ServerTime.Time);
 
     // U자 코스를 순서대로 통과해야 완주로 인정합니다. 서버가 동기화된 위치로 판정합니다.
-    private static readonly Vector3[] RaceGates = {
+    // 마지막 게이트가 결승선. 코스를 바꾸면 씬에서 게이트 좌표만 고치면 된다.
+    [SerializeField] private Vector3[] raceGates = {
         new(-12, 1.5f, 18), new(-12, 1.5f, 38), new(-12, 1.5f, 58),
         new(0, 1.5f, 67), new(12, 1.5f, 58), new(12, 1.5f, 38),
         new(12, 1.5f, 18), new(12, 1.5f, 2)
     };
+    [Tooltip("게이트를 하나도 통과하지 못하고 떨어졌을 때 돌아갈 위치.")]
+    [SerializeField] private Vector3 raceStartRespawn = new(-12, 1.5f, 0);
+    [Tooltip("이 번호(통과한 게이트 수) 이상이면 돌아오는 구간으로 보고 리스폰 방향을 뒤집는다.")]
+    [SerializeField] private int raceReturnGateCount = 4;
+    private Vector3[] RaceGates => raceGates;
 
     private void UpdateRace()
     {
@@ -44,7 +50,7 @@ public partial class SurvivalGameManager
                 if (!raceRespawnTimes.TryGetValue(id, out double last) || now - last > 2)
                 {
                     raceRespawnTimes[id] = now;
-                    RaceRespawnClientRpc(id, progress == 0 ? new Vector3(-12, 1.5f, 0) : RaceGates[progress - 1], progress >= 4);
+                    RaceRespawnClientRpc(id, progress == 0 ? raceStartRespawn : RaceGates[progress - 1], progress >= raceReturnGateCount);
                 }
                 continue;
             }
