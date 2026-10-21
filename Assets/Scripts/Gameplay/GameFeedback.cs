@@ -84,10 +84,12 @@ public class GameFeedback : MonoBehaviour
         Instance.PlayAt(Instance.hitVoice, position, Instance.voiceVolume * GameSettings.SfxVolume);
     }
 
-    public static void DashAt(Vector3 position)
+    public static void DashAt(Vector3 position, Vector3 forward)
     {
         if (Instance == null) return;
-        Instance.SpawnVfx(Instance.dashVfx, position);
+        // 몸의 기울기는 제외하고 플레이어가 바라보는 수평 방향으로 돌진 이펙트를 회전한다.
+        float yaw = Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
+        Instance.SpawnVfx(Instance.dashVfx, position, yaw);
         Instance.PlayAt(Instance.dashSfx, position, Instance.sfxVolume * GameSettings.SfxVolume);
     }
 
@@ -162,7 +164,7 @@ public class GameFeedback : MonoBehaviour
         }
     }
 
-    private void SpawnVfx(GameObject[] prefabs, Vector3 position)
+    private void SpawnVfx(GameObject[] prefabs, Vector3 position, float yaw = 0f)
     {
         GameObject prefab = Pick(prefabs);
         if (prefab == null)
@@ -170,7 +172,7 @@ public class GameFeedback : MonoBehaviour
             return;
         }
 
-        GameObject vfx = Instantiate(prefab, position, Quaternion.identity);
+        GameObject vfx = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f));
         vfx.transform.localScale = prefab.transform.localScale * Mathf.Max(0.1f, vfxScale);
 
         // 파티클이 transform 스케일을 따르도록 강제(프리팹의 scalingMode 설정과 무관하게 적용).
