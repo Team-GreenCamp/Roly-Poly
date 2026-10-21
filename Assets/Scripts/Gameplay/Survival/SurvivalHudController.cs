@@ -244,7 +244,8 @@ public class SurvivalHudController : MonoBehaviour
 
     private void HandlePlayerEliminated(ulong victimClientId, ulong killerClientId)
     {
-        if (killFeedText == null)
+        // 레이스에서는 왼쪽 상단을 순위표가 쓰므로 킬 피드를 띄우지 않는다.
+        if (killFeedText == null || (gameManager != null && gameManager.IsRace))
         {
             return;
         }

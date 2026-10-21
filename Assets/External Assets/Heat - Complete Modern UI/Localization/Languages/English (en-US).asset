@@ -800,7 +800,19 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceTimer
-      value: TIME {0}s  |  FINISHED {1}/{2}
+      value: 'TIME {0}s'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRanking
+      value: RANKING
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRowFinished
+      value: FINISHED
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRowProgress
+      value: '{0}%'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceFinished

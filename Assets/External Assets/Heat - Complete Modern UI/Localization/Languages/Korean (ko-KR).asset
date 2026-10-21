@@ -773,7 +773,19 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceTimer
-      value: "\uB0A8\uC740 \uC2DC\uAC04 {0}\uCD08  |  \uC644\uC8FC {1}/{2}"
+      value: "\uB0A8\uC740 \uC2DC\uAC04 {0}\uCD08"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRanking
+      value: "\uC21C\uC704"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRowFinished
+      value: "\uC644\uC8FC"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRowProgress
+      value: "{0}%"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceFinished
