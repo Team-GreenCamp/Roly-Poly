@@ -37,6 +37,7 @@ ExportedObj/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -86,6 +87,9 @@ crashlytics-build.properties
 
 # Mono / Unity crash reports
 mono_crash.*
-mono_crash.eda558c06.0.json
-*.json
-mono_crash.eda558c06.0.json
+
+# Unity 씬 자동 복구본, 임시 작업 폴더
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
+/[Aa]ssets/[Tt]emp/
+/[Aa]ssets/[Tt]emp.meta
