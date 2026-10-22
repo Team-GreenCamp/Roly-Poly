@@ -27,6 +27,21 @@ public partial class PlayerController
     [SerializeField] private float animRunThreshold = 4.5f;
     [Tooltip("애니메이션 전환(CrossFade) 시간(초).")]
     [SerializeField] private float animCrossFadeDuration = 0.12f;
+    [Tooltip("걷기 애니메이션이 1배속으로 재생될 때의 이동 속도(m/s). 더 빠르게 걸으면 발놀림도 빨라져 미끄러져 보이지 않는다.")]
+    [SerializeField] private float walkAnimReferenceSpeed = 3.2f;
+    [Tooltip("달리기 애니메이션이 1배속으로 재생될 때의 이동 속도(m/s).")]
+    [SerializeField] private float runAnimReferenceSpeed = 6f;
+    [Tooltip("걷기·달리기 재생 속도 배율 범위.")]
+    [SerializeField] private Vector2 locomotionAnimSpeedRange = new Vector2(0.7f, 1.5f);
+
+    [Header("Jump Squash & Stretch (점프·착지 연출)")]
+    [Tooltip("뛰어오를 때 세로로 늘어나는 정도.")]
+    [SerializeField] private float takeoffStretch = 0.16f;
+    [Tooltip("착지할 때 납작해지는 정도.")]
+    [SerializeField] private float landingSquash = 0.22f;
+    [SerializeField] private float squashStretchDuration = 0.22f;
+    [Tooltip("이 시간보다 짧게 떠 있던 착지(작은 턱, 발판 틈)는 찌그러짐을 생략한다(초).")]
+    [SerializeField] private float minAirTimeForLandingSquash = 0.12f;
 
     [Header("Eye Reaction (눈 표정 연출)")]
     [Tooltip("넉다운/스턴 시 재생할 눈 표정 상태 이름(Shapekey 레이어). 비우면 눈 연출 비활성.")]
@@ -67,6 +82,16 @@ public partial class PlayerController
     private string activeEyeReaction; // 현재 재생 중인 리액션 눈 상태(null=중립/깜빡임)
     private float nextBlinkTime = -1f;
     private float blinkActiveUntil = -1f;
+
+    // 걷기·달리기 재생 속도용 평면 속도. 원격 사본은 kinematic이라 Rigidbody 속도 대신 위치 변화로 잰다.
+    private Vector3 lastAnimPosition;
+    private bool animPositionInitialized;
+    private float animPlanarSpeed;
+
+    // 점프·착지 늘어남/찌그러짐(+면 늘어남, -면 찌그러짐). animState 전환에서 켜므로 모든 인스턴스가 같은 연출을 본다.
+    private float jumpBounceStartTime = -999f;
+    private float jumpBounceAmount;
+    private float jumpStateEnteredAt = -999f;
 
     // 승자 세리머니(Spin) — SurvivalGameManager가 승자 소유자 클라이언트에서 켜고, 씬 언로드 시 끈다.
     private bool isCelebrating;
@@ -113,7 +138,46 @@ public partial class PlayerController
         }
 
         ApplyBodyState(anim, effectiveState);
+        UpdateLocomotionAnimSpeed(anim, effectiveState);
         UpdateEyeExpression(anim, effectiveState);
+    }
+
+    // 걷기·달리기는 실제 이동 속도에 맞춰 재생 속도를 바꾸고, 나머지 동작은 1배속.
+    private void UpdateLocomotionAnimSpeed(Animator anim, byte state)
+    {
+        Vector3 position = transform.position;
+        if (animPositionInitialized && Time.deltaTime > 0f)
+        {
+            float speed = Vector3.ProjectOnPlane(position - lastAnimPosition, Vector3.up).magnitude / Time.deltaTime;
+            animPlanarSpeed = Mathf.Lerp(animPlanarSpeed, speed, 1f - Mathf.Exp(-10f * Time.deltaTime));
+        }
+
+        lastAnimPosition = position;
+        animPositionInitialized = true;
+
+        float reference = state == AnimWalk ? walkAnimReferenceSpeed : state == AnimRun ? runAnimReferenceSpeed : 0f;
+        anim.speed = reference > 0f
+            ? Mathf.Clamp(animPlanarSpeed / reference, locomotionAnimSpeedRange.x, locomotionAnimSpeedRange.y)
+            : 1f;
+    }
+
+    private void StartJumpBounce(float amount)
+    {
+        jumpBounceAmount = amount;
+        jumpBounceStartTime = Time.time;
+    }
+
+    // 캐릭터 스케일에 곱할 점프·착지 늘어남/찌그러짐(부피가 유지되는 느낌으로 옆은 반대로).
+    private Vector3 GetJumpBounceScale()
+    {
+        float u = (Time.time - jumpBounceStartTime) / Mathf.Max(0.01f, squashStretchDuration);
+        if (u < 0f || u >= 1f)
+        {
+            return Vector3.one;
+        }
+
+        float a = jumpBounceAmount * Mathf.Sin(u * Mathf.PI);
+        return new Vector3(1f - a * 0.5f, 1f + a, 1f - a * 0.5f);
     }
 
     // 권한(소유자/오프라인) 인스턴스에서만 유효한 상태 판정.
@@ -185,6 +249,18 @@ public partial class PlayerController
         // 정확히 한 번씩 실행된다 — 추가 네트워킹 없이 전원에게 연출이 재생되는 훅.
         if (previousState != state)
         {
+            // 뛰어오를 때 늘어나고, 충분히 떠 있다가 착지하면 찌그러진다.
+            if (state == AnimJump)
+            {
+                jumpStateEnteredAt = Time.time;
+                StartJumpBounce(takeoffStretch);
+            }
+            else if (previousState == AnimJump && (state == AnimIdle || state == AnimWalk || state == AnimRun)
+                && Time.time - jumpStateEnteredAt >= minAirTimeForLandingSquash)
+            {
+                StartJumpBounce(-landingSquash);
+            }
+
             switch (state)
             {
                 case AnimHit:

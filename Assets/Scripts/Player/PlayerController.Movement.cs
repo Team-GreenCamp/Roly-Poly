@@ -41,6 +41,7 @@ public partial class PlayerController
             sprintToggled = false;
         }
 
+        jumpHeld = jumpAction != null && jumpAction.IsPressed();
         if (jumpAction != null && jumpAction.WasPressedThisFrame())
         {
             // 입력은 가변 프레임(Update)에서 받고, 실제 점프는 FixedUpdate에서 처리하므로
@@ -59,6 +60,8 @@ public partial class PlayerController
     {
         moveInput = Vector2.zero;
         jumpBufferTimer = 0f;
+        jumpHeld = false;
+        jumpRising = false;
         coyoteTimer = 0f;
         dashQueued = false;
         landingSpeedPreserveTimer = 0f;
@@ -127,6 +130,19 @@ public partial class PlayerController
             ? gravity * fallGravityMultiplier
             : gravity;
 
+        // 직접 한 점프에서 버튼을 일찍 떼면 상승을 빨리 끊어 낮게 뛴다(범퍼·폭발로 뜬 경우는 제외).
+        if (jumpRising)
+        {
+            if (verticalVelocity <= 0f || IsLaunched)
+            {
+                jumpRising = false;
+            }
+            else if (!jumpHeld)
+            {
+                appliedGravity *= jumpCutGravityMultiplier;
+            }
+        }
+
         physicsBody.AddForce(Vector3.up * appliedGravity, ForceMode.Acceleration);
     }
 
@@ -143,6 +159,7 @@ public partial class PlayerController
         physicsBody.linearVelocity = velocity;
 
         isGrounded = false;
+        jumpRising = true;
         jumpBufferTimer = 0f; // 입력 버퍼 소모
         coyoteTimer = 0f;     // 코요테 소모(공중 더블 점프 방지)
     }
@@ -163,7 +180,16 @@ public partial class PlayerController
         Vector3 velocity = physicsBody.linearVelocity;
         Vector3 planarVelocity = Vector3.ProjectOnPlane(velocity, Vector3.up);
         Vector3 desiredVelocity = moveDirection * targetSpeed;
-        Vector3 nextPlanarVelocity = Vector3.MoveTowards(planarVelocity, desiredVelocity, acceleration * Time.fixedDeltaTime);
+        Vector3 nextPlanarVelocity;
+        if (!isGrounded && moveDirection.sqrMagnitude <= 0.0001f)
+        {
+            // 공중에서 손을 떼도 점프한 기세를 거의 유지한다(아주 천천히만 감속).
+            nextPlanarVelocity = Vector3.MoveTowards(planarVelocity, Vector3.zero, airIdleDeceleration * Time.fixedDeltaTime);
+        }
+        else
+        {
+            nextPlanarVelocity = Vector3.MoveTowards(planarVelocity, desiredVelocity, acceleration * Time.fixedDeltaTime);
+        }
         nextPlanarVelocity = PreserveLandingPlanarSpeed(nextPlanarVelocity, moveDirection, targetSpeed);
 
         physicsBody.linearVelocity = nextPlanarVelocity + (Vector3.up * velocity.y);
@@ -208,6 +234,24 @@ public partial class PlayerController
         physicsBody.MoveRotation(swing * Quaternion.Euler(0f, desiredYaw, 0f));
 
         // 직접 제어와 싸우지 않도록 물리 각속도의 yaw 성분은 제거한다(기울기 각속도는 유지).
+        RemoveYawAngularVelocity(1f);
+    }
+
+    // 기울기(스윙)는 그대로 두고 바라보는 방향(yaw)만 즉시 바꾼다. 대시처럼 바로 그쪽을 봐야 할 때 사용.
+    private void SnapFacing(Vector3 facingDirection)
+    {
+        Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+        if (flatForward.sqrMagnitude <= 0.0001f || facingDirection.sqrMagnitude <= 0.0001f)
+        {
+            return;
+        }
+
+        float currentYaw = Mathf.Atan2(flatForward.x, flatForward.z) * Mathf.Rad2Deg;
+        float targetYaw = Mathf.Atan2(facingDirection.x, facingDirection.z) * Mathf.Rad2Deg;
+        Quaternion swing = physicsBody.rotation * Quaternion.Inverse(Quaternion.Euler(0f, currentYaw, 0f));
+        Quaternion snapped = swing * Quaternion.Euler(0f, targetYaw, 0f);
+        physicsBody.rotation = snapped;
+        transform.rotation = snapped;
         RemoveYawAngularVelocity(1f);
     }
 

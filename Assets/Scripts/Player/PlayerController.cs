@@ -28,6 +28,10 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float jumpBufferTime = 0.12f;
     [Tooltip("코요테 타임(초). 발판에서 벗어난 직후 이 시간 동안은 여전히 점프할 수 있습니다.")]
     [SerializeField] private float coyoteTime = 0.1f;
+    [Tooltip("공중에서 방향 입력이 없을 때의 수평 감속(m/s²). 낮을수록 점프한 기세가 유지됩니다.")]
+    [SerializeField] private float airIdleDeceleration = 1.5f;
+    [Tooltip("점프 버튼을 일찍 떼면 상승 중 중력에 곱하는 배율. 짧게 누르면 낮게, 길게 누르면 높게 뜹니다.")]
+    [SerializeField] private float jumpCutGravityMultiplier = 2.5f;
 
     [Header("Landing Stability")]
     [SerializeField] private float landingSpeedPreserveDuration = 0.18f;
@@ -122,6 +126,8 @@ public partial class PlayerController : NetworkBehaviour
     private Vector3 groundNormal = Vector3.up;
     private bool isGrounded;
     private float jumpBufferTimer; // >0이면 최근에 누른 점프 입력이 아직 유효함(버퍼)
+    private bool jumpHeld;         // 점프 버튼을 누르고 있는지(점프 높이 조절)
+    private bool jumpRising;       // 직접 점프해 상승 중(일찍 떼면 상승을 끊을 수 있는 구간)
     private float coyoteTimer;     // >0이면 최근까지 접지 상태였음(코요테 타임)
     private bool isPhysicsOwner;
     private bool gameplayInputEnabled = true;

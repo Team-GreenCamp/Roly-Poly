@@ -75,6 +75,7 @@ public partial class PlayerController
     private NetworkOwnedObjectActivator squashLobbyActivator;
     private Transform squashVisualRoot;
     private Vector3 squashVisualBaseScale = Vector3.one;
+    private Vector3 squashSmoothedScale = Vector3.one;
     private bool squashBaseScaleCaptured;
 
     // 피해자 중심 좌표 비교/충격점 계산용.
@@ -176,6 +177,7 @@ public partial class PlayerController
             {
                 squashVisualRoot = root;
                 squashVisualBaseScale = root.localScale;
+                squashSmoothedScale = root.localScale;
                 squashBaseScaleCaptured = true;
             }
             else if (!squashBaseScaleCaptured)
@@ -183,6 +185,7 @@ public partial class PlayerController
                 // 스턴 중 처음 본 루트: 일단 현재 값을 기준으로(드문 엣지 케이스).
                 squashVisualRoot = root;
                 squashVisualBaseScale = root.localScale;
+                squashSmoothedScale = root.localScale;
                 squashBaseScaleCaptured = true;
             }
         }
@@ -195,7 +198,9 @@ public partial class PlayerController
             : squashVisualBaseScale;
 
         float t = 1f - Mathf.Exp(-Mathf.Max(0.01f, squashLerpSpeed) * Time.deltaTime);
-        root.localScale = Vector3.Lerp(root.localScale, target, t);
+        squashSmoothedScale = Vector3.Lerp(squashSmoothedScale, target, t);
+        // 찌부(스턴) 보간 위에 점프·착지 늘어남/찌그러짐을 곱한다.
+        root.localScale = Vector3.Scale(squashSmoothedScale, GetJumpBounceScale());
     }
 
     private void ResolveDashAction()
@@ -227,14 +232,26 @@ public partial class PlayerController
         dashActiveUntil = Time.time + dashWindow;
         dashRollAnimUntil = Time.time + Mathf.Max(0.1f, dashRollDuration);
 
-        Vector3 flatForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
-        if (flatForward.sqrMagnitude < 0.0001f)
+        // 방향 입력이 있으면 그쪽으로 돌진한다(몸이 아직 덜 돌았어도 입력 방향 우선). 입력이 없으면 바라보는 방향.
+        Vector3 dashDirection = GetMoveDirection(moveInput);
+        if (dashDirection.sqrMagnitude > 0.0001f)
         {
-            flatForward = Vector3.forward;
+            dashDirection.Normalize();
+            SnapFacing(dashDirection);
         }
-        flatForward.Normalize();
+        else
+        {
+            dashDirection = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            dashDirection = dashDirection.sqrMagnitude < 0.0001f ? Vector3.forward : dashDirection.normalized;
+        }
 
-        physicsBody.AddForce(flatForward * dashForce, ForceMode.Impulse);
+        // 대시 방향과 어긋난 기존 수평 속도는 지워 방향 전환 대시도 같은 세기로 나간다.
+        Vector3 velocity = physicsBody.linearVelocity;
+        Vector3 planar = Vector3.ProjectOnPlane(velocity, Vector3.up);
+        float along = Mathf.Max(0f, Vector3.Dot(planar, dashDirection));
+        physicsBody.linearVelocity = dashDirection * along + Vector3.up * velocity.y;
+
+        physicsBody.AddForce(dashDirection * dashForce, ForceMode.Impulse);
     }
 
     // ─────────────────────────────────────────────────────────────
