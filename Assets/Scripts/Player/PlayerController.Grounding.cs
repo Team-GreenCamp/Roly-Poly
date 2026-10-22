@@ -46,8 +46,9 @@ public partial class PlayerController
             Vector3 landingForce = landingDirection * (Mathf.Abs(previousVerticalVelocity) * landingTorqueMultiplier);
             ApplyExternalImpulse(landingForce, center + (Vector3.up * 0.5f));
 
-            // 높은 곳에서 떨어져 세게 착지하면 잠시 조작을 막고 오뚝이처럼 휘청였다가 복귀한다.
-            StartKnockdown();
+            // 높은 곳에서 떨어져 세게 착지하면 잠깐 휘청였다가 바로 복귀한다.
+            // (떨어지는 발판 위에 착지했을 때 일어나기 전에 또 떨어지지 않도록 빠른 회복 넘어짐을 쓴다)
+            StartKnockdown(landingKnockdownMinimumDuration);
         }
 
         lastVerticalVelocity = physicsBody.linearVelocity.y;

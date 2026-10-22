@@ -332,7 +332,7 @@ public partial class PlayerController
         }
         else if (effect == CombatEffectBlast)
         {
-            StartKnockdown(quick: true);
+            StartKnockdown(blastKnockdownMinimumDuration);
         }
     }
 

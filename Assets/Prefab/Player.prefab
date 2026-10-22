@@ -159,7 +159,8 @@ MonoBehaviour:
   knockdownUprightAngle: 12
   knockdownRecoveryAngularSpeed: 1.2
   blastKnockdownMinimumDuration: 0.3
-  blastKnockdownUprightAngle: 30
+  landingKnockdownMinimumDuration: 0.15
+  quickKnockdownUprightAngle: 30
   turnDamping: 8
   maxAngularVelocity: 30
   groundedOffset: 0.1

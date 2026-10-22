@@ -121,21 +121,26 @@ public partial class PlayerController
         physicsBody.AddTorque(correctiveTorque, ForceMode.Acceleration);
     }
 
-    // 폭발 넘어짐: 짧은 최소 시간과 느슨한 기립 조건으로 빨리 일어난다.
+    // 폭발·세게 착지 넘어짐: 짧은 최소 시간과 느슨한 기립 조건으로 빨리 일어난다.
     private bool quickKnockdown;
+    private float quickKnockdownMinimumDuration;
 
-    private void StartKnockdown(bool quick = false)
+    // quickMinimumDuration > 0이면 빠른 회복 넘어짐(그 시간이 최소 넘어짐 시간).
+    private void StartKnockdown(float quickMinimumDuration = 0f)
     {
+        bool quick = quickMinimumDuration > 0f;
         if (isKnockedDown)
         {
             knockdownTimer = 0f;
             quickKnockdown &= quick; // 일반 넘어짐이 겹치면 일반 회복 조건을 따른다
+            quickKnockdownMinimumDuration = Mathf.Max(quickKnockdownMinimumDuration, quickMinimumDuration);
             return;
         }
 
         // 넘어짐 중에는 입력만 막고 Rigidbody는 계속 물리/회전하도록 둡니다.
         isKnockedDown = true;
         quickKnockdown = quick;
+        quickKnockdownMinimumDuration = quickMinimumDuration;
         knockdownTimer = 0f;
         timeSinceLargeTilt = recoveryDelay;
         ClearGameplayInputState();
@@ -152,12 +157,12 @@ public partial class PlayerController
         float tiltAngle = Vector3.Angle(transform.up, Vector3.up);
         float tiltAngularSpeed = Vector3.ProjectOnPlane(physicsBody.angularVelocity, Vector3.up).magnitude;
 
-        if (knockdownTimer < (quickKnockdown ? blastKnockdownMinimumDuration : knockdownMinimumDuration))
+        if (knockdownTimer < (quickKnockdown ? quickKnockdownMinimumDuration : knockdownMinimumDuration))
         {
             return;
         }
 
-        float uprightAngle = quickKnockdown ? blastKnockdownUprightAngle : knockdownUprightAngle;
+        float uprightAngle = quickKnockdown ? quickKnockdownUprightAngle : knockdownUprightAngle;
         float recoveryAngularSpeed = quickKnockdown ? knockdownRecoveryAngularSpeed * 3f : knockdownRecoveryAngularSpeed;
         if (tiltAngle > uprightAngle || tiltAngularSpeed > recoveryAngularSpeed)
         {
