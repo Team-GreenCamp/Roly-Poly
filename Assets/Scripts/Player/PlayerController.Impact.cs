@@ -210,7 +210,7 @@ public partial class PlayerController
                 TargetClientIds = new[] { OwnerClientId }
             }
         };
-        ApplyCombatHitOwnerClientRpc(force, point, CombatEffectKnockdown, target);
+        ApplyCombatHitOwnerClientRpc(force, point, CombatEffectBlast, target);
     }
 
     private float nextObstacleHitTime;

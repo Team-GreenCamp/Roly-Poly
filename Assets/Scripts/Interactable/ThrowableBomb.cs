@@ -24,10 +24,10 @@ public class ThrowableBomb : NetworkBehaviour
 
     [Header("폭발")]
     [SerializeField] private float blastRadius = 3.5f;
-    [SerializeField] private float blastHorizontalForce = 9f;
-    [SerializeField] private float blastUpwardForce = 6f;
+    [SerializeField] private float blastHorizontalForce = 14f;
+    [SerializeField] private float blastUpwardForce = 15f;
     [Tooltip("반경 끝에서의 힘 비율(중심은 1)")]
-    [SerializeField, Range(0f, 1f)] private float edgeForceRatio = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float edgeForceRatio = 0.5f;
     [SerializeField] private float objectBlastForce = 9f;
 
     [Header("발판 붕괴")]

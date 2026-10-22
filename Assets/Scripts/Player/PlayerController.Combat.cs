@@ -15,6 +15,7 @@ public partial class PlayerController
     private const byte CombatEffectImpulseOnly = 0;
     private const byte CombatEffectStun = 1;       // 찌부(머리 밟기)
     private const byte CombatEffectKnockdown = 2;  // 넘어짐(돌진/밀치기)
+    private const byte CombatEffectBlast = 3;      // 폭발: 크게 날아가고 빨리 일어나는 넘어짐
 
     // 서버 검증 상한: 스톰프/돌진은 전부 접촉 판정이므로 서버가 보는 두 위치가 이 거리 안이어야 한다.
     // (위치 동기화 지연·보간을 감안해 넉넉히 둔 값 — 정상 플레이는 접촉 거리라 걸릴 일이 없다.)
@@ -328,6 +329,10 @@ public partial class PlayerController
         if (effect == CombatEffectKnockdown)
         {
             StartKnockdown();
+        }
+        else if (effect == CombatEffectBlast)
+        {
+            StartKnockdown(quick: true);
         }
     }
 

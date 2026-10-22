@@ -52,6 +52,10 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float knockdownMinimumDuration = 0.45f;
     [SerializeField] private float knockdownUprightAngle = 12f;
     [SerializeField] private float knockdownRecoveryAngularSpeed = 1.2f;
+    [Tooltip("폭발 피격 넘어짐의 최소 시간(초). 크게 날아가는 대신 빨리 다시 조작할 수 있게 짧게 둔다.")]
+    [SerializeField] private float blastKnockdownMinimumDuration = 0.3f;
+    [Tooltip("폭발 피격 후 이 각도 안으로 서면 바로 조작을 돌려준다(일반 넘어짐보다 느슨하게).")]
+    [SerializeField] private float blastKnockdownUprightAngle = 30f;
     [Tooltip("정지 중 외부 충격으로 생긴 yaw 회전이 멈추는 감쇠 속도. (이동 중 회전은 rotationSpeed로 직접 제어)")]
     [SerializeField] private float turnDamping = 8f;
     [SerializeField] private float maxAngularVelocity = 25f;

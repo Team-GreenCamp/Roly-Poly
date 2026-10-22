@@ -612,9 +612,9 @@ MonoBehaviour:
   directHitMinSpeed: 3
   throwerGraceSeconds: 0.4
   blastRadius: 3.5
-  blastHorizontalForce: 9
-  blastUpwardForce: 6
-  edgeForceRatio: 0.4
+  blastHorizontalForce: 14
+  blastUpwardForce: 15
+  edgeForceRatio: 0.5
   objectBlastForce: 9
   breakPlatforms: 1
   platformBreakRadius: 3

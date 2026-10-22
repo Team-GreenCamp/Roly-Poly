@@ -158,6 +158,8 @@ MonoBehaviour:
   knockdownMinimumDuration: 0.45
   knockdownUprightAngle: 12
   knockdownRecoveryAngularSpeed: 1.2
+  blastKnockdownMinimumDuration: 0.3
+  blastKnockdownUprightAngle: 30
   turnDamping: 8
   maxAngularVelocity: 30
   groundedOffset: 0.1
@@ -182,6 +184,7 @@ MonoBehaviour:
   knockdownImpactSpeedThreshold: 7
   knockdownThrownObjectSpeedThreshold: 5.5
   knockdownFallingObjectSpeedThreshold: 5
+  obstacleHitCooldown: 0.8
   slideSlopeAngle: 45
   slideForce: 18
   grappleRange: 2.3
