@@ -194,6 +194,25 @@ public partial class PlayerController
         ApplyCombatHitOwnerClientRpc(knockdownForce, contactPoint, CombatEffectKnockdown, target);
     }
 
+    // 폭발처럼 서버가 범위로 판정한 피해. 공격자를 기록하고 넉다운 임펄스를 피해자 소유자에게 릴레이한다.
+    public void ServerApplyBlast(Vector3 force, Vector3 point, ulong attackerClientId)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        ServerRegisterAttacker(attackerClientId);
+        ClientRpcParams target = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { OwnerClientId }
+            }
+        };
+        ApplyCombatHitOwnerClientRpc(force, point, CombatEffectKnockdown, target);
+    }
+
     private float nextObstacleHitTime;
 
     // 장애물에 맞으면 넘어지며(피격 애니메이션) 장애물이 움직이는 방향으로 날아간다.

@@ -65,6 +65,9 @@ public class GrabbableObject : NetworkBehaviour
     private ulong lastThrowerClientId = ulong.MaxValue;
     private float lastThrowTime = -999f;
 
+    // 마지막으로 이 물체를 집은 클라이언트(권한 측 기록). 폭탄처럼 손에서 터지는 물체의 공격자 판정용.
+    public ulong LastHolderClientId { get; private set; } = ulong.MaxValue;
+
     private void Awake()
     {
         TryGetComponent(out cachedNetworkObject);
@@ -178,6 +181,7 @@ public class GrabbableObject : NetworkBehaviour
         if (interactor == null || interactors.Contains(interactor)) return;
 
         interactors.Add(interactor);
+        LastHolderClientId = interactor.OwnerClientId;
 
         if (isHeavy)
         {
@@ -251,6 +255,10 @@ public class GrabbableObject : NetworkBehaviour
         interactors.Clear();
         if (IsNetworkActive && IsServer) heldCount.Value = 0;
     }
+
+    // 폭발 등으로 서버가 들고 있던 사람 전원에게서 강제로 떼어낼 때 호출.
+    // 소유자 클라이언트의 PlayerInteractor는 heldCount가 0이 된 것을 보고 스스로 잡기 상태를 정리한다.
+    public void ServerReleaseAll() => DetachForSnap();
 
     // 열쇠 소모처럼 오브젝트를 없앨 때. 네트워크에서는 서버만 Despawn할 수 있습니다.
     public void RequestConsume(PlayerInteractor interactor)
