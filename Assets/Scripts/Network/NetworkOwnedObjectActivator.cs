@@ -87,6 +87,13 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private Vector3 readyCheckScale = new Vector3(0.35f, 0.35f, 0.35f);
     [SerializeField] private int readyCheckSortingOrder = 20;
 
+    [Header("Host Crown (로비 방장 이름 위 왕관)")]
+    [SerializeField] private Sprite hostCrownSprite;
+    [SerializeField] private Color hostCrownColor = new Color(1f, 0.75f, 0.1f, 1f);
+    [Tooltip("이름표 기준 왕관의 로컬 오프셋. ★승수 라벨이 보이면 그 위로 올라간다.")]
+    [SerializeField] private Vector3 hostCrownOffset = new Vector3(0f, 0.3f, 0f);
+    [SerializeField] private Vector3 hostCrownScale = new Vector3(0.45f, 0.45f, 0.45f);
+
     private readonly NetworkVariable<Vector3> syncedPosition =
         new NetworkVariable<Vector3>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<Quaternion> syncedRotation =
@@ -107,6 +114,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     private static Sprite solidBackgroundSprite; // Texture2D.whiteTexture 기반 1x1 유닛 공유 스프라이트
     private bool podiumLabelOverride; // 시상식: 게임 씬이어도 이름표를 강제로 표시
     private SpriteRenderer readyCheckRenderer;
+    private SpriteRenderer hostCrownRenderer; // 방장 왕관 (nameLabel의 자식이라 표시/방향을 따라감)
     private Coroutine spawnPresentationCoroutine;
     private Outline lobbyCharacterOutline;
     private Transform lobbyCharacterOutlineRoot;
@@ -1321,6 +1329,43 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         // 세션 승수는 이름과 분리해 이름 위에 별도 라벨(★N)로 표시.
         UpdateWinsLabel();
+        UpdateHostCrown();
+    }
+
+    // 로비에서는 방장 이름 위에 왕관을 띄워 누가 게임을 시작하는지 알 수 있게 한다.
+    private void UpdateHostCrown()
+    {
+        bool isLobbyHost = hostCrownSprite != null && nameLabel != null && IsInLobbyScene() && !podiumLabelOverride
+            && OwnerClientId == NetworkManager.ServerClientId;
+        if (!isLobbyHost)
+        {
+            if (hostCrownRenderer != null)
+            {
+                hostCrownRenderer.gameObject.SetActive(false);
+            }
+            return;
+        }
+
+        if (hostCrownRenderer == null)
+        {
+            Transform existing = nameLabel.transform.Find("HostCrown");
+            GameObject crownObject = existing != null ? existing.gameObject : new GameObject("HostCrown");
+            crownObject.transform.SetParent(nameLabel.transform, false);
+            crownObject.transform.localRotation = Quaternion.identity;
+            hostCrownRenderer = crownObject.GetComponent<SpriteRenderer>();
+            if (hostCrownRenderer == null)
+            {
+                hostCrownRenderer = crownObject.AddComponent<SpriteRenderer>();
+            }
+        }
+
+        bool winsVisible = winsLabel != null && winsLabel.gameObject.activeSelf;
+        hostCrownRenderer.transform.localPosition = winsVisible ? winsLabelOffset + hostCrownOffset : hostCrownOffset;
+        hostCrownRenderer.transform.localScale = hostCrownScale;
+        hostCrownRenderer.sprite = hostCrownSprite;
+        hostCrownRenderer.color = hostCrownColor;
+        hostCrownRenderer.sortingOrder = readyCheckSortingOrder;
+        hostCrownRenderer.gameObject.SetActive(true);
     }
 
     // 이름표 뒤 가독성용 배경 박스. 글자 크기(GetPreferredValues)에 패딩을 더해 자동으로 맞춘다.
