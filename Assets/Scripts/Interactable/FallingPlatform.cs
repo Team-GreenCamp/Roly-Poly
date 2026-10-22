@@ -4,10 +4,11 @@ using UnityEngine;
 
 // 7번: 밟으면 떨어지는 발판 (서버 권한).
 //
-// 동기화하려면 이 오브젝트에 NetworkObject + NetworkTransform(Authority: Server)이 필요합니다.
 // 이 게임의 플레이어는 소유자만 dynamic, 원격 프록시는 kinematic이라 "서버에서" 충돌이 잡히지 않습니다.
-// 따라서 밟은 플레이어의 소유 클라이언트가 서버에 낙하를 요청하고, 서버만 물리를 굴려 NetworkTransform으로
-// 위치를 모두에게 전파합니다. (NetworkObject가 없으면 기존처럼 각 클라이언트가 로컬로 처리합니다.)
+// 따라서 밟은 플레이어의 소유 클라이언트가 서버에 낙하를 요청하고, 서버는 "언제 떨어지기 시작하는지"(dropTime)만 동기화합니다.
+// 실제 낙하 위치는 모든 머신이 서버 시각으로 같은 공식(등가속 낙하 + 살짝 기울기)을 계산해 kinematic으로 움직이므로
+// 발판마다 NetworkTransform을 둘 필요가 없습니다(수백 장이 매 틱 위치를 보내던 부하 제거). 늦게 들어와도 같은 위치가 나옵니다.
+// (NetworkObject가 스폰되지 않았으면 각 머신이 로컬 시계로 처리합니다.)
 [RequireComponent(typeof(NetworkObject))]
 public partial class FallingPlatform : NetworkBehaviour
 {
@@ -36,6 +37,24 @@ public partial class FallingPlatform : NetworkBehaviour
     [Tooltip("체크하면 낙하 시작 시 기존 VFX도 재생합니다. 기본은 색 변화만(발판이 많은 맵에서 화면이 정신없는 것 방지).")]
     public bool playFallVfx = false;
 
+    [Header("낙하")]
+    [Tooltip("낙하 가속도(m/s²). 모든 머신이 이 값으로 같은 위치를 계산한다.")]
+    public float fallGravity = 9.81f;
+    [Tooltip("이만큼 떨어지면 충돌을 끈다(m). 떨어지는 발판이 아래층 플레이어를 밀어내지 않게 한다.")]
+    public float colliderOffDropDistance = 1.5f;
+    [Tooltip("떨어지며 기우는 속도 범위(도/초). 발판마다 위치로 정해져 모든 머신에서 같다.")]
+    public Vector2 tumbleDegreesPerSecond = new Vector2(20f, 55f);
+
+    private readonly NetworkVariable<double> networkDropTime = new NetworkVariable<double>(0);
+    private double localDropTime;
+    private bool fallActive;
+    private bool atRestPose = true;
+    private Collider fallCollider;
+    private Vector3 tumbleAxis = Vector3.right;
+    private float tumbleSpeed;
+    private double FallClock => IsNetworkActive ? NetworkManager.ServerTime.Time : Time.timeAsDouble;
+    private double DropTime => IsNetworkActive ? networkDropTime.Value : localDropTime;
+
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private Rigidbody rb;
@@ -63,15 +82,16 @@ public partial class FallingPlatform : NetworkBehaviour
     // 밟는 즉시 true가 되며, 실제 물리 낙하(fallDelay 이후)보다 앞선다.
     public bool IsFalling => IsNetworkActive ? networkFalling.Value : localFalling;
 
-    // 실제로 물리 낙하가 시작됐는지(fallDelay 유예 이후 rb.isKinematic이 풀린 시점).
-    // 서버/오프라인 로컬 판정용 — 밟은 뒤 유예 동안에는 코인을 조기 회수하지 않도록 IsFalling과 구분한다.
-    public bool HasPhysicallyDropped => RegenerationHidden || (rb != null && !rb.isKinematic);
+    // 실제로 낙하가 시작됐는지(fallDelay 유예 이후).
+    // 밟은 뒤 유예 동안에는 코인을 조기 회수하지 않도록 IsFalling과 구분한다.
+    public bool HasPhysicallyDropped => IsFalling && DropTime > 0 && FallClock >= DropTime;
 
     public override void OnNetworkSpawn()
     {
         networkFalling.OnValueChanged += HandleFallingChanged;
-        // 스폰 시점에 이미 낙하 상태면(늦은 동기화 등) 틴트를 맞춰 둔다.
+        // 스폰 시점에 이미 낙하 상태면(늦은 동기화 등) 틴트와 낙하 위치를 맞춰 둔다.
         SetSteppedTint(networkFalling.Value);
+        RefreshFallActive();
     }
 
     public override void OnNetworkDespawn()
@@ -91,6 +111,7 @@ public partial class FallingPlatform : NetworkBehaviour
         // 밟힘 표시: 낙하 유예 동안 발판을 하얗게(steppedTintColor) 물들여 "이미 밟힌 발판"임을 알린다.
         // 복귀형 발판은 networkFalling=false로 되돌아올 때 원래 색으로 복원된다.
         SetSteppedTint(newValue);
+        RefreshFallActive();
 
         if (newValue && playFallVfx)
         {
@@ -316,7 +337,14 @@ public partial class FallingPlatform : NetworkBehaviour
         if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
         rb.isKinematic = true;
         rb.useGravity = false;
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.interpolation = RigidbodyInterpolation.None;
+        fallCollider = GetComponent<Collider>();
+
+        // 기우는 방향·속도는 발판 위치로 정해 모든 머신에서 같게 한다.
+        float h = Mathf.Abs(Mathf.Sin(initialPosition.x * 12.9898f + initialPosition.z * 78.233f) * 43758.5453f) % 1f;
+        float angle = h * Mathf.PI * 2f;
+        tumbleAxis = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+        tumbleSpeed = Mathf.Lerp(tumbleDegreesPerSecond.x, tumbleDegreesPerSecond.y, (h * 7.31f) % 1f);
     }
 
     public override void OnDestroy()
@@ -371,100 +399,125 @@ public partial class FallingPlatform : NetworkBehaviour
     private void BeginFallOnServer()
     {
         if (networkFalling.Value) return;
+        networkDropTime.Value = FallClock + fallDelay;
         networkFalling.Value = true;
         StartCoroutine(ServerFallRoutine());
     }
 
-    // 서버만 물리를 굴리고, 결과 위치는 NetworkTransform이 클라이언트에 전파합니다.
+    // 서버는 시각만 관리한다. 낙하 위치는 모든 머신이 Update에서 dropTime으로 계산한다.
     private IEnumerator ServerFallRoutine()
     {
-        if (respawnTweenSeconds > 0f && respawnDelay > 0f)
-        {
-            yield return RegenerateRoutine();
-            yield break;
-        }
-        yield return new WaitForSeconds(fallDelay);
-
-        rb.isKinematic = false;
-        rb.useGravity = true;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-
+        double drop = networkDropTime.Value;
         if (respawnDelay > 0f)
         {
-            yield return new WaitForSeconds(respawnDelay);
-
-            rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
-            rb.isKinematic = true;
-            rb.useGravity = false;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-
-            rb.position = initialPosition;
-            rb.rotation = initialRotation;
-            transform.SetPositionAndRotation(initialPosition, initialRotation);
-
+            // 재생성 발판: 떨어졌다가 제자리로 돌아와(페이드가 있으면 그만큼 더 기다린 뒤) 원래 상태로.
+            double end = drop + respawnDelay + Mathf.Max(0f, respawnTweenSeconds);
+            while (FallClock < end) yield return null;
+            networkDropTime.Value = 0;
             networkFalling.Value = false;
+            yield break;
+        }
+
+        // 복귀하지 않는 발판: 잠시 후 서버가 네트워크에서 내려 전 클라이언트에서 사라진다.
+        while (FallClock < drop + Mathf.Max(0.5f, despawnAfterFallSeconds)) yield return null;
+        if (cachedNetworkObject != null && cachedNetworkObject.IsSpawned)
+        {
+            // 인씬 NetworkObject라 Despawn(true) 파괴는 NGO 경고 대상 → Despawn(false)로 내리고
+            // 실제 숨김은 OnNetworkDespawn(서버·클라 공통)에서 SetActive(false)로 처리한다.
+            cachedNetworkObject.Despawn(false);
         }
         else
         {
-            // 복귀하지 않는 발판: 잠시 후 서버가 네트워크에서 내려 전 클라이언트에서 사라진다.
-            yield return new WaitForSeconds(Mathf.Max(0.5f, despawnAfterFallSeconds));
-
-            if (cachedNetworkObject != null && cachedNetworkObject.IsSpawned)
-            {
-                // 인씬 NetworkObject라 Despawn(true) 파괴는 NGO 경고 대상 → Despawn(false)로 내리고
-                // 실제 숨김은 OnNetworkDespawn(서버·클라 공통)에서 SetActive(false)로 처리한다.
-                cachedNetworkObject.Despawn(false);
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
+            Destroy(gameObject);
         }
     }
 
-    // ───── 오프라인(비네트워크) 폴백: 기존 동작 ─────
+    // ───── 오프라인(비네트워크) 폴백: 같은 흐름을 로컬 시계로 ─────
     private IEnumerator FallRoutineLocal()
     {
         localFalling = true;
+        localDropTime = FallClock + fallDelay;
         SetSteppedTint(true);
+        RefreshFallActive();
         if (playFallVfx)
         {
             GameFeedback.PlatformFallAt(transform.position + Vector3.up * 0.3f);
         }
-        if (respawnTweenSeconds > 0f && respawnDelay > 0f)
-        {
-            yield return RegenerateRoutine();
-            yield break;
-        }
-        yield return new WaitForSeconds(fallDelay);
-
-        rb.isKinematic = false;
-        rb.useGravity = true;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
         if (respawnDelay > 0f)
         {
-            yield return new WaitForSeconds(respawnDelay);
-
-            rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
-            rb.isKinematic = true;
-            rb.useGravity = false;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-
-            transform.position = initialPosition;
-            transform.rotation = initialRotation;
-
+            double end = localDropTime + respawnDelay + Mathf.Max(0f, respawnTweenSeconds);
+            while (FallClock < end) yield return null;
+            localDropTime = 0;
             localFalling = false;
             SetSteppedTint(false);
+            RefreshFallActive();
+            yield break;
         }
-        else
+
+        // 복귀하지 않는 발판(오프라인): 잠시 후 비활성화해 무한 낙하를 막는다.
+        while (FallClock < localDropTime + Mathf.Max(0.5f, despawnAfterFallSeconds)) yield return null;
+        RestoreOriginalMaterials();
+        gameObject.SetActive(false);
+    }
+
+    // 낙하 중인 발판만 매 프레임 계산한다(가만히 있는 수백 장은 여기서 바로 빠진다).
+    private void RefreshFallActive()
+    {
+        bool active = IsFalling;
+        if (active == fallActive)
         {
-            // 복귀하지 않는 발판(오프라인): 잠시 후 비활성화해 무한 낙하를 막는다.
-            yield return new WaitForSeconds(Mathf.Max(0.5f, despawnAfterFallSeconds));
-            RestoreOriginalMaterials();
-            gameObject.SetActive(false);
+            return;
         }
+
+        fallActive = active;
+        if (!active)
+        {
+            SetFallPose(initialPosition, initialRotation);
+            if (fallCollider != null) fallCollider.enabled = true;
+        }
+    }
+
+    // 낙하 위치 계산(모든 머신, Update에서 한 번). 가만히 있는 발판은 Update 첫 줄에서 바로 빠진다.
+    // 충돌이 켜진 동안은 kinematic 이동(위에 선 플레이어가 함께 내려감), 충돌을 끈 뒤에는 위치만 옮겨 물리 부하를 줄인다.
+    private void UpdateFallPose()
+    {
+        double drop = DropTime;
+        float elapsed = drop > 0 ? (float)(FallClock - drop) : -1f;
+        bool returning = respawnDelay > 0f && elapsed >= respawnDelay;
+        if (elapsed <= 0f || returning)
+        {
+            // 떨어지기 전(경고 중)이거나 제자리로 돌아온 뒤: 원래 자리.
+            if (!atRestPose) SetFallPose(initialPosition, initialRotation);
+            SetFallCollider(!returning || respawnTweenSeconds <= 0f);
+            return;
+        }
+
+        // 등가속 낙하 + 발판마다 정해진 방향으로 살짝 기울기. 충분히 떨어지면 충돌을 끈다.
+        float distance = 0.5f * fallGravity * elapsed * elapsed;
+        Quaternion tilt = Quaternion.AngleAxis(tumbleSpeed * elapsed, tumbleAxis);
+        bool colliding = distance < colliderOffDropDistance;
+        SetFallCollider(colliding);
+        SetFallPose(initialPosition + Vector3.down * distance, tilt * initialRotation, move: colliding);
+    }
+
+    private void SetFallCollider(bool on)
+    {
+        if (fallCollider != null && fallCollider.enabled != on) fallCollider.enabled = on;
+    }
+
+    private void SetFallPose(Vector3 position, Quaternion rotation, bool move = false)
+    {
+        atRestPose = position == initialPosition && rotation == initialRotation;
+        if (move && rb != null)
+        {
+            // kinematic 이동이라 위에 서 있던 플레이어도 자연스럽게 함께 내려간다.
+            rb.MovePosition(position);
+            rb.MoveRotation(rotation);
+            return;
+        }
+
+        // 충돌이 꺼졌거나 제자리로 돌릴 때는 Transform만 옮긴다(물리 쪽은 다음 시뮬레이션에서 따라온다).
+        transform.SetPositionAndRotation(position, rotation);
     }
 }

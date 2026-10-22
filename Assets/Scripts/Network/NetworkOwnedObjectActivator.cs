@@ -51,6 +51,10 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private float remoteRotationLerpSpeed = 20f;
     [Tooltip("원격 캐릭터 위치가 이 거리 이상 벌어지면 보간 대신 즉시 스냅(스폰/리스폰 텔레포트 대응).")]
     [SerializeField] private float remoteTeleportSnapDistance = 3f;
+    [Tooltip("소유자가 위치를 다시 보내는 최소 이동 거리(m).")]
+    [SerializeField] private float ownerSyncPositionThreshold = 0.01f;
+    [Tooltip("소유자가 회전을 다시 보내는 최소 각도(도).")]
+    [SerializeField] private float ownerSyncRotationThreshold = 0.5f;
 
     [Header("Camera")]
     [SerializeField] private string runtimeVirtualCameraName = "Runtime Cinemachine Camera";
@@ -1530,8 +1534,18 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         if (IsOwner)
         {
-            syncedPosition.Value = transform.position;
-            syncedRotation.Value = transform.rotation;
+            // 마지막으로 보낸 값에서 의미 있게 바뀌었을 때만 쓴다. 서 있을 때의 미세한 흔들림까지
+            // 매 틱 전체 정밀도로 보내던 트래픽을 없앤다(작은 변화는 누적되면 결국 전송된다).
+            if ((transform.position - syncedPosition.Value).sqrMagnitude >= ownerSyncPositionThreshold * ownerSyncPositionThreshold)
+            {
+                syncedPosition.Value = transform.position;
+            }
+
+            if (Quaternion.Angle(transform.rotation, syncedRotation.Value) >= ownerSyncRotationThreshold)
+            {
+                syncedRotation.Value = transform.rotation;
+            }
+
             return;
         }
 
