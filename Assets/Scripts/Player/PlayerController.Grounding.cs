@@ -38,7 +38,8 @@ public partial class PlayerController
             StartLandingSpeedPreservation();
         }
 
-        if (!wasGrounded && isGrounded && previousVerticalVelocity <= -landingImpactThreshold)
+        // 범퍼로 날아간 착지는 의도된 비행이라 넘어뜨리지 않는다.
+        if (!wasGrounded && isGrounded && previousVerticalVelocity <= -landingImpactThreshold && !IsLaunched)
         {
             Vector3 landingDirection = currentHorizontalVelocity.sqrMagnitude > 0.01f
                 ? currentHorizontalVelocity.normalized

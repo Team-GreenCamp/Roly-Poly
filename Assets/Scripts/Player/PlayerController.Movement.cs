@@ -149,6 +149,11 @@ public partial class PlayerController
 
     private void UpdateMovement()
     {
+        if (UpdateLaunchFlight())
+        {
+            return;
+        }
+
         Vector3 moveDirection = GetMoveDirection(moveInput);
         currentMoveDirection = moveDirection;
         float inputMagnitude = Mathf.Clamp01(moveInput.magnitude);

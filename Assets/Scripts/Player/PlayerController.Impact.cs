@@ -83,6 +83,14 @@ public partial class PlayerController
             return;
         }
 
+        // 범퍼: 고정 장치라 부딪힌 소유자가 직접 튕겨 나간다.
+        Bumper bumper = collision.collider.GetComponentInParent<Bumper>();
+        if (bumper != null)
+        {
+            HandleBumperHit(bumper);
+            return;
+        }
+
         // 레이스 장애물: 모든 클라가 같은 서버 시각으로 움직이므로 피해자 소유자가 직접 판정한다.
         RaceObstacle obstacle = collision.collider.GetComponentInParent<RaceObstacle>();
         if (obstacle != null)
