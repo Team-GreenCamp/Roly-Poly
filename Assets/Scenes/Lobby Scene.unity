@@ -30926,7 +30926,7 @@ MonoBehaviour:
   normalCG: {fileID: 714210231}
   highlightCG: {fileID: 2043218753}
   useSounds: 1
-  useLocalization: 0
+  useLocalization: 1
   fadingMultiplier: 8
   onHotkeyPress:
     m_PersistentCalls:
@@ -35976,7 +35976,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1210611347369057318, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 113.03
       objectReference: {fileID: 0}
     - target: {fileID: 1210611347369057318, guid: fa9f6539ccf9b2341bd36df84516d79e, type: 3}
       propertyPath: m_SizeDelta.y
@@ -38420,7 +38420,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5839504939431997992, guid: 55954466c0ff7734584d1f4ff17a39c3, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 118.36
       objectReference: {fileID: 0}
     - target: {fileID: 5839504939431997992, guid: 55954466c0ff7734584d1f4ff17a39c3, type: 3}
       propertyPath: m_SizeDelta.y
@@ -55021,7 +55021,7 @@ MonoBehaviour:
   normalCG: {fileID: 1257783998}
   highlightCG: {fileID: 1181133599}
   useSounds: 1
-  useLocalization: 0
+  useLocalization: 1
   fadingMultiplier: 8
   onHotkeyPress:
     m_PersistentCalls:
@@ -73206,8 +73206,11 @@ MonoBehaviour:
   - chapterID: Chapter 1
     title: "\uC11C\uBC14\uC774\uBC8C"
     background: {fileID: 21300000, guid: b40193ac6ad554f14a52eee5d7ab0e6f, type: 3}
-    description: "\uCD5C\uD6C4 1\uC778 \uC0DD\uC874 \xB7 \uC2DC\uAC04\uC774 \uC9C0\uB098\uBA74
-      \uBC14\uB2E5\uC774 \uBB34\uB108\uC9C4\uB2E4"
+    description: "\uD3ED\uD0C4\uACFC \uBC94\uD37C\uB85C \uC0C1\uB300\uB97C \uBC1C\uD310
+      \uBC16\uC73C\uB85C \uBC00\uC5B4\uB0B4\uC138\uC694.\n\uBC1F\uC740 \uBC1C\uD310\uC740
+      \uC0AC\uB77C\uC84C\uB2E4\uAC00 \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC0DD\uAE41\uB2C8\uB2E4.\n\uCD5C\uD6C4
+      1\uC778\uC774 \uC2B9\uB9AC\uD558\uBA70, 2\uBD84\uC774 \uC9C0\uB098\uBA74 \uCF54\uC778
+      \uC810\uC218\uB85C \uC2B9\uC790\uB97C \uC815\uD569\uB2C8\uB2E4."
     defaultState: 1
     titleKey: MapSurvival
     descriptionKey: MapSurvivalDesc
@@ -73221,10 +73224,12 @@ MonoBehaviour:
       m_PersistentCalls:
         m_Calls: []
   - chapterID: Chapter 2
-    title: "\uC2A4\uBAA8 \uB9C1\uC544\uC6C3"
+    title: "\uC7A5\uC560\uBB3C \uB808\uC774\uC2A4"
     background: {fileID: 21300000, guid: a20770b2bfd0fa043bf1e649375439da, type: 3}
-    description: "\uBC00\uACE0 \uB358\uC838\uC11C \uB9C1 \uBC16\uC73C\uB85C! \uB9C1\uC740
-      \uC810\uC810 \uC881\uC544\uC9C4\uB2E4"
+    description: "\uC9C4\uC790 \uD574\uBA38, \uD53C\uC2A4\uD1A4, \uD1B5\uB098\uBB34\uB97C
+      \uD53C\uD574 4\uBD84 \uC548\uC5D0 \uACB0\uC2B9\uC120\uAE4C\uC9C0 \uB2EC\uB9AC\uC138\uC694.\n\uB5A8\uC5B4\uC9C0\uBA74
+      \uB9C8\uC9C0\uB9C9 \uCCB4\uD06C\uD3EC\uC778\uD2B8\uC5D0\uC11C \uB2E4\uC2DC
+      \uC2DC\uC791\uD569\uB2C8\uB2E4."
     defaultState: 1
     titleKey: MapSumo
     descriptionKey: MapSumoDesc
@@ -73240,8 +73245,8 @@ MonoBehaviour:
   - chapterID: Chapter 3
     title: "\uB5A8\uC5B4\uC9C0\uB294 \uBC14\uB2E5"
     background: {fileID: 21300000, guid: 4df290bf0dd74254a6a8350e20936747, type: 3}
-    description: "\uCE35\uCE35\uC774 \uBB34\uB108\uC9C0\uB294 \uBC14\uB2E5\uC5D0\uC11C
-      \uB05D\uAE4C\uC9C0 \uBC84\uD2F0\uAE30"
+    description: "4\uCE35 \uBC14\uB2E5\uC774 \uBC1F\uB294 \uB300\uB85C \uBB34\uB108\uC9D1\uB2C8\uB2E4.\n\uD3ED\uD0C4\uC73C\uB85C
+      \uC0C1\uB300\uB97C \uB5A8\uC5B4\uB728\uB9AC\uACE0 \uB05D\uAE4C\uC9C0 \uC0B4\uC544\uB0A8\uC73C\uC138\uC694."
     defaultState: 1
     titleKey: MapFalling
     descriptionKey: MapFallingDesc

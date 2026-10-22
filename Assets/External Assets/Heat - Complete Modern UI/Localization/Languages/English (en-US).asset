@@ -267,11 +267,11 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: PrevChapterLabel
-      value: Previous Chapter
+      value: Previous Map
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: NextChapterLabel
-      value: Next Chapter
+      value: Next Map
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: GoBackLabel
@@ -1134,17 +1134,15 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSurvivalDesc
-      value: Stepped tiles disappear and regenerate. Be the last survivor, or lead
-        in coins when the 2-minute timer ends.
+      value: "Push rivals off the tiles with bombs and bumpers.\nStepped tiles vanish and come back after a moment.\nLast survivor wins; after 2 minutes, coins decide the winner."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc
-      value: Dodge moving obstacles and race to the finish. Falling returns you to
-        the last checkpoint.
+      value: "Dodge hammers, pistons and rolling logs to finish in 4 minutes.\nFalling returns you to the last checkpoint."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFallingDesc
-      value: Outlast everyone on floors that collapse layer by layer.
+      value: "Four floors crumble beneath your feet.\nKnock rivals down with bombs and be the last one standing."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: Key #174
