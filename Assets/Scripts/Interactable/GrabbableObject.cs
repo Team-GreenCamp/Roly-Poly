@@ -34,6 +34,10 @@ public class GrabbableObject : NetworkBehaviour
     [SerializeField] private float heavyMaxFollowAcceleration = 40f;
     [SerializeField] private float heldFollowMaxDistance = 4.5f;
 
+    [Header("던지기 설정")]
+    [Tooltip("던진/내려놓은 직후 던진 사람과의 충돌을 무시하는 시간(초). 손을 떠나는 물체가 자기 몸에 맞는 것을 막는다.")]
+    [SerializeField] private float throwerIgnoreSeconds = 0.5f;
+
     private Rigidbody rb;
     private Collider[] colliders;
 
@@ -51,6 +55,11 @@ public class GrabbableObject : NetworkBehaviour
     public bool IsBeingHeld => IsNetworkActive ? heldCount.Value > 0 : interactors.Count > 0;
     public int InteractorCount => IsNetworkActive ? heldCount.Value : interactors.Count;
     public float HeldFollowMaxDistance => Mathf.Max(0.1f, heldFollowMaxDistance);
+    public float ThrowerIgnoreSeconds => Mathf.Max(0f, throwerIgnoreSeconds);
+
+    // 각 머신 로컬: 플레이어별 충돌 무시 해제 시각. 들고 있는 동안은 무한대.
+    private readonly Dictionary<PlayerInteractor, float> ignoreCollisionUntil = new Dictionary<PlayerInteractor, float>();
+    private static readonly List<PlayerInteractor> ExpiredIgnores = new List<PlayerInteractor>();
 
     // 원본 물리 상태 저장
     private bool originalUseGravity;
@@ -236,6 +245,10 @@ public class GrabbableObject : NetworkBehaviour
             lastThrowTime = Time.time;
         }
 
+        // 권한 측 물리에서도 손을 떠나는 물체가 던진 사람 몸에 부딪히지 않도록 잠시 충돌을 끈다.
+        // (소유자 머신의 충돌 무시는 로컬이라 서버 물리에는 적용되지 않음)
+        SetIgnoreCollisionWith(interactor, false, ThrowerIgnoreSeconds);
+
         // 던지기는 스냅 없이 즉시 손에서 떼고 전방 속도를 부여합니다.
         RemoveInteractor(interactor, isSnapping: true); // isSnapping=true: 아래에서 물리 직접 세팅
         interactors.Clear();
@@ -317,6 +330,9 @@ public class GrabbableObject : NetworkBehaviour
         PlayerController victim = collision.collider.GetComponentInParent<PlayerController>();
         if (victim == null) return;
 
+        // 던진 직후 던진 사람 자신은 피격 대상에서 제외.
+        if (victim.OwnerClientId == lastThrowerClientId && Time.time - lastThrowTime < ThrowerIgnoreSeconds) return;
+
         // 최근(6초 내) 던져진 물체라면 던진 사람을 공격자로 등록(킬 크레딧).
         if (lastThrowerClientId != ulong.MaxValue && Time.time - lastThrowTime <= 6f)
         {
@@ -328,6 +344,8 @@ public class GrabbableObject : NetworkBehaviour
 
     private void FixedUpdate()
     {
+        ExpireIgnoredCollisions();
+
         // 클라이언트는 NetworkTransform이 박스를 옮기므로 물리를 굴리지 않습니다.
         if (!HasPhysicsAuthority) return;
 
@@ -444,8 +462,48 @@ public class GrabbableObject : NetworkBehaviour
         return Mathf.Clamp(multiplier, 0.1f, 1f);
     }
 
-    // 소유자 클라이언트가 자기 플레이어와 이 박스의 충돌을 끄고/켜는 데 사용 (각 머신 로컬 처리).
-    public void SetIgnoreCollisionWith(PlayerInteractor interactor, bool ignore)
+    // 플레이어와 이 박스의 충돌을 끄고/켜는 데 사용 (각 머신 로컬 처리).
+    // ignore=false에 releaseDelay를 주면 그 시간 동안 충돌 무시를 유지했다가 해제한다(던진 직후 자기 몸 피격 방지).
+    // 그 사이 다시 집으면(ignore=true) 해제가 취소된다.
+    public void SetIgnoreCollisionWith(PlayerInteractor interactor, bool ignore, float releaseDelay = 0f)
+    {
+        if (interactor == null) return;
+
+        if (ignore)
+        {
+            ignoreCollisionUntil[interactor] = float.PositiveInfinity;
+            ApplyIgnoreCollision(interactor, true);
+        }
+        else if (releaseDelay > 0f)
+        {
+            ignoreCollisionUntil[interactor] = Time.time + releaseDelay;
+            ApplyIgnoreCollision(interactor, true);
+        }
+        else
+        {
+            ignoreCollisionUntil.Remove(interactor);
+            ApplyIgnoreCollision(interactor, false);
+        }
+    }
+
+    private void ExpireIgnoredCollisions()
+    {
+        if (ignoreCollisionUntil.Count == 0) return;
+
+        ExpiredIgnores.Clear();
+        foreach (var pair in ignoreCollisionUntil)
+        {
+            if (pair.Key == null || Time.time >= pair.Value) ExpiredIgnores.Add(pair.Key);
+        }
+
+        foreach (var interactor in ExpiredIgnores)
+        {
+            ignoreCollisionUntil.Remove(interactor);
+            if (interactor != null) ApplyIgnoreCollision(interactor, false);
+        }
+    }
+
+    private void ApplyIgnoreCollision(PlayerInteractor interactor, bool ignore)
     {
         if (interactor == null || colliders == null) return;
 

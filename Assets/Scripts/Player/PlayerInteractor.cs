@@ -530,6 +530,7 @@ public class PlayerInteractor : MonoBehaviour
 
         // --- 스냅존(SnapZone) 확인 ---
         SnapZone closestSnapZone = FindSnapZone(grabbable);
+        float ignoreReleaseDelay = 0f;
 
         if (closestSnapZone != null)
         {
@@ -546,13 +547,14 @@ public class PlayerInteractor : MonoBehaviour
                 tossVelocity = Vector3.ProjectOnPlane(playerRb.linearVelocity, Vector3.up);
             }
             grabbable.RequestThrow(this, tossVelocity, Vector3.zero);
+            ignoreReleaseDelay = grabbable.ThrowerIgnoreSeconds;
         }
         else
         {
             grabbable.RequestRemoveInteractor(this, false);
         }
 
-        ClearHeldObjectState();
+        ClearHeldObjectState(ignoreReleaseDelay);
     }
 
     private void ThrowHeldObject()
@@ -586,7 +588,8 @@ public class PlayerInteractor : MonoBehaviour
             : Vector3.zero;
 
         objectToThrow.RequestThrow(this, throwVelocity, angularVelocity);
-        ClearHeldObjectState();
+        // 손을 떠난 물체가 내 몸에 바로 부딪혀 피격되지 않도록 잠시 충돌 무시를 유지한다.
+        ClearHeldObjectState(objectToThrow.ThrowerIgnoreSeconds);
     }
 
     private void ForceDropHeldObject()
@@ -598,12 +601,13 @@ public class PlayerInteractor : MonoBehaviour
         }
     }
 
-    private void ClearHeldObjectState()
+    // ignoreReleaseDelay > 0이면 그 시간 뒤에 충돌 무시를 해제한다(던지기). 무거운 물체도 던질 때는 잠시 무시한다.
+    private void ClearHeldObjectState(float ignoreReleaseDelay = 0f)
     {
-        if (currentHeldGrabbable != null && !currentHeldIsHeavy)
+        if (currentHeldGrabbable != null && (!currentHeldIsHeavy || ignoreReleaseDelay > 0f))
         {
             // 충돌 무시 해제(로컬)
-            currentHeldGrabbable.SetIgnoreCollisionWith(this, false);
+            currentHeldGrabbable.SetIgnoreCollisionWith(this, false, ignoreReleaseDelay);
         }
 
         if (playerController != null)
