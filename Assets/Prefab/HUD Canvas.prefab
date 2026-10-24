@@ -358,6 +358,11 @@ MonoBehaviour:
   winnerText: {fileID: 5359423276649075588}
   actionTextWin: {fileID: 0}
   actionTextLose: {fileID: 0}
+  topRankSprite: {fileID: 21300000, guid: 0035e590d2238451384e382649b97e96, type: 3}
+  noWinnerSprite: {fileID: 21300000, guid: ddc789c44a8114700b870e70c262ad81, type: 3}
+  topRankCount: 3
+  rankingWaitSeconds: 0.5
+  resultPopSeconds: 0.5
   suddenDeathPanel: {fileID: 7561660991334278680}
   suddenDeathText: {fileID: 856939387119269624}
   suddenDeathWarnSeconds: 15

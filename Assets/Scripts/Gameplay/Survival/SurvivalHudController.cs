@@ -45,6 +45,16 @@ public class SurvivalHudController : MonoBehaviour
     [SerializeField] private GameObject actionTextWin;
     [Tooltip("로컬 플레이어 패배 시 winner 패널과 함께 표시할 연출 오브젝트.")]
     [SerializeField] private GameObject actionTextLose;
+    [Tooltip("상위권(시상대 순위 안, 꼴찌 제외)일 때 패배 이미지 대신 보여줄 스프라이트(예: GREAT). 비우면 패배 이미지.")]
+    [SerializeField] private Sprite topRankSprite;
+    [Tooltip("승자 없이 끝났을 때(전원 탈락·완주자 없음) 보여줄 스프라이트(예: GAME OVER). 비우면 패배 이미지.")]
+    [SerializeField] private Sprite noWinnerSprite;
+    [Tooltip("이 등수까지를 상위권으로 본다.")]
+    [SerializeField] private int topRankCount = 3;
+    [Tooltip("서버의 최종 순위를 기다리는 최대 시간(초). 넘으면 승패만으로 먼저 표시한다.")]
+    [SerializeField] private float rankingWaitSeconds = 0.5f;
+    [Tooltip("결과 이미지 등장 연출 시간(초).")]
+    [SerializeField] private float resultPopSeconds = 0.5f;
 
     [Header("서든데스 경고 (선택)")]
     [SerializeField] private GameObject suddenDeathPanel; // 배경 포함 루트(비우면 텍스트 자체를 토글)
@@ -90,8 +100,31 @@ public class SurvivalHudController : MonoBehaviour
     private bool suddenDeathAnnounced;      // 서든데스 보이스 1회 재생용
     private float countdownBaseFontSize;    // 카운트다운 숫자용 원래 크기(대기 문구는 축소 표시)
 
+    private enum ResultKind { None, Win, TopRank, Lose, NoWinner }
+    private ResultKind shownResult;
+    private float resultShownAt;
+    private float finishedSeenAt = -1f;
+    // 패배 오브젝트의 이미지를 상위권/승자 없음 스프라이트로 바꿔 쓰므로 원본을 보관한다.
+    private Image loseImage;
+    private Sprite loseSprite;
+    private Vector2 winBasePosition;
+    private Vector2 loseBasePosition;
+
     private void Start()
     {
+        if (actionTextLose != null && actionTextLose.TryGetComponent(out loseImage))
+        {
+            loseSprite = loseImage.sprite;
+        }
+        if (actionTextWin != null && actionTextWin.transform is RectTransform winRect)
+        {
+            winBasePosition = winRect.anchoredPosition;
+        }
+        if (actionTextLose != null && actionTextLose.transform is RectTransform loseRect)
+        {
+            loseBasePosition = loseRect.anchoredPosition;
+        }
+
         if (countdownText != null)
         {
             countdownBaseFontSize = countdownText.fontSize;
@@ -174,6 +207,15 @@ public class SurvivalHudController : MonoBehaviour
     {
         if (suddenDeathText == null)
         {
+            return;
+        }
+
+        // 종료 후에는 같은 안내 띠에 로비 복귀 카운트다운을 결과 패널·시상식 내내 띄운다.
+        if (state == SurvivalGameManager.MatchState.Finished && gameManager.LobbyReturnRemaining >= 0f)
+        {
+            GameLocalization.Set(suddenDeathText, "HudReturnLobby", Mathf.CeilToInt(gameManager.LobbyReturnRemaining));
+            SetSuddenDeathAccent(false);
+            SetActiveSafe(SuddenDeathRoot, true);
             return;
         }
 
@@ -442,25 +484,147 @@ public class SurvivalHudController : MonoBehaviour
 
     private void UpdateWinnerPanel(SurvivalGameManager.MatchState state)
     {
+        bool finished = state == SurvivalGameManager.MatchState.Finished;
+        if (!finished) finishedSeenAt = -1f;
+        else if (finishedSeenAt < 0f) finishedSeenAt = Time.unscaledTime;
+
         // 종료 직후엔 winner 패널을 보여주고, 시상식이 시작되면(PodiumActive) 끈다.
-        bool show = state == SurvivalGameManager.MatchState.Finished && !gameManager.PodiumActive;
-        ulong winner = gameManager.WinnerClientId;
-        bool localWon = NetworkManager.Singleton != null && winner == NetworkManager.Singleton.LocalClientId;
+        // 최종 순위가 도착할 때까지(최대 rankingWaitSeconds) 기다려 결과 이미지가 중간에 바뀌지 않게 한다.
+        bool ready = finished && (gameManager.HasFinalRanking || Time.unscaledTime - finishedSeenAt >= rankingWaitSeconds);
+        bool show = ready && !gameManager.PodiumActive;
 
         SetActiveSafe(winnerPanel, show);
-        // 승패 결과에 맞는 ActionText만 winner 패널과 같은 시간 동안 표시한다.
-        SetActiveSafe(actionTextWin, show && localWon);
-        SetActiveSafe(actionTextLose, show && !localWon);
+        if (!show)
+        {
+            HideResult();
+            return;
+        }
 
-        if (!show || winnerText == null)
+        ulong winner = gameManager.WinnerClientId;
+        ulong localId = NetworkManager.Singleton != null ? NetworkManager.Singleton.LocalClientId : ulong.MaxValue;
+        bool hasWinner = winner != ulong.MaxValue;
+        int rank = gameManager.GetFinalRank(localId);
+        int playerCount = gameManager.FinalPlayerCount;
+
+        ResultKind kind;
+        if (!hasWinner) kind = ResultKind.NoWinner;
+        else if (winner == localId) kind = ResultKind.Win;
+        else if (rank > 0 && rank <= topRankCount && rank < playerCount) kind = ResultKind.TopRank; // 꼴찌는 상위권에서 제외
+        else kind = ResultKind.Lose;
+
+        if (kind != shownResult)
+        {
+            ShowResult(kind);
+        }
+        AnimateResult();
+
+        if (winnerText == null)
         {
             return;
         }
 
-        string winnerName = localWon ? GameLocalization.Get("HudYouWin") : GameLocalization.Get("HudPlayerWins", winner + 1);
-        int wins = SurvivalWinTracker.GetWins(winner);
+        // 승리·승자 없음은 결과 이미지(WIN!/GAME OVER)가 이미 말해 주므로 문구는 승자가 따로 있을 때만 쓴다.
+        int wins = hasWinner ? SurvivalWinTracker.GetWins(winner) : 0;
         string winsSuffix = wins > 1 ? GameLocalization.Get("HudWins", wins) : string.Empty;
-        winnerText.text = GameLocalization.Get("HudWinner", winnerName, winsSuffix);
+        string headline = kind == ResultKind.TopRank || kind == ResultKind.Lose
+            ? GameLocalization.Get("HudPlayerWins", gameManager.ResolvePlayerName(winner)) + winsSuffix
+            : winsSuffix.Trim();
+        // 로비 복귀 카운트다운은 시상식에도 남도록 상단 안내 띠(UpdateSuddenDeathText)에서 표시한다.
+        string rankLine = rank > 0 ? $"<size=80%>{GameLocalization.Get("HudFinalRank", rank, playerCount)}</size>" : string.Empty;
+        winnerText.text = headline.Length > 0 && rankLine.Length > 0 ? $"{headline}\n{rankLine}" : headline + rankLine;
+    }
+
+    private void ShowResult(ResultKind kind)
+    {
+        shownResult = kind;
+        resultShownAt = Time.unscaledTime;
+
+        SetActiveSafe(actionTextWin, kind == ResultKind.Win);
+        SetActiveSafe(actionTextLose, kind != ResultKind.Win);
+
+        // 패배 오브젝트 하나로 상위권/패배/승자 없음 이미지를 바꿔 보여준다.
+        if (loseImage != null && kind != ResultKind.Win)
+        {
+            Sprite sprite = kind == ResultKind.TopRank ? topRankSprite
+                : kind == ResultKind.NoWinner ? noWinnerSprite
+                : null;
+            loseImage.sprite = sprite != null ? sprite : loseSprite;
+            loseImage.SetNativeSize();
+        }
+    }
+
+    private void HideResult()
+    {
+        if (shownResult == ResultKind.None)
+        {
+            if (winnerPanel == null && winnerText != null && winnerText.text.Length > 0)
+            {
+                winnerText.text = string.Empty; // 패널 없이 텍스트만 있는 씬에서 시상식 중 문구가 남지 않게
+            }
+            return;
+        }
+
+        shownResult = ResultKind.None;
+        SetActiveSafe(actionTextWin, false);
+        SetActiveSafe(actionTextLose, false);
+        if (winnerText != null)
+        {
+            winnerText.alpha = 1f;
+            if (winnerPanel == null) winnerText.text = string.Empty;
+        }
+    }
+
+    // 승리·상위권은 커지며 튀어나오고(EaseOutBack), 패배·승자 없음은 위에서 떨어져 튕긴다(EaseOutBounce).
+    // 문구는 이미지가 자리 잡을 즈음 서서히 나타난다.
+    private void AnimateResult()
+    {
+        float elapsed = Time.unscaledTime - resultShownAt;
+        float duration = Mathf.Max(0.01f, resultPopSeconds);
+        float t = Mathf.Clamp01(elapsed / duration);
+
+        bool win = shownResult == ResultKind.Win;
+        GameObject target = win ? actionTextWin : actionTextLose;
+        if (target != null && target.transform is RectTransform rect)
+        {
+            Vector2 basePosition = win ? winBasePosition : loseBasePosition;
+            if (shownResult == ResultKind.Win || shownResult == ResultKind.TopRank)
+            {
+                float scale = EaseOutBack(t);
+                rect.localScale = new Vector3(scale, scale, 1f);
+                rect.localRotation = Quaternion.Euler(0f, 0f, -12f * (1f - t));
+                rect.anchoredPosition = basePosition;
+            }
+            else
+            {
+                rect.localScale = Vector3.one;
+                rect.localRotation = Quaternion.Euler(0f, 0f, -6f * EaseOutBounce(t));
+                rect.anchoredPosition = basePosition + Vector2.up * (160f * (1f - EaseOutBounce(t)));
+            }
+        }
+
+        if (winnerText != null)
+        {
+            winnerText.alpha = Mathf.Clamp01((elapsed - duration * 0.5f) / duration);
+        }
+    }
+
+    private static float EaseOutBack(float t)
+    {
+        const float c1 = 1.70158f;
+        const float c3 = c1 + 1f;
+        float u = t - 1f;
+        return 1f + c3 * u * u * u + c1 * u * u;
+    }
+
+    private static float EaseOutBounce(float t)
+    {
+        const float n1 = 7.5625f;
+        const float d1 = 2.75f;
+        if (t < 1f / d1) return n1 * t * t;
+        if (t < 2f / d1) { t -= 1.5f / d1; return n1 * t * t + 0.75f; }
+        if (t < 2.5f / d1) { t -= 2.25f / d1; return n1 * t * t + 0.9375f; }
+        t -= 2.625f / d1;
+        return n1 * t * t + 0.984375f;
     }
 
     private static void SetActiveSafe(GameObject target, bool active)

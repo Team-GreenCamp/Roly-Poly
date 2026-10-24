@@ -96,6 +96,9 @@ public partial class SurvivalGameManager : NetworkBehaviour
     private bool localEliminated;
     private bool localBodyMadeKinematic;
     private SpectatorController spectator;
+    // 매치 종료 시 서버가 보내는 최종 순위(1등부터)와 로비 복귀 예정 시각. HUD 결과 연출용.
+    private ulong[] finalRanking;
+    private float lobbyReturnAt = -1f;
 
     public static SurvivalGameManager Instance { get; private set; }
 
@@ -116,6 +119,12 @@ public partial class SurvivalGameManager : NetworkBehaviour
     public int TotalPlayerCount => totalPlayerCount.Value;
     public ulong WinnerClientId => winnerClientId.Value;
     public bool LocalEliminated => localEliminated;
+    public bool HasFinalRanking => finalRanking != null;
+    public int FinalPlayerCount => finalRanking != null ? finalRanking.Length : 0;
+    // 1부터 시작하는 최종 순위. 순위를 아직 받지 못했거나 목록에 없으면 0.
+    public int GetFinalRank(ulong clientId) => finalRanking != null ? Array.IndexOf(finalRanking, clientId) + 1 : 0;
+    // 로비 복귀까지 남은 시간(초). 아직 정해지지 않았으면 -1.
+    public float LobbyReturnRemaining => lobbyReturnAt < 0f ? -1f : Mathf.Max(0f, lobbyReturnAt - Time.realtimeSinceStartup);
     public double CountdownRemaining =>
         NetworkManager != null ? countdownEndTime.Value - NetworkManager.ServerTime.Time : 0.0;
     // 서든데스까지 남은 시간(초). 음수면 이미 시작됨, 0 반환이면 미정(Waiting 등).
@@ -483,6 +492,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
         // 세션 승수 갱신 + 전 클라이언트 동기화(로비 이름표 ★ 표시용).
         int totalWins = winner == ulong.MaxValue ? 0 : SurvivalWinTracker.AddWin(winner);
         AnnounceWinnerClientRpc(winner, totalWins);
+        FinalRankingClientRpc(BuildFinalRanking(winner));
 
         // 시상대: 1등=승자, 2등=가장 늦게 탈락, 3등=그 다음. 없으면 ulong.MaxValue.
         ulong second = ulong.MaxValue, third = ulong.MaxValue;
@@ -514,6 +524,43 @@ public partial class SurvivalGameManager : NetworkBehaviour
     {
         // 호스트에서도 실행되지만 SetWins는 멱등이라 무해하다.
         SurvivalWinTracker.SetWins(winner, totalWins);
+    }
+
+    // 최종 순위(1등부터): 모드별 확정 순서(레이스 순위표·코인 순위) → 승자 → 남은 생존자 → 늦게 탈락한 순.
+    private ulong[] BuildFinalRanking(ulong winner)
+    {
+        var ranking = new List<ulong>();
+        void Add(ulong id)
+        {
+            if (id != ulong.MaxValue && !ranking.Contains(id)) ranking.Add(id);
+        }
+
+        if (raceMode)
+        {
+            nextStandingsUpdateTime = 0f; // 종료 순간 기준으로 다시 정렬
+            UpdateRaceStandings();
+            foreach (var entry in standingsSort) Add(entry.standing.ClientId);
+        }
+        foreach (ulong id in coinFinishOrder) Add(id);
+        Add(winner);
+        foreach (ulong id in aliveClients) Add(id);
+        for (int i = eliminationOrder.Count - 1; i >= 0; i--) Add(eliminationOrder[i]);
+        return ranking.ToArray();
+    }
+
+    [ClientRpc]
+    private void FinalRankingClientRpc(ulong[] ranking)
+    {
+        finalRanking = ranking ?? Array.Empty<ulong>();
+        // ReturnToLobbyAfterDelay와 같은 대기 시간(페이드 제외)을 로컬 시계로 센다.
+        lobbyReturnAt = Time.realtimeSinceStartup + Mathf.Max(0f, winnerPanelSeconds) + Mathf.Max(1f, returnToLobbyDelaySeconds);
+    }
+
+    // HUD 표시용 닉네임. 캐릭터를 찾지 못하면 번호로 대신한다.
+    public string ResolvePlayerName(ulong clientId)
+    {
+        NetworkOwnedObjectActivator activator = FindPlayerActivator(clientId);
+        return activator != null ? activator.DisplayName : $"Player {clientId + 1}";
     }
 
     // 상위 3인을 시상대에 세운다(전 클라이언트). 각 캐릭터는 소유 클라에서 위치가 확정되고,

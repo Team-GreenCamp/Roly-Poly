@@ -800,7 +800,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceTimer
-      value: 'TIME {0}s'
+      value: TIME {0}s
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceRanking
@@ -852,7 +852,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudPlayerWins
-      value: Player {0} WINS!
+      value: '{0} WINS!'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudWins
@@ -1134,15 +1134,27 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSurvivalDesc
-      value: "Push rivals off the tiles with bombs and bumpers.\nStepped tiles vanish and come back after a moment.\nLast survivor wins; after 2 minutes, coins decide the winner."
+      value: 'Push rivals off the tiles with bombs and bumpers.
+
+        Stepped
+        tiles vanish and come back after a moment.
+
+        Last survivor wins; after
+        2 minutes, coins decide the winner.'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc
-      value: "Dodge hammers, pistons and rolling logs to finish in 4 minutes.\nFalling returns you to the last checkpoint."
+      value: 'Dodge hammers, pistons and rolling logs to finish in 4 minutes.
+
+        Falling
+        returns you to the last checkpoint.'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFallingDesc
-      value: "Four floors crumble beneath your feet.\nKnock rivals down with bombs and be the last one standing."
+      value: 'Four floors crumble beneath your feet.
+
+        Knock rivals down with
+        bombs and be the last one standing.'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: Key #174
@@ -1174,5 +1186,13 @@ MonoBehaviour:
       spriteValue: {fileID: 0}
     - key: GameMenuEscapeHint
       value: "Esc  \xB7  Return to game"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudFinalRank
+      value: Final rank #{0} of {1}
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudReturnLobby
+      value: Returning to lobby in {0}s
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}

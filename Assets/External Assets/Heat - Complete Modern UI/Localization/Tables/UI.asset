@@ -272,3 +272,5 @@ MonoBehaviour:
   - key: MapSumoDesc
   - key: MapFallingDesc
   - key: Key #174
+  - key: HudFinalRank
+  - key: HudReturnLobby
