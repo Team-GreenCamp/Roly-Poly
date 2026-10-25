@@ -74,7 +74,7 @@ public class ThrowableBomb : NetworkBehaviour
     private int lastTickIndex = -1;
 
     private double Now => NetworkManager.ServerTime.Time;
-    private bool IsHidden => hiddenUntil.Value > 0 && Now < hiddenUntil.Value;
+    public bool IsHidden => hiddenUntil.Value > 0 && Now < hiddenUntil.Value;
     public bool IsArmed => fuseEndTime.Value > 0;
 
     private void Awake()
@@ -148,24 +148,28 @@ public class ThrowableBomb : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        if (WillExplodeOnHit(collision))
+        {
+            ExplodeOnServer();
+        }
+    }
+
+    // 서버: 이 충돌이 직격 폭발로 이어지는지. GrabbableObject도 같은 판정으로 자기 넉다운을 건너뛴다.
+    public bool WillExplodeOnHit(Collision collision)
+    {
         if (!IsSpawned || !IsServer || !IsArmed || IsHidden || grabbable.IsBeingHeld)
         {
-            return;
+            return false;
         }
 
         PlayerController victim = collision.collider.GetComponentInParent<PlayerController>();
         if (victim == null || collision.relativeVelocity.magnitude < directHitMinSpeed)
         {
-            return;
+            return false;
         }
 
         // 던진 직후 던진 사람 몸에 스치는 경우는 무시한다.
-        if (victim.OwnerClientId == grabbable.LastHolderClientId && Now - releaseTime < throwerGraceSeconds)
-        {
-            return;
-        }
-
-        ExplodeOnServer();
+        return !(victim.OwnerClientId == grabbable.LastHolderClientId && Now - releaseTime < throwerGraceSeconds);
     }
 
     private void ExplodeOnServer()
@@ -240,8 +244,10 @@ public class ThrowableBomb : NetworkBehaviour
 
     private void BreakPlatforms(Vector3 center)
     {
-        foreach (FallingPlatform platform in FindObjectsByType<FallingPlatform>(FindObjectsSortMode.None))
+        // ServerForceFall이 목록을 바꾸지 않지만, 안전하게 뒤에서부터 순회한다.
+        for (int i = FallingPlatform.ActivePlatforms.Count - 1; i >= 0; i--)
         {
+            FallingPlatform platform = FallingPlatform.ActivePlatforms[i];
             Vector3 delta = platform.transform.position - center;
             if (Mathf.Abs(delta.y) > platformBreakHeight || platform.IsFalling)
             {

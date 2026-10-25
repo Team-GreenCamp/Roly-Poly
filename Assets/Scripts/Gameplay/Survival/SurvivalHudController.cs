@@ -97,6 +97,19 @@ public class SurvivalHudController : MonoBehaviour
     private float hideGoAtTime = -1f;
     private float killFeedHideAt = -1f;
     private int lastCountdownNumber = -1;   // 카운트다운 틱 사운드용
+
+    // 매 프레임 문자열을 새로 만들지 않도록, 마지막으로 표시한 값이 바뀔 때만 텍스트를 갱신한다.
+    private int shownTimerSeconds = -1;
+    private int shownAlive = -1;
+    private int shownTotal = -1;
+    private int shownCoinScore = -1;
+    private string shownCountdownKey;
+    private int shownCountdownA, shownCountdownB;
+    private string shownSpectateHintName;
+    private bool spectateHintShown;
+    private (ulong winner, ResultKind kind, int rank, int playerCount, int wins) shownWinnerTextState;
+    private bool winnerTextShown;
+    private Michsky.UI.Heat.LocalizationLanguage shownLanguage; // 언어가 바뀌면 위 캐시를 모두 비워 다시 번역한다
     private bool suddenDeathAnnounced;      // 서든데스 보이스 1회 재생용
     private float countdownBaseFontSize;    // 카운트다운 숫자용 원래 크기(대기 문구는 축소 표시)
 
@@ -158,6 +171,13 @@ public class SurvivalHudController : MonoBehaviour
 
         SurvivalGameManager.MatchState state = gameManager.State;
 
+        Michsky.UI.Heat.LocalizationLanguage language = GameLocalization.Language;
+        if (language != shownLanguage)
+        {
+            shownLanguage = language;
+            ResetShownTextCache();
+        }
+
         UpdateAlivePanel(state);
         UpdateCountdownPanel(state);
         UpdateEliminatedPanel(state);
@@ -176,7 +196,11 @@ public class SurvivalHudController : MonoBehaviour
         float remaining = Mathf.Max(0f, (float)gameManager.SurvivalRemaining);
         int seconds = Mathf.CeilToInt(remaining);
         bool warning = seconds <= 30;
-        matchTimerText.text = $"{seconds / 60:00}:{seconds % 60:00}";
+        if (seconds != shownTimerSeconds)
+        {
+            shownTimerSeconds = seconds;
+            matchTimerText.text = $"{seconds / 60:00}:{seconds % 60:00}";
+        }
         matchTimerText.color = warning ? hudWarningColor : Color.white;
 
         // 마지막 10초는 숫자를 초마다 맥박처럼 키워 긴박감을 준다.
@@ -302,6 +326,26 @@ public class SurvivalHudController : MonoBehaviour
         killFeedHideAt = Time.time + Mathf.Max(1f, killFeedDuration);
     }
 
+    private void ResetShownTextCache()
+    {
+        shownTimerSeconds = -1;
+        shownAlive = -1;
+        shownTotal = -1;
+        shownCoinScore = -1;
+        shownCountdownKey = null;
+        spectateHintShown = false;
+        winnerTextShown = false;
+    }
+
+    private bool CountdownTextChanged(string key, int a, int b)
+    {
+        if (key == shownCountdownKey && a == shownCountdownA && b == shownCountdownB) return false;
+        shownCountdownKey = key;
+        shownCountdownA = a;
+        shownCountdownB = b;
+        return true;
+    }
+
     private string ResolveKillFeedName(ulong clientId)
     {
         return gameManager != null ? gameManager.ResolvePlayerName(clientId) : $"Player {clientId + 1}";
@@ -338,6 +382,7 @@ public class SurvivalHudController : MonoBehaviour
         if (gameManager != null)
         {
             gameManager.OnPlayerEliminated -= HandlePlayerEliminated;
+            gameManager = null; // 다시 활성화되면 TryResolveGameManager가 재구독한다
         }
 
         if (spectator != null)
@@ -371,14 +416,16 @@ public class SurvivalHudController : MonoBehaviour
             {
                 GameLocalization.Set(aliveCountText, "HudAlive", alive, total);
             }
-            if (aliveNumberText != null)
+            if (aliveNumberText != null && alive != shownAlive)
             {
                 aliveNumberText.text = alive.ToString();
             }
-            if (totalNumberText != null)
+            if (totalNumberText != null && total != shownTotal)
             {
                 totalNumberText.text = total.ToString();
             }
+            shownAlive = alive;
+            shownTotal = total;
         }
 
         UpdateCoinText(show);
@@ -392,9 +439,10 @@ public class SurvivalHudController : MonoBehaviour
 
         // 프리팹에 마련된 코인 칸만 표시하며 런타임에는 UI를 생성하지 않는다.
         SetActiveSafe(coinPanel, show);
-        if (show && coinText != null)
+        if (show && coinText != null && coinManager.LocalScore != shownCoinScore)
         {
-            coinText.text = $"{coinManager.LocalScore}";
+            shownCoinScore = coinManager.LocalScore;
+            coinText.text = shownCoinScore.ToString();
         }
     }
 
@@ -407,7 +455,8 @@ public class SurvivalHudController : MonoBehaviour
             if (countdownText != null)
             {
                 countdownText.fontSize = countdownBaseFontSize > 0f ? countdownBaseFontSize * 0.4f : 48f;
-                countdownText.text = GameLocalization.Get("HudWaiting", gameManager.WaitingConnected, gameManager.WaitingRequired);
+                if (CountdownTextChanged("HudWaiting", gameManager.WaitingConnected, gameManager.WaitingRequired))
+                    countdownText.text = GameLocalization.Get("HudWaiting", gameManager.WaitingConnected, gameManager.WaitingRequired);
             }
 
             hideGoAtTime = -1f;
@@ -425,7 +474,7 @@ public class SurvivalHudController : MonoBehaviour
             SetActiveSafe(countdownPanel, true);
 
             int remaining = Mathf.Max(1, Mathf.CeilToInt((float)gameManager.CountdownRemaining));
-            if (countdownText != null)
+            if (countdownText != null && CountdownTextChanged("Number", remaining, 0))
             {
                 countdownText.text = remaining.ToString();
             }
@@ -447,14 +496,15 @@ public class SurvivalHudController : MonoBehaviour
             if (hideGoAtTime < 0f)
             {
                 hideGoAtTime = Time.time + Mathf.Max(0.2f, goDisplaySeconds);
-                if (countdownText != null)
+                if (countdownText != null && CountdownTextChanged("HudGo", 0, 0))
                 {
                     countdownText.text = GameLocalization.Get("HudGo");
                 }
                 GameFeedback.MatchStart();
             }
 
-            if (countdownText != null && Time.time < hideGoAtTime)
+            // 표시 중 언어가 바뀌면 캐시가 비워져 다시 번역된다.
+            if (countdownText != null && Time.time < hideGoAtTime && CountdownTextChanged("HudGo", 0, 0))
                 countdownText.text = GameLocalization.Get("HudGo");
             SetActiveSafe(countdownPanel, Time.time < hideGoAtTime);
             return;
@@ -480,8 +530,10 @@ public class SurvivalHudController : MonoBehaviour
             return;
         }
 
-        if (show && spectateHintText != null)
+        if (show && spectateHintText != null && (!spectateHintShown || !ReferenceEquals(spectateTargetName, shownSpectateHintName)))
         {
+            spectateHintShown = true;
+            shownSpectateHintName = spectateTargetName;
             spectateHintText.text = string.IsNullOrEmpty(spectateTargetName)
                 ? GameLocalization.Get("HudEliminated")
                 : GameLocalization.Get("HudSpectating", spectateTargetName);
@@ -502,6 +554,7 @@ public class SurvivalHudController : MonoBehaviour
         SetActiveSafe(winnerPanel, show);
         if (!show)
         {
+            winnerTextShown = false;
             HideResult();
             return;
         }
@@ -531,6 +584,13 @@ public class SurvivalHudController : MonoBehaviour
 
         // 승리·승자 없음은 결과 이미지(WIN!/GAME OVER)가 이미 말해 주므로 문구는 승자가 따로 있을 때만 쓴다.
         int wins = hasWinner ? SurvivalWinTracker.GetWins(winner) : 0;
+        var winnerTextState = (winner, kind, rank, playerCount, wins);
+        if (winnerTextShown && winnerTextState == shownWinnerTextState)
+        {
+            return; // 문구 재료가 그대로면 닉네임 검색·문자열 조립을 건너뛴다
+        }
+        winnerTextShown = true;
+        shownWinnerTextState = winnerTextState;
         string winsSuffix = wins > 1 ? GameLocalization.Get("HudWins", wins) : string.Empty;
         string headline = kind == ResultKind.TopRank || kind == ResultKind.Lose
             ? GameLocalization.Get("HudPlayerWins", gameManager.ResolvePlayerName(winner)) + winsSuffix

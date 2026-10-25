@@ -32,7 +32,15 @@ public class GrabbableObject : NetworkBehaviour
     [Tooltip("던진/내려놓은 직후 던진 사람과의 충돌을 무시하는 시간(초). 손을 떠나는 물체가 자기 몸에 맞는 것을 막는다.")]
     [SerializeField] private float throwerIgnoreSeconds = 0.5f;
 
+    [Header("서버 검증")]
+    [Tooltip("서버가 잡기 요청을 받아들이는 플레이어-물체 최대 거리(지연 여유 포함)")]
+    [SerializeField] private float serverMaxGrabDistance = 6f;
+    [Tooltip("클라이언트가 보낸 던지기 속도(m/s)·회전 속도(rad/s)의 상한")]
+    [SerializeField] private float serverMaxThrowSpeed = 30f;
+    [SerializeField] private float serverMaxThrowSpin = 50f;
+
     private Rigidbody rb;
+    private ThrowableBomb bomb; // 폭탄이면 숨김 중 잡기 거절·직격 넉백 중복 방지에 쓴다
     private Collider[] colliders;
 
     // 권한(서버 또는 오프라인) 인스턴스에서만 채워지는 홀더 목록.
@@ -74,6 +82,7 @@ public class GrabbableObject : NetworkBehaviour
     private void Awake()
     {
         TryGetComponent(out cachedNetworkObject);
+        TryGetComponent(out bomb);
         rb = GetComponent<Rigidbody>();
         colliders = GetComponentsInChildren<Collider>(true);
         StoreOriginalState();
@@ -151,7 +160,15 @@ public class GrabbableObject : NetworkBehaviour
     private void AddInteractorByClient(ulong clientId)
     {
         PlayerInteractor pi = ResolveInteractor(clientId);
-        if (pi != null) AddInteractor(pi);
+        if (pi != null && CanServerAcceptGrab(pi)) AddInteractor(pi);
+    }
+
+    // 거절하면 heldCount가 오르지 않으므로 요청한 클라이언트는 확인 대기 시간 뒤 스스로 잡기를 푼다.
+    private bool CanServerAcceptGrab(PlayerInteractor pi)
+    {
+        if (bomb != null && bomb.IsHidden) return false; // 터져서 숨겨진 폭탄
+        Vector3 center = rb != null ? rb.worldCenterOfMass : transform.position;
+        return (pi.transform.position - center).sqrMagnitude <= serverMaxGrabDistance * serverMaxGrabDistance;
     }
 
     private void RemoveInteractorByClient(ulong clientId, bool isSnapping)
@@ -162,8 +179,10 @@ public class GrabbableObject : NetworkBehaviour
 
     private void ApplyThrowByClient(ulong clientId, Vector3 linearVelocity, Vector3 angularVelocity)
     {
+        // 실제로 들고 있는 사람의 던지기만 받는다. (폭발로 이미 놓친 폭탄을 늦게 도착한 요청이 날려 보내던 문제)
         PlayerInteractor pi = ResolveInteractor(clientId);
-        if (pi != null) ApplyThrow(pi, linearVelocity, angularVelocity);
+        if (pi == null || !interactors.Contains(pi)) return;
+        ApplyThrow(pi, Vector3.ClampMagnitude(linearVelocity, serverMaxThrowSpeed), Vector3.ClampMagnitude(angularVelocity, serverMaxThrowSpin));
     }
 
     private PlayerInteractor ResolveInteractor(ulong clientId)
@@ -316,6 +335,10 @@ public class GrabbableObject : NetworkBehaviour
 
         // 들려 있는 물체(운반 중)는 넉다운 대상에서 제외. 던지면 홀더가 먼저 비워지므로 무관.
         if (heldCount.Value > 0) return;
+
+        // 폭탄 직격은 폭발 넉백이 대신한다(같은 충돌로 넉다운이 두 번 들어가 힘이 합쳐지던 문제).
+        // 폭탄 쪽 OnCollisionEnter가 먼저 돌았으면 이미 숨김 상태다.
+        if (bomb != null && (bomb.IsHidden || bomb.WillExplodeOnHit(collision))) return;
 
         // 물체 자신이 충분히 움직이고 있을 때만 판정 — 바닥에 놓인 물체에 플레이어가
         // 달려와 부딪힌 경우(상대속도만 높음)는 피격이 아니다.

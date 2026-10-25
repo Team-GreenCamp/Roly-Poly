@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Collections.Generic;
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -85,6 +86,13 @@ public partial class FallingPlatform : NetworkBehaviour
     // 실제로 낙하가 시작됐는지(fallDelay 유예 이후).
     // 밟은 뒤 유예 동안에는 코인을 조기 회수하지 않도록 IsFalling과 구분한다.
     public bool HasPhysicallyDropped => IsFalling && DropTime > 0 && FallClock >= DropTime;
+
+    // 활성화된 발판 목록. 폭발처럼 자주 일어나는 주변 검색에서 씬 전체 FindObjectsByType 대신 쓴다.
+    public static readonly List<FallingPlatform> ActivePlatforms = new List<FallingPlatform>();
+
+    private void OnEnable() => ActivePlatforms.Add(this);
+
+    private void OnDisable() => ActivePlatforms.Remove(this);
 
     public override void OnNetworkSpawn()
     {
@@ -212,8 +220,25 @@ public partial class FallingPlatform : NetworkBehaviour
         }
     }
 
+    // 원본 머티리얼 → 투명 렌더 상태 복제본. 색·알파는 발판마다 MaterialPropertyBlock으로 넣으므로
+    // 같은 원본을 쓰는 발판끼리 복제본 하나를 공유한다(밟을 때마다 새로 만들고 지우던 할당 제거).
+    private static readonly Dictionary<Material, Material> TransparentMaterialCache = new Dictionary<Material, Material>();
+
+    private static Material GetSharedTransparentMaterial(Material original)
+    {
+        if (TransparentMaterialCache.TryGetValue(original, out Material cached) && cached != null)
+        {
+            return cached;
+        }
+
+        Material instance = new Material(original) { name = original.name + " (Transparent)" };
+        ConfigureTransparentMaterial(instance);
+        TransparentMaterialCache[original] = instance;
+        return instance;
+    }
+
     // URP Lit의 불투명 머티리얼은 색의 알파만 낮춰도 투명해지지 않으므로,
-    // 밟힌 발판에만 머티리얼을 복제해 투명 렌더 상태로 전환한다.
+    // 밟힌 발판에만 투명 렌더 상태의 (공유) 머티리얼로 바꿔 끼운다.
     private void EnsureTransparentMaterials()
     {
         if (transparentMaterials != null)
@@ -250,9 +275,7 @@ public partial class FallingPlatform : NetworkBehaviour
                     continue;
                 }
 
-                Material instance = new Material(originals[j]);
-                ConfigureTransparentMaterial(instance);
-                instances[j] = instance;
+                instances[j] = GetSharedTransparentMaterial(originals[j]);
             }
 
             tintRenderer.sharedMaterials = instances;
@@ -286,20 +309,7 @@ public partial class FallingPlatform : NetworkBehaviour
             {
                 tintRenderers[i].sharedMaterials = originalSharedMaterials[i];
             }
-
-            Material[] instances = transparentMaterials[i];
-            if (instances == null)
-            {
-                continue;
-            }
-
-            for (int j = 0; j < instances.Length; j++)
-            {
-                if (instances[j] != null)
-                {
-                    Destroy(instances[j]);
-                }
-            }
+            // 투명 머티리얼은 다른 발판과 공유하므로 파괴하지 않는다.
         }
 
         originalSharedMaterials = null;

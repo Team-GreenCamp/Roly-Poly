@@ -51,6 +51,14 @@ public class PlayerInteractor : MonoBehaviour
     private bool currentHeldIsHeavy;
     private bool hasActiveHold;        // BeginHold~ClearHeldObjectState 사이 true. 물체 Despawn(참조 fake-null) 감지용.
     private bool heldHoldConfirmed;    // 서버 홀더 목록에 실제로 올라온 것을 한 번이라도 확인했는지.
+    private float holdRequestTime;     // 잡기 요청 시각. 서버가 거절해 확인이 오지 않으면 일정 시간 뒤 로컬 잡기 상태를 푼다.
+    private const float HoldConfirmTimeout = 2f;
+
+    // 매 프레임 조준 검사용 버퍼(할당 없이 재사용).
+    // 버퍼가 차면 가까운 대상이 빠질 수 있으므로 넉넉하게 잡는다(조준 범위 안 콜라이더 수보다 충분히 크게).
+    private static readonly RaycastHit[] InteractHitBuffer = new RaycastHit[64];
+    private static readonly System.Collections.Generic.IComparer<RaycastHit> HitDistanceComparer =
+        System.Collections.Generic.Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
     private InteractableOutlineHighlight currentOutlineHighlight;
     private InteractableOutlineHighlight currentHeldOutlineHighlight;
 
@@ -139,6 +147,14 @@ public class PlayerInteractor : MonoBehaviour
             }
             else if (heldHoldConfirmed)
             {
+                // 확인 후 홀더 목록이 비었다(다른 홀더가 던짐, 폭발 등).
+                ClearHeldObjectState();
+            }
+            else if (Time.time - holdRequestTime > HoldConfirmTimeout)
+            {
+                // 서버가 거절했거나 확인이 너무 늦다. 늦게 수락됐을 경우를 대비해 놓기도 요청한다
+                // (요청 순서가 보장되므로 서버는 잡기 뒤에 놓기를 처리하고, 홀더가 아니면 무시한다).
+                currentHeldGrabbable.RequestRemoveInteractor(this, false);
                 ClearHeldObjectState();
             }
         }
@@ -269,14 +285,22 @@ public class PlayerInteractor : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * raycastHeightOffset;
         Ray ray = new Ray(origin, transform.forward);
 
-        RaycastHit[] hits = Physics.SphereCastAll(ray, sphereCastRadius, interactRange, interactLayerMask, QueryTriggerInteraction.Collide);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        RaycastHit[] hits = InteractHitBuffer;
+        int hitCount = Physics.SphereCastNonAlloc(ray, sphereCastRadius, hits, interactRange, interactLayerMask, QueryTriggerInteraction.Collide);
+        if (hitCount == hits.Length)
+        {
+            // 버퍼가 꽉 차면 가까운 대상이 빠졌을 수 있으므로, 이 드문 경우에만 할당하는 전체 검색으로 다시 찾는다.
+            hits = Physics.SphereCastAll(ray, sphereCastRadius, interactRange, interactLayerMask, QueryTriggerInteraction.Collide);
+            hitCount = hits.Length;
+        }
+        System.Array.Sort(hits, 0, hitCount, HitDistanceComparer);
 
         GrabbableObject foundGrabbable = null;
         IInteractable foundInteractable = null;
 
-        foreach (var hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
+            RaycastHit hit = hits[i];
             GrabbableObject grabbable = hit.collider.GetComponentInParent<GrabbableObject>();
 
             // 내가 이미 들고 있는 물건은 조준 검사 대상에서 제외
@@ -504,6 +528,7 @@ public class PlayerInteractor : MonoBehaviour
         currentHeldIsHeavy = grabbable.isHeavy;
         hasActiveHold = true;
         heldHoldConfirmed = false;
+        holdRequestTime = Time.time;
 
         grabbable.RequestAddInteractor(this);
 

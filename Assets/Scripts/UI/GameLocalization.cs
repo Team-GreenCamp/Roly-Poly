@@ -56,6 +56,20 @@ public static class GameLocalization
         binding.Set(key, arguments);
     }
 
+    // HUD처럼 매 프레임 부르는 정수 인수 문구용: 키·값이 그대로면 박싱·포맷 없이 건너뛴다.
+    public static void Set(TMP_Text text, string key) => SetInts(text, key, 0, 0, 0, 0);
+    public static void Set(TMP_Text text, string key, int a) => SetInts(text, key, 1, a, 0, 0);
+    public static void Set(TMP_Text text, string key, int a, int b) => SetInts(text, key, 2, a, b, 0);
+    public static void Set(TMP_Text text, string key, int a, int b, int c) => SetInts(text, key, 3, a, b, c);
+
+    private static void SetInts(TMP_Text text, string key, int count, int a, int b, int c)
+    {
+        if (text == null) return;
+        if (!text.TryGetComponent<GameLocalizedText>(out var binding))
+            binding = text.gameObject.AddComponent<GameLocalizedText>();
+        binding.SetInts(key, count, a, b, c);
+    }
+
     // 서버의 맵 식별자는 유지하고 화면에 표시하는 이름만 번역합니다.
     public static string MapName(string mapId)
     {

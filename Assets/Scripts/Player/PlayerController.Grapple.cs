@@ -64,6 +64,9 @@ public partial class PlayerController
     private float grappleReadyTime = -999f;
     private bool grappleCarryApplied;
     private InteractableOutlineHighlight grappleOutline; // 잡기 대상/붙잡은 상대 표시
+    private PlayerController grappleOutlinePlayer;       // grappleOutline이 가리키는 플레이어(매 프레임 재설정 방지)
+    private Color grappleOutlineColor;
+    private static readonly Collider[] GrappleOverlapBuffer = new Collider[64]; // 넘치면 후보가 빠지므로 넉넉하게
     private float grappleAttackAnimUntil = -999f;        // 이 시각까지 Attack 애니메이션 재생
     // 던지기 ClientRpc가 grabbedByClientId 해제(NetworkVariable)보다 먼저 도착하면
     // UpdateGrabbedVictimMotion이 임펄스를 0으로 덮어써 던지기가 씹힌다. 이 시각까지는 로컬에서 붙잡힘을 무시한다.
@@ -147,6 +150,14 @@ public partial class PlayerController
     // 잡기 대상 아웃라인 관리(소유자 로컬 연출). 대상이 바뀌거나 없어지면 이전 하이라이트를 정리한다.
     private void SetGrappleOutline(PlayerController target, Color color)
     {
+        // 대상·색이 그대로면 매 프레임 컴포넌트 검색과 재설정을 건너뛴다.
+        if (target == grappleOutlinePlayer && color == grappleOutlineColor && (target == null || grappleOutline != null))
+        {
+            return;
+        }
+
+        grappleOutlinePlayer = target;
+        grappleOutlineColor = color;
         InteractableOutlineHighlight next = null;
 
         if (target != null)
@@ -198,13 +209,21 @@ public partial class PlayerController
     private PlayerController FindGrappleTarget()
     {
         Vector3 probe = BodyCenter + transform.forward * (grappleRange * 0.6f);
-        Collider[] hits = Physics.OverlapSphere(probe, grappleRadius, grapplePlayerMask, QueryTriggerInteraction.Ignore);
+        Collider[] hits = GrappleOverlapBuffer;
+        int hitCount = Physics.OverlapSphereNonAlloc(probe, grappleRadius, hits, grapplePlayerMask, QueryTriggerInteraction.Ignore);
+        if (hitCount == hits.Length)
+        {
+            // 버퍼가 꽉 차면 후보가 빠졌을 수 있으므로, 이 드문 경우에만 할당하는 전체 검색으로 다시 찾는다.
+            hits = Physics.OverlapSphere(probe, grappleRadius, grapplePlayerMask, QueryTriggerInteraction.Ignore);
+            hitCount = hits.Length;
+        }
 
         PlayerController best = null;
         float bestSqr = float.MaxValue;
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            PlayerController candidate = hits[i] != null ? hits[i].GetComponentInParent<PlayerController>() : null;
+            Collider hit = hits[i];
+            PlayerController candidate = hit != null ? hit.GetComponentInParent<PlayerController>() : null;
             if (candidate == null || candidate == this)
             {
                 continue;

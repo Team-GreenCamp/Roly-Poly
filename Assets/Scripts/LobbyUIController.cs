@@ -73,6 +73,10 @@ public class LobbyUIController : MonoBehaviour
     private bool listenersRegistered;
     private bool isRefreshingRooms;
     private bool isJoiningRoom;
+    private bool isHostingRoom; // 방 만들기 진행 중(중복 클릭으로 호스트·백엔드 방이 두 번 생기는 것 방지)
+
+    // 이름으로 찾은 씬 오브젝트 캐시. Resources.FindObjectsOfTypeAll은 에셋까지 훑어 비싸므로 한 번만 찾는다.
+    private static readonly Dictionary<string, GameObject> SceneObjectByNameCache = new Dictionary<string, GameObject>();
     private bool isSyncingBackendPlayerCount;
     private bool isReady;
     private bool wasOnline;
@@ -999,12 +1003,20 @@ public class LobbyUIController : MonoBehaviour
             return null;
         }
 
+        // 씬이 바뀌어 파괴됐거나 이름이 바뀐 항목은 다시 찾는다.
+        if (SceneObjectByNameCache.TryGetValue(objectName, out GameObject cached)
+            && cached != null && cached.name == objectName)
+        {
+            return cached;
+        }
+
         Transform[] transforms = Resources.FindObjectsOfTypeAll<Transform>();
         for (int i = 0; i < transforms.Length; i++)
         {
             GameObject candidate = transforms[i].gameObject;
             if (candidate.name == objectName && candidate.scene.IsValid())
             {
+                SceneObjectByNameCache[objectName] = candidate;
                 return candidate;
             }
         }
@@ -1035,11 +1047,12 @@ public class LobbyUIController : MonoBehaviour
     // Heat UI 버튼의 OnClick 이벤트에서도 직접 연결할 수 있도록 public으로 둡니다.
     public async void HandleHostClicked()
     {
-        if (sessionManager == null)
+        if (sessionManager == null || isHostingRoom || isJoiningRoom || sessionManager.IsOnline)
         {
             return;
         }
 
+        isHostingRoom = true;
         EnsureDefaultMapSelection();
         // 입력 패널이 닫히기 전에 방 이름을 보관합니다.
         string requestedRoomName = GetRoomName();
@@ -1074,6 +1087,7 @@ public class LobbyUIController : MonoBehaviour
         }
         finally
         {
+            isHostingRoom = false;
             HideLoading();
         }
     }
