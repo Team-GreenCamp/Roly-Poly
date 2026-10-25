@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 
 // 세션 동안 유지되는 서바이벌 승수 기록(로컬 static — 씬 전환을 넘어 유지).
-// 서버가 매치 종료 시 AddWin 후 ClientRpc로 전파하고, 각 클라이언트는 SetWins로 맞춘다.
+// 서버가 매치 종료 시 AddWin 후 플레이어 오브젝트의 NetworkVariable(NetworkOwnedObjectActivator.syncedWins)로
+// 전파하고, 각 클라이언트는 그 값을 받을 때(늦게 들어와 스폰될 때 포함) SetWins로 맞춘다.
 // 새 세션 시작 시(NetworkSessionManager) ResetAll로 초기화한다(클라이언트 ID 재사용 대비).
 public static class SurvivalWinTracker
 {

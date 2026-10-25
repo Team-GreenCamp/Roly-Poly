@@ -105,6 +105,9 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     // 닉네임(소유자 요청 → 서버 검증·확정, 캐릭터 선택과 동일 패턴). 비어 있으면 이름표는 "Player N" 폴백.
     private readonly NetworkVariable<FixedString64Bytes> syncedNickname =
         new NetworkVariable<FixedString64Bytes>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    // 세션 승수(★). 서버가 SurvivalWinTracker 값을 써 두면 늦게 들어온 클라이언트도 스폰 시점에 받는다.
+    private readonly NetworkVariable<int> syncedWins =
+        new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private CinemachineCamera boundCamera;
     private Camera cachedFacingCamera; // 이름표/Ready 표시가 카메라를 바라보게 할 때 쓰는 캐시(매 프레임 씬 검색 방지)
@@ -156,7 +159,18 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         syncedCharacterIndex.OnValueChanged += HandleCharacterIndexChanged;
         syncedReadyState.OnValueChanged += HandleReadyStateChanged;
         syncedNickname.OnValueChanged += HandleNicknameChanged;
+        syncedWins.OnValueChanged += HandleWinsChanged;
         SceneManager.sceneLoaded += HandleSceneLoaded;
+
+        // 서버는 기록된 승수를 써 두고, 클라이언트는 받은 값을 로컬 기록(HUD·이름표가 읽는 곳)에 반영한다.
+        if (IsServer)
+        {
+            syncedWins.Value = SurvivalWinTracker.GetWins(OwnerClientId);
+        }
+        else
+        {
+            SurvivalWinTracker.SetWins(OwnerClientId, syncedWins.Value);
+        }
 
         UpdateNameLabel();
         UpdateReadyCheckIndicator();
@@ -248,6 +262,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         syncedCharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
         syncedReadyState.OnValueChanged -= HandleReadyStateChanged;
         syncedNickname.OnValueChanged -= HandleNicknameChanged;
+        syncedWins.OnValueChanged -= HandleWinsChanged;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         ClearLocalCameraBinding();
         ClearLobbyCharacterOutline();
@@ -563,6 +578,21 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     private void HandleNicknameChanged(FixedString64Bytes previousValue, FixedString64Bytes newValue)
     {
         UpdateNameLabel();
+    }
+
+    private void HandleWinsChanged(int previousValue, int newValue)
+    {
+        SurvivalWinTracker.SetWins(OwnerClientId, newValue);
+        UpdateNameLabel();
+    }
+
+    // 서버: 매치 종료 시 승수를 확정해 모든 클라이언트(늦게 들어올 사람 포함)에 동기화한다.
+    public void ServerSetWins(int wins)
+    {
+        if (IsServer && IsSpawned)
+        {
+            syncedWins.Value = wins;
+        }
     }
 
     private void ApplyCharacterIndex(int characterIndex)

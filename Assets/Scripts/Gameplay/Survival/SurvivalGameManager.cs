@@ -138,7 +138,9 @@ public partial class SurvivalGameManager : NetworkBehaviour
         NetworkManager != null && suddenDeathStartTime.Value > 0
         && NetworkManager.ServerTime.Time >= suddenDeathStartTime.Value;
 
-    public bool IsEliminated(ulong clientId) => IsServer ? !aliveClients.Contains(clientId) : eliminatedClients.Contains(clientId);
+    // 서버도 '실제 탈락 기록'으로 판정해 클라와 결과를 맞춘다. (생존 목록 기준이면 레이스 완주자와
+    // 카운트다운 전 전원이 탈락으로 잡혀, 호스트 관전 카메라가 완주자를 건너뛰었다)
+    public bool IsEliminated(ulong clientId) => IsServer ? eliminationOrder.Contains(clientId) : eliminatedClients.Contains(clientId);
 
     private void Awake()
     {
@@ -507,9 +509,14 @@ public partial class SurvivalGameManager : NetworkBehaviour
         winnerClientId.Value = winner;
         matchState.Value = (byte)MatchState.Finished;
 
-        // 세션 승수 갱신 + 전 클라이언트 동기화(로비 이름표 ★ 표시용).
-        int totalWins = winner == ulong.MaxValue ? 0 : SurvivalWinTracker.AddWin(winner);
-        AnnounceWinnerClientRpc(winner, totalWins);
+        // 세션 승수 갱신 + 전 클라이언트 동기화(로비 이름표 ★ 표시용). 플레이어 오브젝트의 NetworkVariable로
+        // 보내므로 로비에 나중에 들어온 사람도 받는다.
+        if (winner != ulong.MaxValue)
+        {
+            int totalWins = SurvivalWinTracker.AddWin(winner);
+            NetworkOwnedObjectActivator winnerActivator = FindPlayerActivator(winner);
+            if (winnerActivator != null) winnerActivator.ServerSetWins(totalWins);
+        }
         FinalRankingClientRpc(BuildFinalRanking(winner));
 
         // 시상대: 1등=승자, 2등=가장 늦게 탈락, 3등=그 다음. 없으면 ulong.MaxValue. 나간 사람은 건너뛴다.
@@ -546,13 +553,6 @@ public partial class SurvivalGameManager : NetworkBehaviour
             if (second == ulong.MaxValue) second = id;
             else { third = id; return; }
         }
-    }
-
-    [ClientRpc]
-    private void AnnounceWinnerClientRpc(ulong winner, int totalWins)
-    {
-        // 호스트에서도 실행되지만 SetWins는 멱등이라 무해하다.
-        SurvivalWinTracker.SetWins(winner, totalWins);
     }
 
     // 최종 순위(1등부터): 모드별 확정 순서(레이스 순위표·코인 순위) → 승자 → 남은 생존자 → 늦게 탈락한 순.

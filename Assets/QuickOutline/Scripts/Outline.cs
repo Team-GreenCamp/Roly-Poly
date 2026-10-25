@@ -164,8 +164,8 @@ public class Outline : MonoBehaviour {
 
     foreach (var meshFilter in GetComponentsInChildren<MeshFilter>()) {
 
-      // Skip duplicates
-      if (!bakedMeshes.Add(meshFilter.sharedMesh)) {
+      // Skip duplicates and meshes without Read/Write (their data can't be read)
+      if (!IsReadable(meshFilter.sharedMesh) || !bakedMeshes.Add(meshFilter.sharedMesh)) {
         continue;
       }
 
@@ -182,8 +182,9 @@ public class Outline : MonoBehaviour {
     // Retrieve or generate smooth normals
     foreach (var meshFilter in GetComponentsInChildren<MeshFilter>()) {
 
-      // Skip if smooth normals have already been adopted
-      if (!registeredMeshes.Add(meshFilter.sharedMesh)) {
+      // Skip if smooth normals have already been adopted.
+      // Meshes without Read/Write are skipped too: the shader falls back to regular normals when UV3 is empty.
+      if (!IsReadable(meshFilter.sharedMesh) || !registeredMeshes.Add(meshFilter.sharedMesh)) {
         continue;
       }
 
@@ -206,7 +207,7 @@ public class Outline : MonoBehaviour {
     foreach (var skinnedMeshRenderer in GetComponentsInChildren<SkinnedMeshRenderer>()) {
 
       // Skip if UV3 has already been reset
-      if (!registeredMeshes.Add(skinnedMeshRenderer.sharedMesh)) {
+      if (!IsReadable(skinnedMeshRenderer.sharedMesh) || !registeredMeshes.Add(skinnedMeshRenderer.sharedMesh)) {
         continue;
       }
 
@@ -216,6 +217,10 @@ public class Outline : MonoBehaviour {
       // Combine submeshes
       CombineSubmeshes(skinnedMeshRenderer.sharedMesh, skinnedMeshRenderer.sharedMaterials);
     }
+  }
+
+  static bool IsReadable(Mesh mesh) {
+    return mesh != null && mesh.isReadable;
   }
 
   List<Vector3> SmoothNormals(Mesh mesh) {
