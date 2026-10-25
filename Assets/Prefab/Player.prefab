@@ -19,7 +19,6 @@ GameObject:
   - component: {fileID: 7363093746037789180}
   - component: {fileID: 4081297831180302518}
   - component: {fileID: 5112920333155259829}
-  - component: {fileID: 2462443946215769529}
   - component: {fileID: 7490023543529397197}
   m_Layer: 3
   m_Name: Player
@@ -488,19 +487,6 @@ MonoBehaviour:
   climbMoveSpeed: 2
   ledgeTag: Ledge
   monkeyBarTag: MonkeyBar
---- !u!114 &2462443946215769529
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2383615707599059421}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6dccc07b868861646b050c98e99f5690, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMount
-  isMounted: 0
 --- !u!114 &7490023543529397197
 MonoBehaviour:
   m_ObjectHideFlags: 0

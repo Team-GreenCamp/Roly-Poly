@@ -528,16 +528,9 @@ public class PlayerInteractor : MonoBehaviour
         GrabbableObject grabbable = currentHeldGrabbable;
         Rigidbody body = grabbable.GetComponent<Rigidbody>();
 
-        // --- 스냅존(SnapZone) 확인 ---
-        SnapZone closestSnapZone = FindSnapZone(grabbable);
         float ignoreReleaseDelay = 0f;
 
-        if (closestSnapZone != null)
-        {
-            grabbable.RequestRemoveInteractor(this, true);
-            closestSnapZone.RequestSnap(grabbable);
-        }
-        else if (!grabbable.isHeavy)
+        if (!grabbable.isHeavy)
         {
             // 가벼운 물체: 플레이어의 이동 속도를 실어 살짝 던지듯 내려놓기 (서버에서 물리 적용)
             Vector3 tossVelocity = Vector3.zero;
@@ -620,32 +613,6 @@ public class PlayerInteractor : MonoBehaviour
         currentHeldIsHeavy = false;
         hasActiveHold = false;
         heldHoldConfirmed = false;
-    }
-
-    private SnapZone FindSnapZone(GrabbableObject grabbable)
-    {
-        Rigidbody body = grabbable.GetComponent<Rigidbody>();
-        Vector3 center = body != null ? body.position : grabbable.transform.position;
-
-        Collider[] snapZones = Physics.OverlapSphere(center, 1.5f, interactLayerMask, QueryTriggerInteraction.Collide);
-        SnapZone closest = null;
-        float minDistance = float.MaxValue;
-
-        foreach (var col in snapZones)
-        {
-            SnapZone snapZone = col.GetComponent<SnapZone>();
-            if (snapZone != null && snapZone.CanSnap(grabbable))
-            {
-                float dist = Vector3.Distance(center, snapZone.transform.position);
-                if (dist < minDistance)
-                {
-                    minDistance = dist;
-                    closest = snapZone;
-                }
-            }
-        }
-
-        return closest;
     }
 
     public GrabbableObject CurrentHeldGrabbable => currentHeldGrabbable;
