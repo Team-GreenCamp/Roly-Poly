@@ -515,7 +515,7 @@ public class PlayerInteractor : MonoBehaviour
 
         if (playerController != null)
         {
-            playerController.SetCarrySpeedMultiplier(grabbable.GetCarrySpeedMultiplier());
+            playerController.SetCarryingObject(true);
         }
 
         SetHeldOutlineTarget(grabbable.gameObject);
@@ -612,7 +612,7 @@ public class PlayerInteractor : MonoBehaviour
 
         if (playerController != null)
         {
-            playerController.ResetCarrySpeedMultiplier();
+            playerController.SetCarryingObject(false);
         }
 
         ClearHeldOutlineHighlight();

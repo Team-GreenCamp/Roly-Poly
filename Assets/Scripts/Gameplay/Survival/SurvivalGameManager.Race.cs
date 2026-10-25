@@ -173,7 +173,17 @@ public partial class SurvivalGameManager
     {
         if (!IsServer || State != MatchState.Playing) return;
         if (aliveClients.Count == 0 || (raceDeadline.Value > 0 && RaceRemaining <= 0))
-            FinishMatchOnServer(raceFinishOrder.Count > 0 ? raceFinishOrder[0] : ulong.MaxValue);
+            FinishMatchOnServer(FirstConnectedRaceFinisher());
+    }
+
+    // 1등으로 들어왔어도 이후 나갔으면 승자·승수에서 빼고 다음 완주자에게 넘긴다.
+    private ulong FirstConnectedRaceFinisher()
+    {
+        foreach (ulong id in raceFinishOrder)
+        {
+            if (IsConnectedForResult(id)) return id;
+        }
+        return ulong.MaxValue;
     }
 
     [ClientRpc]

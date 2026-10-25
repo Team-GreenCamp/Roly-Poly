@@ -118,6 +118,7 @@ public partial class PlayerController : NetworkBehaviour
     private Vector2 moveInput;
 
     private float currentCarrySpeedMultiplier = 1f;
+    private bool isCarryingObject;
 
     public Vector3? OverrideFacingDirection { get; set; } = null;
 

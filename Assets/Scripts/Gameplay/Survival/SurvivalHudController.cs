@@ -292,13 +292,19 @@ public class SurvivalHudController : MonoBehaviour
             return;
         }
 
+        string victimName = ResolveKillFeedName(victimClientId);
         if (killerClientId != ulong.MaxValue)
-            GameLocalization.Set(killFeedText, "HudKill", killerClientId + 1, victimClientId + 1);
+            GameLocalization.Set(killFeedText, "HudKill", ResolveKillFeedName(killerClientId), victimName);
         else
-            GameLocalization.Set(killFeedText, "HudFall", victimClientId + 1);
+            GameLocalization.Set(killFeedText, "HudFall", victimName);
 
         SetActiveSafe(KillFeedRoot, true);
         killFeedHideAt = Time.time + Mathf.Max(1f, killFeedDuration);
+    }
+
+    private string ResolveKillFeedName(ulong clientId)
+    {
+        return gameManager != null ? gameManager.ResolvePlayerName(clientId) : $"Player {clientId + 1}";
     }
 
     private bool TryResolveGameManager()

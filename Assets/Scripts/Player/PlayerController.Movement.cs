@@ -12,6 +12,12 @@ public partial class PlayerController
         currentCarrySpeedMultiplier = 1f;
     }
 
+    // 손에 물건을 든 동안은 걷기 속도 그대로, 달리기만 막는다(걷기·점프만 가능).
+    public void SetCarryingObject(bool carrying)
+    {
+        isCarryingObject = carrying;
+    }
+
     public void SetGameplayInputEnabled(bool enabled)
     {
         if (gameplayInputEnabled == enabled)
@@ -283,7 +289,7 @@ public partial class PlayerController
 
     private bool CanSprint()
     {
-        if (sprintAction == null)
+        if (sprintAction == null || isCarryingObject)
         {
             return false;
         }

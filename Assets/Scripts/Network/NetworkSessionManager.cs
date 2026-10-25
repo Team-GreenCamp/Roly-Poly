@@ -266,6 +266,7 @@ public class NetworkSessionManager : MonoBehaviour
             isShuttingDown = false;
             CurrentJoinCode = normalizedJoinCode;
             ResetReadyState();
+            SurvivalWinTracker.ResetAll(); // 새 방 참가: 이전 방의 승수 초기화(클라이언트 ID 재사용 대비)
 
             if (!networkManager.StartClient())
             {
@@ -313,6 +314,7 @@ public class NetworkSessionManager : MonoBehaviour
             isShuttingDown = false;
             CurrentJoinCode = $"{address}:{port}";
             ResetReadyState();
+            SurvivalWinTracker.ResetAll(); // 새 방 참가: 이전 방의 승수 초기화(클라이언트 ID 재사용 대비)
 
             if (!networkManager.StartClient())
             {

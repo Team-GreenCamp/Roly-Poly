@@ -108,6 +108,13 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
     private CinemachineCamera boundCamera;
     private Camera cachedFacingCamera; // 이름표/Ready 표시가 카메라를 바라보게 할 때 쓰는 캐시(매 프레임 씬 검색 방지)
+
+    // 서버의 스폰 배치 RPC가 이 클라의 씬 로드보다 먼저 도착하면(느린 PC) 바닥이 없는 곳에 놓여 떨어진다.
+    // 그래서 마지막으로 받은 배치를 씬 이름과 함께 보관했다가 해당 씬 로드가 끝날 때 (다시) 적용한다.
+    private bool hasPendingSpawnPose;
+    private string pendingSpawnSceneName;
+    private Vector3 pendingSpawnPosition;
+    private Quaternion pendingSpawnRotation;
     private TextMeshPro nameLabel;
     private TextMeshPro winsLabel; // 이름 위 ★승수 (nameLabel의 자식이라 표시/방향을 따라감)
     private SpriteRenderer nameLabelBackground; // 이름표 뒤 가독성용 배경 박스(nameLabel의 자식)
@@ -335,6 +342,11 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         if (IsServer)
         {
             ApplySpawnPosition();
+        }
+        else if (hasPendingSpawnPose && IsOwner && scene.name == pendingSpawnSceneName)
+        {
+            ApplySpawnPose(pendingSpawnPosition, pendingSpawnRotation);
+            CommitOwnerTransformSync(pendingSpawnPosition, pendingSpawnRotation);
         }
 
         PlayLobbySpawnPresentation();
@@ -681,13 +693,26 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             {
                 Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
             };
-            ApplySpawnPoseOwnerClientRpc(targetPosition, targetRotation, ownerTarget);
+            FixedString64Bytes sceneName = SceneManager.GetActiveScene().name;
+            ApplySpawnPoseOwnerClientRpc(targetPosition, targetRotation, sceneName, ownerTarget);
         }
     }
 
     [ClientRpc]
-    private void ApplySpawnPoseOwnerClientRpc(Vector3 targetPosition, Quaternion targetRotation, ClientRpcParams rpcParams = default)
+    private void ApplySpawnPoseOwnerClientRpc(Vector3 targetPosition, Quaternion targetRotation, FixedString64Bytes sceneName, ClientRpcParams rpcParams = default)
     {
+        // 항상 보관해 두고, 아직 그 씬을 로드 중이면 HandleSceneLoaded에서 적용한다.
+        // (데디 서버의 같은 씬 재로드처럼 옛 씬이 아직 남아 있는 경우에도 로드 완료 시 다시 맞춰진다)
+        string targetScene = sceneName.ToString();
+        hasPendingSpawnPose = true;
+        pendingSpawnSceneName = targetScene;
+        pendingSpawnPosition = targetPosition;
+        pendingSpawnRotation = targetRotation;
+        if (!SceneManager.GetSceneByName(targetScene).isLoaded)
+        {
+            return;
+        }
+
         // 타게팅되어 소유자에서만 실행됨. 로컬 트랜스폼과 owner-write 동기화 변수를 함께 갱신해
         // 다른 클라가 옛 위치로 되돌아가는 레이스를 없앤다.
         ApplySpawnPose(targetPosition, targetRotation);

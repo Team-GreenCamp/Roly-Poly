@@ -20,12 +20,6 @@ public class GrabbableObject : NetworkBehaviour
     [Tooltip("체크하면 무거운 물체(끌기용), 체크 해제하면 가벼운 물체(들기용)")]
     public bool isHeavy = false;
 
-    [Header("다중 상호작용 속도 설정")]
-    [Tooltip("1명일 때의 기본 속도 배율 (1 = 정상 속도, 0.5 = 절반 속도)")]
-    public float baseSpeedMultiplier = 0.6f;
-    [Tooltip("1명이 추가될 때마다 증가하는 속도 배율 보너스")]
-    public float multiPlayerSpeedBonus = 0.4f;
-
     [Header("잡기 안정화 설정")]
     [SerializeField] private float heavySingleFollowAcceleration = 12f;
     [SerializeField] private float heavyMultiFollowAccelerationBonus = 8f;
@@ -350,9 +344,25 @@ public class GrabbableObject : NetworkBehaviour
         if (!HasPhysicsAuthority) return;
 
         // 권한 측에서만 추종 물리. (먼 홀더는 소유자 PlayerInteractor가 스스로 놓도록 처리)
+        bool prunedHolder = false;
         for (int i = interactors.Count - 1; i >= 0; i--)
         {
-            if (interactors[i] == null) interactors.RemoveAt(i);
+            if (interactors[i] == null)
+            {
+                interactors.RemoveAt(i);
+                prunedHolder = true;
+            }
+        }
+
+        // 홀더가 접속 종료 등으로 사라졌으면 놓은 것과 똑같이 처리한다(공중에 고정된 채 '들림'으로 남는 문제 방지).
+        if (prunedHolder)
+        {
+            if (IsNetworkActive && IsServer) heldCount.Value = interactors.Count;
+            if (interactors.Count == 0)
+            {
+                if (!isHeavy) EnableDroppedLightPhysics();
+                else RestoreOriginalState();
+            }
         }
 
         if (interactors.Count == 0) return;
@@ -454,12 +464,6 @@ public class GrabbableObject : NetworkBehaviour
         rb.useGravity = true;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-    }
-
-    public float GetCarrySpeedMultiplier()
-    {
-        float multiplier = baseSpeedMultiplier + (InteractorCount - 1) * multiPlayerSpeedBonus;
-        return Mathf.Clamp(multiplier, 0.1f, 1f);
     }
 
     // 플레이어와 이 박스의 충돌을 끄고/켜는 데 사용 (각 머신 로컬 처리).

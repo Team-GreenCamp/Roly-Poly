@@ -772,11 +772,11 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudKill
-      value: "Player {0} \u25B6 Player {1} knocked off!"
+      value: "{0} \u25B6 {1} knocked off!"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudFall
-      value: Player {0} fell...
+      value: '{0} fell...'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalRule

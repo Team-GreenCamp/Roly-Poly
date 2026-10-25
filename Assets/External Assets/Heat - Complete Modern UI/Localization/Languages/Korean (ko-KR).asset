@@ -743,11 +743,11 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudKill
-      value: "\uD50C\uB808\uC774\uC5B4 {0} \u25B6 \uD50C\uB808\uC774\uC5B4 {1} \uB5A8\uC5B4\uB728\uB9BC!"
+      value: "{0} \u25B6 {1} \uB5A8\uC5B4\uB728\uB9BC!"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudFall
-      value: "\uD50C\uB808\uC774\uC5B4 {0} \uCD94\uB77D..."
+      value: "{0} \uCD94\uB77D..."
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalRule

@@ -82,6 +82,8 @@ public partial class SurvivalGameManager : NetworkBehaviour
     // ───── 서버 로컬 ─────
     private readonly HashSet<ulong> aliveClients = new HashSet<ulong>();
     private readonly List<ulong> eliminationOrder = new List<ulong>(); // 탈락 순서(빠른 순). 시상대 2·3등 산출용.
+    private readonly HashSet<ulong> disconnectedClients = new HashSet<ulong>(); // 매치 중 나간 사람(순위·시상대·승수 제외)
+    private readonly HashSet<ulong> sceneReadyClients = new HashSet<ulong>(); // 이 씬 로드를 마치고 SGM이 스폰된 클라
     private bool soloMode;
     private ulong lastEliminatedClientId = ulong.MaxValue;
     private float nextKillSweepTime;
@@ -157,6 +159,18 @@ public partial class SurvivalGameManager : NetworkBehaviour
             NetworkManager.OnClientDisconnectCallback += HandleClientDisconnected;
             StartCoroutine(ServerMatchFlow());
         }
+
+        // 인씬 오브젝트인 SGM이 여기서 스폰됐다 = 이 클라는 씬 로드를 마쳤다. 서버는 전원 보고를 받고 카운트다운을 시작한다.
+        if (IsClient)
+        {
+            ReportSceneReadyServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ReportSceneReadyServerRpc(ServerRpcParams rpcParams = default)
+    {
+        sceneReadyClients.Add(rpcParams.Receive.SenderClientId);
     }
 
     public override void OnNetworkDespawn()
@@ -222,9 +236,10 @@ public partial class SurvivalGameManager : NetworkBehaviour
             waitingRequired.Value = 0; // 대기 종료 → HUD 표시 해제
         }
 
-        // Waiting: NGO 씬 전환으로 유지 스폰되는 플레이어 오브젝트들이 전부 준비될 때까지 대기.
+        // Waiting: 전원이 씬 로드를 마치고(ReportSceneReady) 플레이어 오브젝트가 준비될 때까지 대기.
+        // 플레이어 오브젝트는 씬 전환을 넘어 유지되므로 스폰 여부만으로는 로딩 중인 클라를 걸러낼 수 없다.
         float waitDeadline = Time.realtimeSinceStartup + Mathf.Max(1f, maxWaitForSpawnSeconds);
-        while (!AllPlayersSpawned() && Time.realtimeSinceStartup < waitDeadline)
+        while (!AllPlayersReady() && Time.realtimeSinceStartup < waitDeadline)
         {
             yield return null;
         }
@@ -234,6 +249,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
         // Countdown: 생존자 스냅샷 확정.
         aliveClients.Clear();
         eliminationOrder.Clear();
+        disconnectedClients.Clear();
         foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
         {
             aliveClients.Add(clientId);
@@ -330,7 +346,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
         }
     }
 
-    private bool AllPlayersSpawned()
+    private bool AllPlayersReady()
     {
         if (NetworkManager == null)
         {
@@ -339,7 +355,8 @@ public partial class SurvivalGameManager : NetworkBehaviour
 
         foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
         {
-            if (!NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client)
+            if (!sceneReadyClients.Contains(clientId)
+                || !NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client)
                 || client.PlayerObject == null
                 || !client.PlayerObject.IsSpawned)
             {
@@ -405,7 +422,8 @@ public partial class SurvivalGameManager : NetworkBehaviour
     {
         if (IsServer)
         {
-            // 접속 종료 = 탈락.
+            // 접속 종료 = 탈락. 단, 순위·시상대·승수에서는 빠진다.
+            disconnectedClients.Add(clientId);
             EliminateOnServer(clientId);
         }
     }
@@ -462,7 +480,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
             // 자신이 떨어져 0명이 되면 그를 승자로 종료해 혼자서도 전체 루프를 검증할 수 있다.
             if (aliveClients.Count == 0)
             {
-                FinishMatchOnServer(lastEliminatedClientId);
+                FinishMatchOnServer(LastConnectedEliminated());
             }
 
             return;
@@ -473,8 +491,8 @@ public partial class SurvivalGameManager : NetworkBehaviour
             return;
         }
 
-        // 남은 1명이 승자. 동시 낙사로 0명이 되면 마지막 탈락자를 승자로 처리한다.
-        ulong winner = lastEliminatedClientId;
+        // 남은 1명이 승자. 동시 낙사로 0명이 되면 (접속 중인) 마지막 탈락자를 승자로 처리한다.
+        ulong winner = LastConnectedEliminated();
         foreach (ulong clientId in aliveClients)
         {
             winner = clientId;
@@ -494,29 +512,40 @@ public partial class SurvivalGameManager : NetworkBehaviour
         AnnounceWinnerClientRpc(winner, totalWins);
         FinalRankingClientRpc(BuildFinalRanking(winner));
 
-        // 시상대: 1등=승자, 2등=가장 늦게 탈락, 3등=그 다음. 없으면 ulong.MaxValue.
-        ulong second = ulong.MaxValue, third = ulong.MaxValue;
-        int found = 0;
-        for (int i = eliminationOrder.Count - 1; i >= 0 && found < 2; i--)
-        {
-            if (eliminationOrder[i] == winner) continue;
-            if (found == 0) second = eliminationOrder[i];
-            else third = eliminationOrder[i];
-            found++;
-        }
-        if (raceMode)
-        {
-            second = raceFinishOrder.Count > 1 ? raceFinishOrder[1] : ulong.MaxValue;
-            third = raceFinishOrder.Count > 2 ? raceFinishOrder[2] : ulong.MaxValue;
-        }
-        if (coinFinishOrder.Count > 0)
-        {
-            second = coinFinishOrder.Count > 1 ? coinFinishOrder[1] : ulong.MaxValue;
-            third = coinFinishOrder.Count > 2 ? coinFinishOrder[2] : ulong.MaxValue;
-        }
+        // 시상대: 1등=승자, 2등=가장 늦게 탈락, 3등=그 다음. 없으면 ulong.MaxValue. 나간 사람은 건너뛴다.
+        ulong second, third;
+        if (raceMode) PickRunnersUp(raceFinishOrder, true, winner, out second, out third);
+        else if (coinFinishOrder.Count > 0) PickRunnersUp(coinFinishOrder, true, winner, out second, out third);
+        else PickRunnersUp(eliminationOrder, false, winner, out second, out third);
         ShowPodiumClientRpc(winner, second, third);
 
         StartCoroutine(ReturnToLobbyAfterDelay());
+    }
+
+    private bool IsConnectedForResult(ulong clientId)
+        => clientId != ulong.MaxValue && !disconnectedClients.Contains(clientId);
+
+    // 동시 낙사 등으로 생존자가 0명일 때의 승자 후보: 접속 중인 사람 중 가장 늦게 탈락한 사람.
+    private ulong LastConnectedEliminated()
+    {
+        for (int i = eliminationOrder.Count - 1; i >= 0; i--)
+        {
+            if (IsConnectedForResult(eliminationOrder[i])) return eliminationOrder[i];
+        }
+        return ulong.MaxValue;
+    }
+
+    // order에서 승자와 나간 사람을 빼고 앞선 두 명을 2·3등으로 고른다. bestFirst=false면 뒤(늦게 탈락)부터 본다.
+    private void PickRunnersUp(List<ulong> order, bool bestFirst, ulong winner, out ulong second, out ulong third)
+    {
+        second = third = ulong.MaxValue;
+        for (int k = 0; k < order.Count; k++)
+        {
+            ulong id = order[bestFirst ? k : order.Count - 1 - k];
+            if (id == winner || !IsConnectedForResult(id)) continue;
+            if (second == ulong.MaxValue) second = id;
+            else { third = id; return; }
+        }
     }
 
     [ClientRpc]
@@ -532,7 +561,7 @@ public partial class SurvivalGameManager : NetworkBehaviour
         var ranking = new List<ulong>();
         void Add(ulong id)
         {
-            if (id != ulong.MaxValue && !ranking.Contains(id)) ranking.Add(id);
+            if (IsConnectedForResult(id) && !ranking.Contains(id)) ranking.Add(id);
         }
 
         if (raceMode)
