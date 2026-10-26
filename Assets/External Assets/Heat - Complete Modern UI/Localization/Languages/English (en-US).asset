@@ -1196,3 +1196,23 @@ MonoBehaviour:
       value: Returning to lobby in {0}s
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HintGrab
+      value: Grab
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintThrow
+      value: Throw
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintDash
+      value: Dash
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintJumpHold
+      value: Jump
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintSprint
+      value: Sprint
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}

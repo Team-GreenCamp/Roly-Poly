@@ -1165,3 +1165,23 @@ MonoBehaviour:
       value: "{0}\uCD08 \uD6C4 \uB85C\uBE44\uB85C \uB3CC\uC544\uAC11\uB2C8\uB2E4"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HintGrab
+      value: "\uC7A1\uAE30"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintThrow
+      value: "\uB358\uC9C0\uAE30"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintDash
+      value: "\uB300\uC2DC"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintJumpHold
+      value: "\uC810\uD504"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintSprint
+      value: "\uB2EC\uB9AC\uAE30"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}

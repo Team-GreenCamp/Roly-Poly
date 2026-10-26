@@ -274,3 +274,8 @@ MonoBehaviour:
   - key: Key #174
   - key: HudFinalRank
   - key: HudReturnLobby
+  - key: HintGrab
+  - key: HintThrow
+  - key: HintDash
+  - key: HintJumpHold
+  - key: HintSprint
