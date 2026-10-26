@@ -11,6 +11,15 @@ public static class GameLocalization
     private static LocalizationLanguage cachedLanguage;
     private static readonly Dictionary<string, string> translations = new();
 
+    // 도메인 리로드를 끈 플레이 모드에서는 정적 캐시가 남아 수정한 번역이 반영되지 않으므로 매번 비운다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetCache()
+    {
+        uiManager = null;
+        cachedLanguage = null;
+        translations.Clear();
+    }
+
     public static LocalizationLanguage Language
     {
         get
