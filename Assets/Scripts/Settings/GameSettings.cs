@@ -29,7 +29,7 @@ public static class GameSettings
     public static float SfxVolume => PlayerPrefs.GetFloat(SfxVolumeKey, 1f);
     public static float UiVolume => PlayerPrefs.GetFloat(UiVolumeKey, 1f);
     public static float CameraSensitivity => PlayerPrefs.GetFloat(CameraSensitivityKey, 2f);
-    public static bool UseToggleSprint => PlayerPrefs.GetInt(SprintModeKey, 0) == 0;
+    public static bool UseToggleSprint => PlayerPrefs.GetInt(SprintModeKey, 1) == 0;
     public static Vector2Int DisplayResolution => new(PlayerPrefs.GetInt(DisplayWidthKey, Screen.width), PlayerPrefs.GetInt(DisplayHeightKey, Screen.height));
     public static int WindowModeIndex => Mathf.Clamp(PlayerPrefs.GetInt(DisplayModeKey, Screen.fullScreenMode == FullScreenMode.Windowed ? 0 : 1), 0, 1);
 
@@ -94,7 +94,7 @@ public static class GameSettings
 
     public static void SetSprintMode(int index)
     {
-        // 0은 토글, 1은 누르고 있는 동안 달리기입니다.
+        // 0은 토글, 1은 누르고 있는 동안 달리기(기본값)입니다.
         PlayerPrefs.SetInt(SprintModeKey, Mathf.Clamp(index, 0, 1));
     }
 

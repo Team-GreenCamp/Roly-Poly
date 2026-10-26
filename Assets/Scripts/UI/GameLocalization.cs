@@ -20,6 +20,23 @@ public static class GameLocalization
         translations.Clear();
     }
 
+    // 처음 실행할 때는 저장된 언어가 없으므로 운영체제 언어를 저장해 HEAT의 LocalizationManager가 그 언어로 시작하게 합니다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void SelectSystemLanguageOnFirstLaunch()
+    {
+        if (PlayerPrefs.HasKey(UIManager.localizationSaveKey)) return;
+        if (uiManager == null) uiManager = Resources.Load<UIManager>("Heat UI Manager");
+        if (uiManager == null || uiManager.localizationSettings == null) return;
+
+        string languageId = Application.systemLanguage == SystemLanguage.Korean ? "ko-KR" : "en-US";
+        foreach (var language in uiManager.localizationSettings.languages)
+        {
+            if (language.languageID != languageId) continue;
+            PlayerPrefs.SetString(UIManager.localizationSaveKey, languageId);
+            return;
+        }
+    }
+
     public static LocalizationLanguage Language
     {
         get

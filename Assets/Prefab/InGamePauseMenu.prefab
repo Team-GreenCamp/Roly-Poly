@@ -21788,7 +21788,7 @@ GameObject:
   m_Icon: {fileID: 2800000, guid: f4007fbdb43231c4c8a13871706d7c46, type: 3}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5836445741321108592
 RectTransform:
   m_ObjectHideFlags: 0
@@ -30146,7 +30146,7 @@ MonoBehaviour:
   selectedImageObj: {fileID: 2376627579107555623}
   seperator: {fileID: 459290419552626731}
   isInteractable: 1
-  isSelected: 1
+  isSelected: 0
   useLocalization: 1
   useCustomText: 0
   useSeperator: 1
@@ -38205,7 +38205,7 @@ GameObject:
   m_Icon: {fileID: 2800000, guid: f4007fbdb43231c4c8a13871706d7c46, type: 3}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4898905699840012758
 RectTransform:
   m_ObjectHideFlags: 0
@@ -46747,7 +46747,7 @@ MonoBehaviour:
   selectedImageObj: {fileID: 5944164615332275816}
   seperator: {fileID: 2621178827592931658}
   isInteractable: 1
-  isSelected: 0
+  isSelected: 1
   useLocalization: 1
   useCustomText: 0
   useSeperator: 1
@@ -75201,7 +75201,7 @@ MonoBehaviour:
   useLocalization: 1
   iconScale: 1
   contentSpacing: 15
-  defaultIndex: 0
+  defaultIndex: 1
   index: 0
   items:
   - itemTitle: Toggle
