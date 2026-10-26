@@ -19,6 +19,7 @@ public partial class PlayerController
     private const byte AnimFear = 6;   // 붙잡힌 동안 버둥거림
     private const byte AnimAttack = 7; // 잡기/던지기 순간
     private const byte AnimSpin = 8;   // 승자 세리머니
+    private const byte AnimEmoteFirst = 9; // 감정표현 1~4 (9~12, PlayerController.Emote.cs)
 
     [Header("Animation Driver")]
     [Tooltip("이 평면 속도 이상이면 걷기(Walk)로 판정합니다(m/s).")]
@@ -105,6 +106,11 @@ public partial class PlayerController
     {
         bool networked = networkObject != null && networkObject.IsSpawned;
 
+        if (CanProcessInput())
+        {
+            ReadEmoteInput();
+        }
+
         byte effectiveState;
         if (!networked)
         {
@@ -187,6 +193,12 @@ public partial class PlayerController
         if (isCelebrating)
         {
             return AnimSpin;
+        }
+
+        // 감정표현은 로비에서도 보여야 하므로 입력 꺼짐 판정보다 먼저 본다. (움직이면 스스로 끊긴다)
+        if (TryGetEmoteAnimState(out byte emoteState))
+        {
+            return emoteState;
         }
 
         // 로비 등 게임플레이 입력이 꺼진 상태에서는 항상 Idle.(로비에선 접지 계산도 돌지 않음)
@@ -318,6 +330,7 @@ public partial class PlayerController
         if (state == AnimHit) desiredEye = eyeReactionState;                 // 어질어질
         else if (state == AnimFear) desiredEye = grabbedEyeState;            // 붙잡힘: 울상
         else if (state == AnimSpin) desiredEye = winEyeState;                // 승자: 행복
+        else if (TryGetEmote(state, out EmoteDefinition emote)) desiredEye = emote.eyeState; // 감정표현
         else if (IsGrabbingSomeone) desiredEye = grabbingEyeState;           // 붙잡는 중: 광폭 (동기화 변수라 원격도 표시)
 
         bool reaction = !string.IsNullOrEmpty(desiredEye);
@@ -410,14 +423,22 @@ public partial class PlayerController
             {
                 // 화면 밖/LOD 컬링으로 블렌드셰이프(눈) 갱신이 멈추지 않도록 항상 애니메이트.
                 activeAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                // 표정이 켜진 채 모델이 꺼졌다 켜지면 다시 바인딩하면서 그 표정을 기본값으로 잡아,
+                // 눈 레이어 가중치를 0으로 내려도 중립 눈으로 돌아오지 않는다. 비활성화 때 상태를 유지해 다시 바인딩을 막는다.
+                activeAnimator.keepAnimatorStateOnDisable = true;
             }
         }
 
         return activeAnimator;
     }
 
-    private static string AnimStateName(byte state)
+    private string AnimStateName(byte state)
     {
+        if (TryGetEmote(state, out EmoteDefinition emote))
+        {
+            return emote.bodyState;
+        }
+
         switch (state)
         {
             case AnimWalk: return "Walk";

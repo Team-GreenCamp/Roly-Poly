@@ -1216,3 +1216,11 @@ MonoBehaviour:
       value: Sprint
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HintCharacterChange
+      value: Change Character
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintEmote
+      value: Emote
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}

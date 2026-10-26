@@ -196,6 +196,19 @@ MonoBehaviour:
   obstacleHitCooldown: 0.8
   slideSlopeAngle: 45
   slideForce: 18
+  emotes:
+  - bodyState: Fly
+    eyeState: Eyes_Excited
+    duration: 3
+  - bodyState: Attack
+    eyeState: Eyes_Rabid
+    duration: 3
+  - bodyState: Fear
+    eyeState: Eyes_Cry
+    duration: 3
+  - bodyState: Lay
+    eyeState: Eyes_Sleep
+    duration: 5
   grappleRange: 2.3
   grappleRadius: 0.8
   grappleHoldDuration: 2.5

@@ -279,3 +279,5 @@ MonoBehaviour:
   - key: HintDash
   - key: HintJumpHold
   - key: HintSprint
+  - key: HintCharacterChange
+  - key: HintEmote

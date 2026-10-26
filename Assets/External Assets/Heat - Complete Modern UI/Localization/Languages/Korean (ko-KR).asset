@@ -1185,3 +1185,11 @@ MonoBehaviour:
       value: "\uB2EC\uB9AC\uAE30"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HintCharacterChange
+      value: "\uCE90\uB9AD\uD130 \uBCC0\uACBD"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintEmote
+      value: "\uAC10\uC815\uD45C\uD604"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
