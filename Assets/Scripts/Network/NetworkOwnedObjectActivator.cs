@@ -1359,6 +1359,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         if (!showNameLabel)
         {
             SetNameLabelVisible(false);
+            // 이름표에 붙어 있던 준비 체크를 플레이어 루트로 되돌린다.
+            UpdateReadyCheckIndicator();
             return;
         }
 
@@ -1366,6 +1368,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         {
             // 게임 씬에서는 화면을 가리지 않도록 플레이어 닉네임 라벨을 숨긴다(시상식 제외).
             SetNameLabelVisible(false);
+            UpdateReadyCheckIndicator();
             return;
         }
 
@@ -1385,6 +1388,16 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         // 세션 승수는 이름과 분리해 이름 위에 별도 라벨(★N)로 표시.
         UpdateWinsLabel();
         UpdateHostCrown();
+        // 준비 체크는 왕관 자리에 붙으므로 ★승수 라벨이 바뀌면 같이 다시 배치한다.
+        UpdateReadyCheckIndicator();
+    }
+
+    // 이름표 기준 왕관·준비 체크 자리. ★승수 라벨이 보이면 그 위로 올라간다.
+    // 방장은 준비하지 않으므로 둘이 한 캐릭터에 함께 뜨지 않는다.
+    private Vector3 GetNameBadgeLocalPosition()
+    {
+        bool winsVisible = winsLabel != null && winsLabel.gameObject.activeSelf;
+        return winsVisible ? winsLabelOffset + hostCrownOffset : hostCrownOffset;
     }
 
     // 로비에서는 방장 이름 위에 왕관을 띄워 누가 게임을 시작하는지 알 수 있게 한다.
@@ -1414,8 +1427,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             }
         }
 
-        bool winsVisible = winsLabel != null && winsLabel.gameObject.activeSelf;
-        hostCrownRenderer.transform.localPosition = winsVisible ? winsLabelOffset + hostCrownOffset : hostCrownOffset;
+        hostCrownRenderer.transform.localPosition = GetNameBadgeLocalPosition();
         hostCrownRenderer.transform.localScale = hostCrownScale;
         hostCrownRenderer.sprite = hostCrownSprite;
         hostCrownRenderer.color = hostCrownColor;
@@ -1555,8 +1567,31 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        readyCheckRenderer.transform.localPosition = readyCheckOffset;
-        readyCheckRenderer.transform.localScale = readyCheckScale;
+        // 이름표가 보이면 왕관과 같은 자리(이름표 위)에 붙여 닉네임과 겹치지 않게 한다.
+        // 이름표가 숨겨지면 자식인 체크도 같이 사라지므로 그때는 플레이어 루트 기준(readyCheckOffset)으로 둔다.
+        // 이름표 스케일을 상쇄해 체크 크기는 readyCheckScale(플레이어 기준) 그대로 유지한다.
+        Transform readyCheckParent = nameLabel != null && nameLabel.gameObject.activeSelf ? nameLabel.transform : transform;
+        if (readyCheckRenderer.transform.parent != readyCheckParent)
+        {
+            readyCheckRenderer.transform.SetParent(readyCheckParent, false);
+        }
+
+        if (readyCheckParent == transform)
+        {
+            readyCheckRenderer.transform.localPosition = readyCheckOffset;
+            readyCheckRenderer.transform.localScale = readyCheckScale;
+        }
+        else
+        {
+            Vector3 parentScale = readyCheckParent.lossyScale;
+            Vector3 rootScale = transform.lossyScale;
+            readyCheckRenderer.transform.localPosition = GetNameBadgeLocalPosition();
+            readyCheckRenderer.transform.localScale = new Vector3(
+                readyCheckScale.x * rootScale.x / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                readyCheckScale.y * rootScale.y / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                readyCheckScale.z * rootScale.z / Mathf.Max(0.0001f, Mathf.Abs(parentScale.z)));
+        }
+
         readyCheckRenderer.sprite = readyCheckSprite;
         readyCheckRenderer.color = readyCheckColor;
         readyCheckRenderer.sortingOrder = readyCheckSortingOrder;

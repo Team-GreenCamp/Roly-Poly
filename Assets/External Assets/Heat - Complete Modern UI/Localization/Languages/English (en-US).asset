@@ -1224,3 +1224,7 @@ MonoBehaviour:
       value: Emote
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HintPickUp
+      value: Pick Up
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}

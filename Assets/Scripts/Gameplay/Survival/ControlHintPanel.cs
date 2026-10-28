@@ -30,12 +30,12 @@ public class ControlHintPanel : MonoBehaviour
     [SerializeField] private float fadeSeconds = 0.4f;
 
     private enum Mode { None, Survival, Race, Falling }
-    private enum HintInput { MouseLeft, MouseRight, Space, F, Shift }
+    private enum HintInput { MouseLeft, MouseRight, E, Space, F, Shift }
 
     // (입력, 동작 로컬라이즈 키)
     private static readonly (HintInput input, string action)[] SurvivalHints =
     {
-        (HintInput.MouseRight, "HintGrab"), (HintInput.MouseLeft, "HintThrow"),
+        (HintInput.MouseRight, "HintGrab"), (HintInput.MouseLeft, "HintThrow"), (HintInput.E, "HintPickUp"),
         (HintInput.Space, "HintJumpHold"), (HintInput.F, "HintDash"), (HintInput.Shift, "HintSprint"),
     };
     private static readonly (HintInput input, string action)[] RaceHints =
@@ -44,7 +44,7 @@ public class ControlHintPanel : MonoBehaviour
     };
     private static readonly (HintInput input, string action)[] FallingHints =
     {
-        (HintInput.MouseRight, "HintGrab"), (HintInput.MouseLeft, "HintThrow"),
+        (HintInput.MouseRight, "HintGrab"), (HintInput.MouseLeft, "HintThrow"), (HintInput.E, "HintPickUp"),
         (HintInput.Space, "HintJumpHold"), (HintInput.F, "HintDash"),
     };
 

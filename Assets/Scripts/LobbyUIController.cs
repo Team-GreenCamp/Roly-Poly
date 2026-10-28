@@ -1072,6 +1072,10 @@ public class LobbyUIController : MonoBehaviour
             if (sessionManager.IsHost && !string.IsNullOrWhiteSpace(sessionManager.CurrentJoinCode))
             {
                 PublishCurrentMapSelectionIfHost();
+                // 백엔드 방 목록 없이 코드로 들어온 클라이언트도 같은 이름을 보도록 직접 전달합니다.
+                // 전송 한도에 맞춰 잘린 이름을 호스트 표시와 백엔드 등록에도 그대로 씁니다.
+                sessionManager.SetRoomName(requestedRoomName);
+                requestedRoomName = sessionManager.CurrentRoomName;
                 // 백엔드 등록이 지연되거나 실패해도 생성한 방 이름을 표시합니다.
                 activeBackendRoomName = requestedRoomName;
                 RefreshUI();
@@ -2144,9 +2148,15 @@ public class LobbyUIController : MonoBehaviour
 
     private string GetDisplayedRoomName()
     {
-        return string.IsNullOrWhiteSpace(activeBackendRoomName)
-            ? GameLocalization.Get("RoomUnnamed")
-            : activeBackendRoomName.Trim();
+        if (!string.IsNullOrWhiteSpace(activeBackendRoomName))
+        {
+            return activeBackendRoomName.Trim();
+        }
+
+        // 백엔드 조회가 실패했으면 호스트가 네트워크로 보낸 이름을 씁니다.
+        return sessionManager != null && !string.IsNullOrWhiteSpace(sessionManager.CurrentRoomName)
+            ? sessionManager.CurrentRoomName
+            : GameLocalization.Get("RoomUnnamed");
     }
 
     private static string NormalizeRoomCode(string joinCode)

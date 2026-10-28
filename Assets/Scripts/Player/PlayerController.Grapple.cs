@@ -27,10 +27,13 @@ public partial class PlayerController
     [SerializeField] private float grappleCooldown = 1.5f;
     [Tooltip("입(주둥이) 기준점을 직접 지정할 때 사용(선택). 비우면 활성 캐릭터 모델 크기에서 자동 산출합니다.")]
     [SerializeField] private Transform grappleMouthAnchor;
-    [Tooltip("입 기준점에서 앞으로 이만큼 떨어진 곳에 상대를 뭅니다(m).")]
-    [SerializeField] private float grappleHoldDistance = 0.15f;
-    [Tooltip("입 기준점 대비 상대 루트의 높이 보정(m). 음수면 몸통이 입에 걸리도록 내려갑니다.")]
-    [SerializeField] private float grappleHoldHeight = -0.25f;
+    [Tooltip("상대 몸통 중심에서 위로 얼마나 올라간 지점(등·목덜미)을 무는지. 몸 높이 절반 대비 비율(0=중심, 1=꼭대기).")]
+    [Range(0f, 1f)]
+    [SerializeField] private float grappleBiteHeight = 0.35f;
+    [Tooltip("문 지점의 추가 전방 보정(m). 0이면 상대 몸이 주둥이에 살짝 파묻힌다.")]
+    [SerializeField] private float grappleHoldDistance = 0f;
+    [Tooltip("문 지점의 추가 높이 보정(m).")]
+    [SerializeField] private float grappleHoldHeight = 0f;
     [Tooltip("물린 상대가 축 처지듯 기울어지는 각도(도). 0이면 수평 유지.")]
     [SerializeField] private float grappleHoldTiltDegrees = 20f;
     [Tooltip("붙잡은 상대를 던지는 전방 세기.")]
@@ -479,15 +482,32 @@ public partial class PlayerController
         }
         forward.Normalize();
 
-        // 캐릭터(동물)마다 입 높이/주둥이 길이가 다르므로 공격자의 입 기준점에서 위치를 잡는다.
-        Vector3 mouth = grabber.GetGrappleMouthPoint(forward);
-        position = mouth + forward * grappleHoldDistance + Vector3.up * grappleHoldHeight;
-
         // '입으로 가로로 물린' 자세: 피해자 몸이 공격자 시선과 직각(가로)으로 눕고,
         // 물린 축(공격자 전방)을 기준으로 살짝 기울어져 축 처진 느낌을 준다.
         Vector3 side = Vector3.Cross(Vector3.up, forward).normalized;
         rotation = Quaternion.AngleAxis(grappleHoldTiltDegrees, forward)
                  * Quaternion.LookRotation(side, Vector3.up);
+
+        // 캐릭터(동물)마다 입 높이/주둥이 길이와 몸 크기가 다르므로,
+        // 공격자 입 기준점에 피해자 몸의 '무는 지점(등·목덜미)'이 오도록 피해자 루트 위치를 역산한다.
+        // 가로로 누운 피해자의 폭 방향이 공격자 전방이므로, 폭의 일부만큼 앞으로 밀어 주둥이에 살짝 파묻히게 한다.
+        Vector3 mouth = grabber.GetGrappleMouthPoint(forward);
+        Vector3 biteLocal = Vector3.zero;
+        float halfWidth = 0f;
+        if (TryGetModelBoundsInRoot(out Bounds body))
+        {
+            biteLocal = body.center + Vector3.up * (body.extents.y * grappleBiteHeight);
+            halfWidth = body.extents.x * Mathf.Abs(transform.lossyScale.x);
+        }
+
+        Vector3 biteOffset = rotation * Vector3.Scale(biteLocal, transform.lossyScale);
+        position = mouth
+                 + forward * (halfWidth * 0.4f + grappleHoldDistance)
+                 + Vector3.up * grappleHoldHeight
+                 - biteOffset;
+
+        // 공격자보다 피해자가 크면 발이 바닥 아래로 파고드므로 공격자 발높이 아래로는 내리지 않는다.
+        position.y = Mathf.Max(position.y, grabber.transform.position.y + 0.02f);
     }
 
     // 이 플레이어의 '입(주둥이)' 기준 월드 좌표. 수동 앵커가 있으면 그것을,
@@ -502,32 +522,71 @@ public partial class PlayerController
             return grappleMouthAnchor.position;
         }
 
+        if (TryGetModelBoundsInRoot(out Bounds body))
+        {
+            // 몸 바운즈의 앞쪽 끝(주둥이) 근처: 몸 높이의 70% 지점, 앞쪽 끝에서 살짝 안쪽.
+            Vector3 local = new Vector3(
+                body.center.x,
+                body.center.y + body.extents.y * 0.4f,
+                body.max.z - body.extents.z * 0.1f);
+            return transform.TransformPoint(local);
+        }
+
+        // 폴백: 루트 기준 고정 오프셋.
+        return transform.position + flatForward * 0.4f + Vector3.up * 0.45f;
+    }
+
+    // 활성 캐릭터 모델의 바운즈를 플레이어 루트 로컬 공간(+z 전방, +y 위, 원점=발)으로 옮긴 AABB.
+    // 모델 FBX의 축 방향과 무관하게 앞쪽 끝·높이를 구할 수 있다. 스폰 스케일 연출·애니메이션에도 맞도록 매번 계산한다.
+    private bool TryGetModelBoundsInRoot(out Bounds rootBounds)
+    {
+        rootBounds = default;
+
         if (characterView == null)
         {
             characterView = GetComponent<PlayerCharacterView>();
         }
 
         Transform modelRoot = characterView != null ? characterView.GetActiveCharacterRoot() : null;
-        if (modelRoot != null)
+        if (modelRoot == null)
         {
-            if (modelRoot != grappleMouthRendererRoot)
-            {
-                grappleMouthRendererRoot = modelRoot;
-                grappleMouthRenderer = modelRoot.GetComponentInChildren<SkinnedMeshRenderer>(true);
-            }
+            return false;
+        }
 
-            if (grappleMouthRenderer != null)
+        if (modelRoot != grappleMouthRendererRoot)
+        {
+            grappleMouthRendererRoot = modelRoot;
+            grappleMouthRenderer = modelRoot.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        }
+
+        if (grappleMouthRenderer == null)
+        {
+            return false;
+        }
+
+        // SkinnedMeshRenderer.localBounds는 루트 본 기준이다.
+        Transform boundsSpace = grappleMouthRenderer.rootBone != null ? grappleMouthRenderer.rootBone : grappleMouthRenderer.transform;
+        Bounds local = grappleMouthRenderer.localBounds;
+        Vector3 center = local.center;
+        Vector3 extents = local.extents;
+        for (int i = 0; i < 8; i++)
+        {
+            Vector3 corner = center + new Vector3(
+                (i & 1) == 0 ? -extents.x : extents.x,
+                (i & 2) == 0 ? -extents.y : extents.y,
+                (i & 4) == 0 ? -extents.z : extents.z);
+            Vector3 point = transform.InverseTransformPoint(boundsSpace.TransformPoint(corner));
+            if (i == 0)
             {
-                // 모델 로컬 바운즈의 앞쪽 끝(주둥이) 근처: 위로 55%, 앞으로 85% 지점.
-                Bounds bounds = grappleMouthRenderer.localBounds;
-                Vector3 local = bounds.center
-                    + new Vector3(0f, bounds.extents.y * 0.55f, bounds.extents.z * 0.85f);
-                return grappleMouthRenderer.transform.TransformPoint(local);
+                rootBounds = new Bounds(point, Vector3.zero);
+            }
+            else
+            {
+                rootBounds.Encapsulate(point);
             }
         }
 
-        // 폴백: 루트 기준 고정 오프셋.
-        return transform.position + flatForward * 0.4f + Vector3.up * 0.45f;
+        return true;
     }
 
     // clientId → PlayerController 조회. NetworkManager.ConnectedClients는 서버 전용이라

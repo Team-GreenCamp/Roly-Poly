@@ -1193,3 +1193,7 @@ MonoBehaviour:
       value: "\uAC10\uC815\uD45C\uD604"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
+    - key: HintPickUp
+      value: "\uC544\uC774\uD15C \uC9D1\uAE30"
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}

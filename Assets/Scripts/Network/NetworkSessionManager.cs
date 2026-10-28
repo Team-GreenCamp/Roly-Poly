@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Netcode;
@@ -64,6 +65,8 @@ public class NetworkSessionManager : MonoBehaviour
     public string CurrentLobbySceneName => lobbySceneName;
     public string CurrentMapChapterId { get; private set; } = string.Empty;
     public string CurrentMapId { get; private set; } = string.Empty;
+    // 호스트가 정한 방 이름. 백엔드 방 목록 없이 코드로 직접 들어온 클라이언트도 같은 이름을 보도록 네트워크로 전달한다.
+    public string CurrentRoomName { get; private set; } = string.Empty;
     public bool CanHostStartGame => networkManager != null
         && networkManager.IsServer
         && !gameStartRequested
@@ -72,6 +75,7 @@ public class NetworkSessionManager : MonoBehaviour
     private const string ReadyStateMessageName = "ReadyState";
     private const string MapSelectionMessageName = "MapSelection";
     private const string GameStartMessageName = "GameStart";
+    private const string RoomNameMessageName = "RoomName";
     // 방 정원 상한.
     private const int MaxSupportedPlayers = 8;
     private bool callbacksRegistered;
@@ -597,6 +601,26 @@ public class NetworkSessionManager : MonoBehaviour
         NotifyStateChanged();
     }
 
+    public void SetRoomName(string roomName)
+    {
+        if (networkManager == null || !networkManager.IsServer)
+        {
+            return;
+        }
+
+        CurrentRoomName = ClampToFixedString512(NormalizeMessageString(roomName));
+
+        foreach (ulong clientId in networkManager.ConnectedClientsIds)
+        {
+            if (clientId != networkManager.LocalClientId)
+            {
+                SendRoomNameToClient(clientId);
+            }
+        }
+
+        NotifyStateChanged();
+    }
+
     private bool CanStartSession()
     {
         if (networkManager == null)
@@ -618,6 +642,7 @@ public class NetworkSessionManager : MonoBehaviour
         }
 
         localShutdownRequested = false;
+        CurrentRoomName = string.Empty;
         return true;
     }
 
@@ -700,6 +725,7 @@ public class NetworkSessionManager : MonoBehaviour
         networkManager.CustomMessagingManager.RegisterNamedMessageHandler(ReadyStateMessageName, HandleReadyStateMessage);
         networkManager.CustomMessagingManager.RegisterNamedMessageHandler(MapSelectionMessageName, HandleMapSelectionMessage);
         networkManager.CustomMessagingManager.RegisterNamedMessageHandler(GameStartMessageName, HandleGameStartMessage);
+        networkManager.CustomMessagingManager.RegisterNamedMessageHandler(RoomNameMessageName, HandleRoomNameMessage);
         namedMessagesRegistered = true;
     }
 
@@ -715,6 +741,7 @@ public class NetworkSessionManager : MonoBehaviour
             networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(ReadyStateMessageName);
             networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(MapSelectionMessageName);
             networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(GameStartMessageName);
+            networkManager.CustomMessagingManager.UnregisterNamedMessageHandler(RoomNameMessageName);
         }
 
         namedMessagesRegistered = false;
@@ -857,6 +884,7 @@ public class NetworkSessionManager : MonoBehaviour
         {
             SetClientReady(clientId, false);
             SendMapSelectionToClient(clientId, CurrentMapChapterId, CurrentMapId, gameSceneName);
+            SendRoomNameToClient(clientId);
             SetStatus($"플레이어가 로비에 입장했습니다. 현재 인원: {ConnectedPlayerCount}");
         }
     }
@@ -1181,6 +1209,63 @@ public class NetworkSessionManager : MonoBehaviour
 
         // 호스트가 누른 Start 상태를 클라이언트에게 명시적으로 전달했는지 확인하기 위한 로그입니다.
         Debug.Log($"[ReadyFlow][GameStart] broadcast scene={normalizedSceneName}, clients=[{string.Join(", ", networkManager.ConnectedClientsIds)}]");
+    }
+
+    private void SendRoomNameToClient(ulong clientId)
+    {
+        if (networkManager == null
+            || networkManager.CustomMessagingManager == null
+            || !networkManager.IsServer
+            || string.IsNullOrWhiteSpace(CurrentRoomName))
+        {
+            return;
+        }
+
+        using FastBufferWriter writer = new FastBufferWriter(1024, Allocator.Temp);
+        writer.WriteValueSafe(new FixedString512Bytes(CurrentRoomName));
+        networkManager.CustomMessagingManager.SendNamedMessage(RoomNameMessageName, clientId, writer);
+    }
+
+    // FixedString512Bytes는 UTF-8 509바이트까지만 담는다(넘치면 에디터에서 예외, 빌드에서 잘림).
+    // 미리 문자 경계에서 잘라 두어 호스트와 클라이언트가 같은 이름을 보게 한다.
+    private static string ClampToFixedString512(string value)
+    {
+        int maxBytes = FixedString512Bytes.UTF8MaxLengthInBytes;
+        if (Encoding.UTF8.GetByteCount(value) <= maxBytes)
+        {
+            return value;
+        }
+
+        int length = 0;
+        int byteCount = 0;
+        while (length < value.Length)
+        {
+            int charCount = char.IsHighSurrogate(value[length]) && length + 1 < value.Length ? 2 : 1;
+            int charBytes = Encoding.UTF8.GetByteCount(value.Substring(length, charCount));
+            if (byteCount + charBytes > maxBytes)
+            {
+                break;
+            }
+
+            byteCount += charBytes;
+            length += charCount;
+        }
+
+        return value.Substring(0, length);
+    }
+
+    private void HandleRoomNameMessage(ulong clientId, FastBufferReader reader)
+    {
+        // 방 이름은 서버 → 클라이언트 전용이다. 클라이언트가 보낸 조작된 길이 값이
+        // 서버에서 역직렬화되지 않도록 읽기 전에 거른다.
+        if (networkManager == null || networkManager.IsServer || clientId != NetworkManager.ServerClientId)
+        {
+            return;
+        }
+
+        reader.ReadValueSafe(out FixedString512Bytes roomName);
+        CurrentRoomName = NormalizeMessageString(roomName.ToString());
+        NotifyStateChanged();
     }
 
     private void NotifyMapSelectionChanged(string chapterId, string mapId, string sceneName)

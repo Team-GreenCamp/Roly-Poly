@@ -281,3 +281,4 @@ MonoBehaviour:
   - key: HintSprint
   - key: HintCharacterChange
   - key: HintEmote
+  - key: HintPickUp

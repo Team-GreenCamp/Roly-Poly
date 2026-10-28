@@ -214,8 +214,9 @@ MonoBehaviour:
   grappleHoldDuration: 2.5
   grappleCooldown: 1.5
   grappleMouthAnchor: {fileID: 0}
-  grappleHoldDistance: 0.5
-  grappleHoldHeight: 0.3
+  grappleBiteHeight: 0.35
+  grappleHoldDistance: 0
+  grappleHoldHeight: 0
   grappleHoldTiltDegrees: 20
   grappleThrowForce: 13
   grappleThrowUp: 5
@@ -344,7 +345,7 @@ MonoBehaviour:
   spawnVisualRoot: {fileID: 719685268943280322}
   spawnScaleInDuration: 0.35
   spawnStartScale: 0.1
-  enableLobbyCharacterOutline: 1
+  enableLobbyCharacterOutline: 0
   localLobbyOutlineColor: {r: 0.45, g: 0.95, b: 1, a: 1}
   remoteLobbyOutlineColor: {r: 1, g: 0.92, b: 0.45, a: 1}
   lobbyOutlineWidth: 2.5
