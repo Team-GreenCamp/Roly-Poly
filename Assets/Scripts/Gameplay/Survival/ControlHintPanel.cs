@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // 경기 중 화면 구석에 작게 띄우는 조작 안내 (HUD Canvas에 부착, 순수 로컬).
-// 모드는 SurvivalGameManager의 플래그로 판별하므로 씬마다 따로 설정하지 않는다.
+// 모든 모드에서 같은 조작이 가능하므로 안내도 모드와 상관없이 전부 보여준다.
 // 카운트다운과 경기 초반에는 또렷하게, 이후에는 흐리게 남겨 두고, 탈락·종료 시 숨긴다.
 [DisallowMultipleComponent]
 public class ControlHintPanel : MonoBehaviour
@@ -19,7 +19,7 @@ public class ControlHintPanel : MonoBehaviour
     }
 
     [SerializeField] private CanvasGroup group;
-    [Tooltip("안내 줄. 모드의 안내 개수보다 많은 줄은 숨긴다.")]
+    [Tooltip("안내 줄. 안내 개수보다 많은 줄은 숨긴다.")]
     [SerializeField] private HintSlot[] hintSlots;
     [SerializeField] private Sprite mouseLeftSprite;
     [SerializeField] private Sprite mouseRightSprite;
@@ -29,26 +29,16 @@ public class ControlHintPanel : MonoBehaviour
     [SerializeField] private float dimAlpha = 0.45f;
     [SerializeField] private float fadeSeconds = 0.4f;
 
-    private enum Mode { None, Survival, Race, Falling }
     private enum HintInput { MouseLeft, MouseRight, E, Space, F, Shift }
 
     // (입력, 동작 로컬라이즈 키)
-    private static readonly (HintInput input, string action)[] SurvivalHints =
+    private static readonly (HintInput input, string action)[] Hints =
     {
         (HintInput.MouseRight, "HintGrab"), (HintInput.MouseLeft, "HintThrow"), (HintInput.E, "HintPickUp"),
         (HintInput.Space, "HintJumpHold"), (HintInput.F, "HintDash"), (HintInput.Shift, "HintSprint"),
-    };
-    private static readonly (HintInput input, string action)[] RaceHints =
-    {
-        (HintInput.Space, "HintJumpHold"), (HintInput.F, "HintDash"), (HintInput.Shift, "HintSprint"),
-    };
-    private static readonly (HintInput input, string action)[] FallingHints =
-    {
-        (HintInput.MouseRight, "HintGrab"), (HintInput.MouseLeft, "HintThrow"), (HintInput.E, "HintPickUp"),
-        (HintInput.Space, "HintJumpHold"), (HintInput.F, "HintDash"),
     };
 
-    private Mode shownMode;
+    private bool hintsApplied;
     private float playingSeenAt = -1f;
 
     private void Start()
@@ -75,7 +65,7 @@ public class ControlHintPanel : MonoBehaviour
             bool show = (state == SurvivalGameManager.MatchState.Countdown || playing) && !gameManager.LocalEliminated;
             if (show)
             {
-                ApplyMode(ResolveMode(gameManager));
+                ApplyHints();
                 bool bright = !playing || Time.unscaledTime - playingSeenAt < brightSeconds;
                 target = bright ? 1f : dimAlpha;
             }
@@ -87,25 +77,12 @@ public class ControlHintPanel : MonoBehaviour
         }
     }
 
-    private static Mode ResolveMode(SurvivalGameManager gameManager)
+    private void ApplyHints()
     {
-        if (gameManager.IsRace) return Mode.Race;
-        if (gameManager.IsTimedCoinSurvival) return Mode.Survival;
-        return Mode.Falling;
-    }
+        if (hintsApplied) return;
+        hintsApplied = true;
 
-    private void ApplyMode(Mode mode)
-    {
-        if (mode == shownMode) return;
-        shownMode = mode;
-
-        (HintInput input, string action)[] hints = mode switch
-        {
-            Mode.Race => RaceHints,
-            Mode.Survival => SurvivalHints,
-            _ => FallingHints,
-        };
-
+        (HintInput input, string action)[] hints = Hints;
         for (int i = 0; i < hintSlots.Length; i++)
         {
             HintSlot slot = hintSlots[i];
