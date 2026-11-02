@@ -155,7 +155,8 @@ public partial class SurvivalGameManager
     // (박스 판정이면 눈에 보이는 결승선보다 몇 m 앞에서 완주 처리된다)
     private bool HasPassedRaceGate(int index, Vector3 position)
     {
-        if (position.y < 0 || position.y > 5) return false;
+        // 바닥 높이는 0이지만 캐릭터에 따라 캡슐 바닥이 피벗보다 위라 서 있어도 피벗 y가 음수가 된다.
+        if (position.y < -1 || position.y > 5) return false;
         Vector3 gate = RaceGates[index];
         Vector3 delta = position - gate;
         if (index < RaceGates.Length - 1)
