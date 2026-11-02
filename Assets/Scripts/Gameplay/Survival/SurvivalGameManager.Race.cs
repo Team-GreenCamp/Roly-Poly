@@ -7,6 +7,8 @@ public partial class SurvivalGameManager
     [Header("Obstacle Race")]
     [SerializeField] private bool raceMode;
     [SerializeField] private float raceTimeLimit = 180f;
+    [Tooltip("첫 완주자가 나오면 남은 플레이어는 이 시간 안에 들어와야 한다. 남은 제한시간이 더 짧으면 그대로 둔다. 0이면 끈다.")]
+    [SerializeField] private float raceFinishGraceTime = 20f;
     private readonly List<ulong> raceFinishOrder = new();
     private readonly Dictionary<ulong, int> raceProgress = new();
     private readonly Dictionary<ulong, double> raceRespawnTimes = new();
@@ -17,6 +19,7 @@ public partial class SurvivalGameManager
     public bool IsRace => raceMode;
     public int RaceFinishCount => raceFinishCount.Value;
     public bool LocalRaceFinished => localRaceFinished;
+    public bool RaceFinishCountdownActive => raceMode && raceFinishGraceTime > 0 && raceFinishCount.Value > 0;
     // 세션 종료와 로비 전환 사이에도 HUD가 남은 시간을 안전하게 읽을 수 있게 합니다.
     public double RaceRemaining => NetworkManager == null || raceDeadline.Value <= 0 ? raceTimeLimit :
         System.Math.Max(0, raceDeadline.Value - NetworkManager.ServerTime.Time);
@@ -86,6 +89,9 @@ public partial class SurvivalGameManager
             if (progress != RaceGates.Length) continue;
             raceFinishOrder.Add(id);
             raceFinishCount.Value = raceFinishOrder.Count;
+            // 첫 완주 순간부터 남은 플레이어의 마감을 앞당긴다(제한시간을 늘리지는 않음).
+            if (raceFinishOrder.Count == 1 && raceFinishGraceTime > 0)
+                raceDeadline.Value = System.Math.Min(raceDeadline.Value, NetworkManager.ServerTime.Time + raceFinishGraceTime);
             aliveClients.Remove(id);
             aliveCount.Value = aliveClients.Count;
             RaceFinishedClientRpc(id);
