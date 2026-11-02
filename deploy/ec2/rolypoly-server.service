@@ -1,0 +1,17 @@
+[Unit]
+Description=RolyPoly dedicated game server
+After=network-online.target br-backend.service
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/rolypoly-server
+EnvironmentFile=-/home/ubuntu/rolypoly-server.env
+ExecStart=/home/ubuntu/rolypoly-server/start-server.sh
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/ubuntu/gameserver.log
+StandardError=append:/home/ubuntu/gameserver.log
+
+[Install]
+WantedBy=multi-user.target
