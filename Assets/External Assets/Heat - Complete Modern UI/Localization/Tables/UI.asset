@@ -216,6 +216,8 @@ MonoBehaviour:
   - key: LobbyUnsupported
   - key: LobbyNetworkFailed
   - key: LobbyJoinFailed
+  - key: DisconnectLost
+  - key: DisconnectWithReason
   - key: LobbyLoading
   - key: LobbyNoRooms
   - key: LobbyRoomCount
@@ -270,3 +272,13 @@ MonoBehaviour:
   - key: MapSumoDesc
   - key: MapFallingDesc
   - key: Key #174
+  - key: HudFinalRank
+  - key: HudReturnLobby
+  - key: HintGrab
+  - key: HintThrow
+  - key: HintDash
+  - key: HintJumpHold
+  - key: HintSprint
+  - key: HintCharacterChange
+  - key: HintEmote
+  - key: HintPickUp

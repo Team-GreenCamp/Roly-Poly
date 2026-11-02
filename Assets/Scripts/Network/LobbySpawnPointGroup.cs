@@ -6,7 +6,8 @@ public class LobbySpawnPointGroup : MonoBehaviour
     [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private bool wrapWhenFull = true;
 
-    public bool TryGetSpawnPose(ulong ownerClientId, out Vector3 position, out Quaternion rotation)
+    // spawnSlot: 서버가 접속자별로 배정한 스폰 순번(NetworkOwnedObjectActivator.GetServerSpawnSlot).
+    public bool TryGetSpawnPose(ulong spawnSlot, out Vector3 position, out Quaternion rotation)
     {
         position = Vector3.zero;
         rotation = Quaternion.identity;
@@ -18,8 +19,8 @@ public class LobbySpawnPointGroup : MonoBehaviour
             return false;
         }
 
-        // Netcode clientId 순서대로 미리 배치한 스폰 위치를 사용합니다.
-        int index = (int)ownerClientId;
+        // 스폰 슬롯 순서대로 미리 배치한 스폰 위치를 사용합니다.
+        int index = (int)spawnSlot;
         if (wrapWhenFull)
         {
             index %= count;

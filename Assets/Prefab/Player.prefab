@@ -19,7 +19,6 @@ GameObject:
   - component: {fileID: 7363093746037789180}
   - component: {fileID: 4081297831180302518}
   - component: {fileID: 5112920333155259829}
-  - component: {fileID: 2462443946215769529}
   - component: {fileID: 7490023543529397197}
   m_Layer: 3
   m_Name: Player
@@ -99,6 +98,13 @@ MonoBehaviour:
   animWalkThreshold: 0.2
   animRunThreshold: 4.5
   animCrossFadeDuration: 0.12
+  walkAnimReferenceSpeed: 3.2
+  runAnimReferenceSpeed: 6
+  locomotionAnimSpeedRange: {x: 0.7, y: 1.5}
+  takeoffStretch: 0.16
+  landingSquash: 0.22
+  squashStretchDuration: 0.22
+  minAirTimeForLandingSquash: 0.12
   eyeReactionState: Eyes_Spin
   grabbedEyeState: Eyes_Cry
   grabbingEyeState: Eyes_Rabid
@@ -138,6 +144,8 @@ MonoBehaviour:
   fallGravityMultiplier: 2
   jumpBufferTime: 0.12
   coyoteTime: 0.1
+  airIdleDeceleration: 1.5
+  jumpCutGravityMultiplier: 2.5
   landingSpeedPreserveDuration: 0.18
   landingSpeedPreserveRatio: 0.9
   landingTiltAngularDamping: 18
@@ -158,6 +166,9 @@ MonoBehaviour:
   knockdownMinimumDuration: 0.45
   knockdownUprightAngle: 12
   knockdownRecoveryAngularSpeed: 1.2
+  blastKnockdownMinimumDuration: 0.3
+  landingKnockdownMinimumDuration: 0.15
+  quickKnockdownUprightAngle: 30
   turnDamping: 8
   maxAngularVelocity: 30
   groundedOffset: 0.1
@@ -182,15 +193,30 @@ MonoBehaviour:
   knockdownImpactSpeedThreshold: 7
   knockdownThrownObjectSpeedThreshold: 5.5
   knockdownFallingObjectSpeedThreshold: 5
+  obstacleHitCooldown: 0.8
   slideSlopeAngle: 45
   slideForce: 18
+  emotes:
+  - bodyState: Fly
+    eyeState: Eyes_Excited
+    duration: 3
+  - bodyState: Attack
+    eyeState: Eyes_Rabid
+    duration: 3
+  - bodyState: Fear
+    eyeState: Eyes_Cry
+    duration: 3
+  - bodyState: Lay
+    eyeState: Eyes_Sleep
+    duration: 5
   grappleRange: 2.3
   grappleRadius: 0.8
   grappleHoldDuration: 2.5
   grappleCooldown: 1.5
   grappleMouthAnchor: {fileID: 0}
-  grappleHoldDistance: 0.5
-  grappleHoldHeight: 0.3
+  grappleBiteHeight: 0.35
+  grappleHoldDistance: 0
+  grappleHoldHeight: 0
   grappleHoldTiltDegrees: 20
   grappleThrowForce: 13
   grappleThrowUp: 5
@@ -319,7 +345,7 @@ MonoBehaviour:
   spawnVisualRoot: {fileID: 719685268943280322}
   spawnScaleInDuration: 0.35
   spawnStartScale: 0.1
-  enableLobbyCharacterOutline: 1
+  enableLobbyCharacterOutline: 0
   localLobbyOutlineColor: {r: 0.45, g: 0.95, b: 1, a: 1}
   remoteLobbyOutlineColor: {r: 1, g: 0.92, b: 0.45, a: 1}
   lobbyOutlineWidth: 2.5
@@ -328,6 +354,8 @@ MonoBehaviour:
   remotePositionLerpSpeed: 20
   remoteRotationLerpSpeed: 20
   remoteTeleportSnapDistance: 3
+  ownerSyncPositionThreshold: 0.01
+  ownerSyncRotationThreshold: 0.5
   runtimeVirtualCameraName: Runtime Cinemachine Camera
   followOffset: {x: 0.65, y: 1.2, z: -3.5}
   runtimeCameraSceneNames:
@@ -335,7 +363,7 @@ MonoBehaviour:
   - Network Test
   showNameLabel: 1
   showNameLabelOnlyInLobby: 1
-  nameLabelOffset: {x: 0, y: 1.5, z: 0}
+  nameLabelOffset: {x: 0, y: 1.4, z: 0}
   nameLabelFontSize: 1.5
   nameLabelFont: {fileID: 11400000, guid: 306e3d1a41ce2445c8a34c0976610a2a, type: 2}
   nameLabelBackgroundColor: {r: 0, g: 0, b: 0, a: 0.6}
@@ -346,9 +374,13 @@ MonoBehaviour:
   readyCheckSprite: {fileID: 21300000, guid: f7ab84f304476244cbbf551976c56bea, type: 3}
   readyCheckColor: {r: 0.2, g: 1, b: 0.35, a: 1}
   showReadyCheckOnlyInLobby: 1
-  readyCheckOffset: {x: 0, y: 1.4, z: 0}
+  readyCheckOffset: {x: 0, y: 1.3, z: 0}
   readyCheckScale: {x: 0.15, y: 0.15, z: 0.15}
   readyCheckSortingOrder: 20
+  hostCrownSprite: {fileID: 21300000, guid: 44c75099cd1d748f6bb8be1cbfbb12bd, type: 3}
+  hostCrownColor: {r: 1, g: 0.75, b: 0.1, a: 1}
+  hostCrownOffset: {x: 0, y: 0.3, z: 0}
+  hostCrownScale: {x: 0.45, y: 0.45, z: 0.45}
   logCharacterSelectDebug: 1
 --- !u!54 &5103745207573382375
 Rigidbody:
@@ -469,19 +501,6 @@ MonoBehaviour:
   climbMoveSpeed: 2
   ledgeTag: Ledge
   monkeyBarTag: MonkeyBar
---- !u!114 &2462443946215769529
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2383615707599059421}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6dccc07b868861646b050c98e99f5690, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerMount
-  isMounted: 0
 --- !u!114 &7490023543529397197
 MonoBehaviour:
   m_ObjectHideFlags: 0

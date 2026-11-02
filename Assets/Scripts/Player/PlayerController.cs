@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInput))]
@@ -27,6 +28,10 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float jumpBufferTime = 0.12f;
     [Tooltip("코요테 타임(초). 발판에서 벗어난 직후 이 시간 동안은 여전히 점프할 수 있습니다.")]
     [SerializeField] private float coyoteTime = 0.1f;
+    [Tooltip("공중에서 방향 입력이 없을 때의 수평 감속(m/s²). 낮을수록 점프한 기세가 유지됩니다.")]
+    [SerializeField] private float airIdleDeceleration = 1.5f;
+    [Tooltip("점프 버튼을 일찍 떼면 상승 중 중력에 곱하는 배율. 짧게 누르면 낮게, 길게 누르면 높게 뜹니다.")]
+    [SerializeField] private float jumpCutGravityMultiplier = 2.5f;
 
     [Header("Landing Stability")]
     [SerializeField] private float landingSpeedPreserveDuration = 0.18f;
@@ -52,6 +57,13 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float knockdownMinimumDuration = 0.45f;
     [SerializeField] private float knockdownUprightAngle = 12f;
     [SerializeField] private float knockdownRecoveryAngularSpeed = 1.2f;
+    [Tooltip("폭발 피격 넘어짐의 최소 시간(초). 크게 날아가는 대신 빨리 다시 조작할 수 있게 짧게 둔다.")]
+    [SerializeField] private float blastKnockdownMinimumDuration = 0.3f;
+    [Tooltip("높은 곳에서 세게 착지했을 때 넘어짐의 최소 시간(초). 떨어지는 발판 위에서 연달아 떨어지지 않게 짧게 둔다.")]
+    [SerializeField] private float landingKnockdownMinimumDuration = 0.15f;
+    [Tooltip("폭발·착지 넘어짐은 이 각도 안으로 서면 바로 조작을 돌려준다(일반 넘어짐보다 느슨하게).")]
+    [FormerlySerializedAs("blastKnockdownUprightAngle")]
+    [SerializeField] private float quickKnockdownUprightAngle = 30f;
     [Tooltip("정지 중 외부 충격으로 생긴 yaw 회전이 멈추는 감쇠 속도. (이동 중 회전은 rotationSpeed로 직접 제어)")]
     [SerializeField] private float turnDamping = 8f;
     [SerializeField] private float maxAngularVelocity = 25f;
@@ -84,6 +96,8 @@ public partial class PlayerController : NetworkBehaviour
     [SerializeField] private float knockdownImpactSpeedThreshold = 7f;
     [SerializeField] private float knockdownThrownObjectSpeedThreshold = 5.5f;
     [SerializeField] private float knockdownFallingObjectSpeedThreshold = 5f;
+    [Tooltip("레이스 장애물 피격 후 다시 맞을 수 있기까지의 시간(초).")]
+    [SerializeField] private float obstacleHitCooldown = 0.8f;
 
     [Header("Slope")]
     [SerializeField] private float slideSlopeAngle = 32f;
@@ -99,9 +113,12 @@ public partial class PlayerController : NetworkBehaviour
     // 소유자(또는 네트워크 세션이 없는 단일 플레이) 인스턴스에서만 입력을 처리해야 하는지 여부.
     // PlayerInteractor / PlayerClimber 등 비-NetworkBehaviour 입력 스크립트가 공유한다.
     public bool HasInputAuthority => CanProcessInput();
+    // 카운트다운/완주/시상식 등 게임 규칙상 조작이 잠겨 있는지. 상호작용·등반 스크립트도 이 값을 따른다.
+    public bool IsGameplayInputEnabled => gameplayInputEnabled;
     private Vector2 moveInput;
 
     private float currentCarrySpeedMultiplier = 1f;
+    private bool isCarryingObject;
 
     public Vector3? OverrideFacingDirection { get; set; } = null;
 
@@ -110,6 +127,8 @@ public partial class PlayerController : NetworkBehaviour
     private Vector3 groundNormal = Vector3.up;
     private bool isGrounded;
     private float jumpBufferTimer; // >0이면 최근에 누른 점프 입력이 아직 유효함(버퍼)
+    private bool jumpHeld;         // 점프 버튼을 누르고 있는지(점프 높이 조절)
+    private bool jumpRising;       // 직접 점프해 상승 중(일찍 떼면 상승을 끊을 수 있는 구간)
     private float coyoteTimer;     // >0이면 최근까지 접지 상태였음(코요테 타임)
     private bool isPhysicsOwner;
     private bool gameplayInputEnabled = true;

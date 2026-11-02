@@ -51,6 +51,10 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private float remoteRotationLerpSpeed = 20f;
     [Tooltip("원격 캐릭터 위치가 이 거리 이상 벌어지면 보간 대신 즉시 스냅(스폰/리스폰 텔레포트 대응).")]
     [SerializeField] private float remoteTeleportSnapDistance = 3f;
+    [Tooltip("소유자가 위치를 다시 보내는 최소 이동 거리(m).")]
+    [SerializeField] private float ownerSyncPositionThreshold = 0.01f;
+    [Tooltip("소유자가 회전을 다시 보내는 최소 각도(도).")]
+    [SerializeField] private float ownerSyncRotationThreshold = 0.5f;
 
     [Header("Camera")]
     [SerializeField] private string runtimeVirtualCameraName = "Runtime Cinemachine Camera";
@@ -83,6 +87,13 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     [SerializeField] private Vector3 readyCheckScale = new Vector3(0.35f, 0.35f, 0.35f);
     [SerializeField] private int readyCheckSortingOrder = 20;
 
+    [Header("Host Crown (로비 방장 이름 위 왕관)")]
+    [SerializeField] private Sprite hostCrownSprite;
+    [SerializeField] private Color hostCrownColor = new Color(1f, 0.75f, 0.1f, 1f);
+    [Tooltip("이름표 기준 왕관의 로컬 오프셋. ★승수 라벨이 보이면 그 위로 올라간다.")]
+    [SerializeField] private Vector3 hostCrownOffset = new Vector3(0f, 0.3f, 0f);
+    [SerializeField] private Vector3 hostCrownScale = new Vector3(0.45f, 0.45f, 0.45f);
+
     private readonly NetworkVariable<Vector3> syncedPosition =
         new NetworkVariable<Vector3>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private readonly NetworkVariable<Quaternion> syncedRotation =
@@ -94,15 +105,26 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
     // 닉네임(소유자 요청 → 서버 검증·확정, 캐릭터 선택과 동일 패턴). 비어 있으면 이름표는 "Player N" 폴백.
     private readonly NetworkVariable<FixedString64Bytes> syncedNickname =
         new NetworkVariable<FixedString64Bytes>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    // 세션 승수(★). 서버가 SurvivalWinTracker 값을 써 두면 늦게 들어온 클라이언트도 스폰 시점에 받는다.
+    private readonly NetworkVariable<int> syncedWins =
+        new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private CinemachineCamera boundCamera;
     private Camera cachedFacingCamera; // 이름표/Ready 표시가 카메라를 바라보게 할 때 쓰는 캐시(매 프레임 씬 검색 방지)
+
+    // 서버의 스폰 배치 RPC가 이 클라의 씬 로드보다 먼저 도착하면(느린 PC) 바닥이 없는 곳에 놓여 떨어진다.
+    // 그래서 마지막으로 받은 배치를 씬 이름과 함께 보관했다가 해당 씬 로드가 끝날 때 (다시) 적용한다.
+    private bool hasPendingSpawnPose;
+    private string pendingSpawnSceneName;
+    private Vector3 pendingSpawnPosition;
+    private Quaternion pendingSpawnRotation;
     private TextMeshPro nameLabel;
     private TextMeshPro winsLabel; // 이름 위 ★승수 (nameLabel의 자식이라 표시/방향을 따라감)
     private SpriteRenderer nameLabelBackground; // 이름표 뒤 가독성용 배경 박스(nameLabel의 자식)
     private static Sprite solidBackgroundSprite; // Texture2D.whiteTexture 기반 1x1 유닛 공유 스프라이트
     private bool podiumLabelOverride; // 시상식: 게임 씬이어도 이름표를 강제로 표시
     private SpriteRenderer readyCheckRenderer;
+    private SpriteRenderer hostCrownRenderer; // 방장 왕관 (nameLabel의 자식이라 표시/방향을 따라감)
     private Coroutine spawnPresentationCoroutine;
     private Outline lobbyCharacterOutline;
     private Transform lobbyCharacterOutlineRoot;
@@ -137,7 +159,18 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         syncedCharacterIndex.OnValueChanged += HandleCharacterIndexChanged;
         syncedReadyState.OnValueChanged += HandleReadyStateChanged;
         syncedNickname.OnValueChanged += HandleNicknameChanged;
+        syncedWins.OnValueChanged += HandleWinsChanged;
         SceneManager.sceneLoaded += HandleSceneLoaded;
+
+        // 서버는 기록된 승수를 써 두고, 클라이언트는 받은 값을 로컬 기록(HUD·이름표가 읽는 곳)에 반영한다.
+        if (IsServer)
+        {
+            syncedWins.Value = SurvivalWinTracker.GetWins(OwnerClientId);
+        }
+        else
+        {
+            SurvivalWinTracker.SetWins(OwnerClientId, syncedWins.Value);
+        }
 
         UpdateNameLabel();
         UpdateReadyCheckIndicator();
@@ -229,6 +262,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         syncedCharacterIndex.OnValueChanged -= HandleCharacterIndexChanged;
         syncedReadyState.OnValueChanged -= HandleReadyStateChanged;
         syncedNickname.OnValueChanged -= HandleNicknameChanged;
+        syncedWins.OnValueChanged -= HandleWinsChanged;
         SceneManager.sceneLoaded -= HandleSceneLoaded;
         ClearLocalCameraBinding();
         ClearLobbyCharacterOutline();
@@ -323,6 +357,11 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         if (IsServer)
         {
             ApplySpawnPosition();
+        }
+        else if (hasPendingSpawnPose && IsOwner && scene.name == pendingSpawnSceneName)
+        {
+            ApplySpawnPose(pendingSpawnPosition, pendingSpawnRotation);
+            CommitOwnerTransformSync(pendingSpawnPosition, pendingSpawnRotation);
         }
 
         PlayLobbySpawnPresentation();
@@ -541,6 +580,21 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         UpdateNameLabel();
     }
 
+    private void HandleWinsChanged(int previousValue, int newValue)
+    {
+        SurvivalWinTracker.SetWins(OwnerClientId, newValue);
+        UpdateNameLabel();
+    }
+
+    // 서버: 매치 종료 시 승수를 확정해 모든 클라이언트(늦게 들어올 사람 포함)에 동기화한다.
+    public void ServerSetWins(int wins)
+    {
+        if (IsServer && IsSpawned)
+        {
+            syncedWins.Value = wins;
+        }
+    }
+
     private void ApplyCharacterIndex(int characterIndex)
     {
         if (characterView != null)
@@ -639,15 +693,16 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        Vector3 targetPosition = spawnCenterOffset + GetSpawnOffset(OwnerClientId);
+        ulong spawnSlot = (ulong)GetServerSpawnSlot();
+        Vector3 targetPosition = spawnCenterOffset + GetSpawnOffset(spawnSlot);
         Quaternion targetRotation = transform.rotation;
 
-        if (TryGetLobbySpawnPose(out Vector3 lobbyPosition, out Quaternion lobbyRotation))
+        if (TryGetLobbySpawnPose(spawnSlot, out Vector3 lobbyPosition, out Quaternion lobbyRotation))
         {
             targetPosition = lobbyPosition;
             targetRotation = lobbyRotation;
         }
-        else if (TryGetSceneSpawnPose(out Vector3 scenePosition, out Quaternion sceneRotation))
+        else if (TryGetSceneSpawnPose(spawnSlot, out Vector3 scenePosition, out Quaternion sceneRotation))
         {
             targetPosition = scenePosition;
             targetRotation = sceneRotation;
@@ -668,13 +723,26 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             {
                 Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
             };
-            ApplySpawnPoseOwnerClientRpc(targetPosition, targetRotation, ownerTarget);
+            FixedString64Bytes sceneName = SceneManager.GetActiveScene().name;
+            ApplySpawnPoseOwnerClientRpc(targetPosition, targetRotation, sceneName, ownerTarget);
         }
     }
 
     [ClientRpc]
-    private void ApplySpawnPoseOwnerClientRpc(Vector3 targetPosition, Quaternion targetRotation, ClientRpcParams rpcParams = default)
+    private void ApplySpawnPoseOwnerClientRpc(Vector3 targetPosition, Quaternion targetRotation, FixedString64Bytes sceneName, ClientRpcParams rpcParams = default)
     {
+        // 항상 보관해 두고, 아직 그 씬을 로드 중이면 HandleSceneLoaded에서 적용한다.
+        // (데디 서버의 같은 씬 재로드처럼 옛 씬이 아직 남아 있는 경우에도 로드 완료 시 다시 맞춰진다)
+        string targetScene = sceneName.ToString();
+        hasPendingSpawnPose = true;
+        pendingSpawnSceneName = targetScene;
+        pendingSpawnPosition = targetPosition;
+        pendingSpawnRotation = targetRotation;
+        if (!SceneManager.GetSceneByName(targetScene).isLoaded)
+        {
+            return;
+        }
+
         // 타게팅되어 소유자에서만 실행됨. 로컬 트랜스폼과 owner-write 동기화 변수를 함께 갱신해
         // 다른 클라가 옛 위치로 되돌아가는 레이스를 없앤다.
         ApplySpawnPose(targetPosition, targetRotation);
@@ -736,13 +804,78 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
                 body.angularVelocity = previousAngularVelocity;
             }
         }
-        else
+
+        // Rigidbody 값은 다음 물리 스텝에야 Transform에 반영되므로 즉시 맞춰 둔다.
+        // (그래야 직후 BindLocalCamera가 옛 방향이 아닌 스폰 방향 기준으로 카메라를 정렬한다)
+        transform.SetPositionAndRotation(targetPosition, targetRotation);
+
+        // 스폰 방향은 카메라 연결 뒤(원격 클라는 RPC로)에 도착할 수 있으니 여기서도 등 뒤로 다시 맞춘다.
+        if (IsOwner)
         {
-            transform.SetPositionAndRotation(targetPosition, targetRotation);
+            AlignCameraBehind(targetRotation);
         }
     }
 
-    private bool TryGetLobbySpawnPose(out Vector3 position, out Quaternion rotation)
+    private void AlignCameraBehind(Quaternion rotation)
+    {
+        if (boundCamera == null || boundCamera.Follow != cameraRoot)
+        {
+            return;
+        }
+
+        var orbitalFollow = boundCamera.GetComponent<CinemachineOrbitalFollow>();
+        if (orbitalFollow != null &&
+            orbitalFollow.TrackerSettings.BindingMode == Unity.Cinemachine.TargetTracking.BindingMode.WorldSpace)
+        {
+            orbitalFollow.HorizontalAxis.Value = orbitalFollow.HorizontalAxis.ClampValue(rotation.eulerAngles.y);
+            boundCamera.PreviousStateIsValid = false;
+        }
+    }
+
+    // 서버: 클라이언트별 스폰 슬롯. clientId는 재접속할 때마다 계속 증가하므로 그대로 나머지 연산하면
+    // 남아 있는 플레이어와 자리가 겹친다. 현재 접속자가 쓰지 않는 가장 작은 슬롯을 배정하고,
+    // 씬이 바뀌어도 같은 슬롯을 유지한다.
+    private static readonly Dictionary<ulong, int> serverSpawnSlots = new Dictionary<ulong, int>();
+    private static readonly List<ulong> staleSpawnSlotClients = new List<ulong>();
+
+    private int GetServerSpawnSlot()
+    {
+        NetworkManager networkManager = NetworkManager;
+        if (networkManager == null || !networkManager.IsServer)
+        {
+            return (int)OwnerClientId;
+        }
+
+        // 나간 클라이언트의 슬롯은 반납한다.
+        staleSpawnSlotClients.Clear();
+        foreach (ulong clientId in serverSpawnSlots.Keys)
+        {
+            if (!networkManager.ConnectedClients.ContainsKey(clientId))
+            {
+                staleSpawnSlotClients.Add(clientId);
+            }
+        }
+        for (int i = 0; i < staleSpawnSlotClients.Count; i++)
+        {
+            serverSpawnSlots.Remove(staleSpawnSlotClients[i]);
+        }
+
+        if (serverSpawnSlots.TryGetValue(OwnerClientId, out int slot))
+        {
+            return slot;
+        }
+
+        slot = 0;
+        while (serverSpawnSlots.ContainsValue(slot))
+        {
+            slot++;
+        }
+
+        serverSpawnSlots[OwnerClientId] = slot;
+        return slot;
+    }
+
+    private bool TryGetLobbySpawnPose(ulong spawnSlot, out Vector3 position, out Quaternion rotation)
     {
         position = Vector3.zero;
         rotation = Quaternion.identity;
@@ -753,10 +886,10 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         }
 
         LobbySpawnPointGroup spawnPointGroup = FindLobbySpawnPointGroup(SceneManager.GetActiveScene());
-        return spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(OwnerClientId, out position, out rotation);
+        return spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(spawnSlot, out position, out rotation);
     }
 
-    private bool TryGetSceneSpawnPose(out Vector3 position, out Quaternion rotation)
+    private bool TryGetSceneSpawnPose(ulong spawnSlot, out Vector3 position, out Quaternion rotation)
     {
         position = Vector3.zero;
         rotation = Quaternion.identity;
@@ -768,12 +901,12 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         Scene activeScene = SceneManager.GetActiveScene();
         LobbySpawnPointGroup spawnPointGroup = FindLobbySpawnPointGroup(activeScene);
-        if (spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(OwnerClientId, out position, out rotation))
+        if (spawnPointGroup != null && spawnPointGroup.TryGetSpawnPose(spawnSlot, out position, out rotation))
         {
             return true;
         }
 
-        Transform spawnPoint = FindNamedSceneSpawnPoint(activeScene, OwnerClientId);
+        Transform spawnPoint = FindNamedSceneSpawnPoint(activeScene, spawnSlot);
         if (spawnPoint == null)
         {
             return false;
@@ -1226,6 +1359,8 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         if (!showNameLabel)
         {
             SetNameLabelVisible(false);
+            // 이름표에 붙어 있던 준비 체크를 플레이어 루트로 되돌린다.
+            UpdateReadyCheckIndicator();
             return;
         }
 
@@ -1233,6 +1368,7 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
         {
             // 게임 씬에서는 화면을 가리지 않도록 플레이어 닉네임 라벨을 숨긴다(시상식 제외).
             SetNameLabelVisible(false);
+            UpdateReadyCheckIndicator();
             return;
         }
 
@@ -1251,6 +1387,52 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         // 세션 승수는 이름과 분리해 이름 위에 별도 라벨(★N)로 표시.
         UpdateWinsLabel();
+        UpdateHostCrown();
+        // 준비 체크는 왕관 자리에 붙으므로 ★승수 라벨이 바뀌면 같이 다시 배치한다.
+        UpdateReadyCheckIndicator();
+    }
+
+    // 이름표 기준 왕관·준비 체크 자리. ★승수 라벨이 보이면 그 위로 올라간다.
+    // 방장은 준비하지 않으므로 둘이 한 캐릭터에 함께 뜨지 않는다.
+    private Vector3 GetNameBadgeLocalPosition()
+    {
+        bool winsVisible = winsLabel != null && winsLabel.gameObject.activeSelf;
+        return winsVisible ? winsLabelOffset + hostCrownOffset : hostCrownOffset;
+    }
+
+    // 로비에서는 방장 이름 위에 왕관을 띄워 누가 게임을 시작하는지 알 수 있게 한다.
+    private void UpdateHostCrown()
+    {
+        bool isLobbyHost = hostCrownSprite != null && nameLabel != null && IsInLobbyScene() && !podiumLabelOverride
+            && OwnerClientId == NetworkManager.ServerClientId;
+        if (!isLobbyHost)
+        {
+            if (hostCrownRenderer != null)
+            {
+                hostCrownRenderer.gameObject.SetActive(false);
+            }
+            return;
+        }
+
+        if (hostCrownRenderer == null)
+        {
+            Transform existing = nameLabel.transform.Find("HostCrown");
+            GameObject crownObject = existing != null ? existing.gameObject : new GameObject("HostCrown");
+            crownObject.transform.SetParent(nameLabel.transform, false);
+            crownObject.transform.localRotation = Quaternion.identity;
+            hostCrownRenderer = crownObject.GetComponent<SpriteRenderer>();
+            if (hostCrownRenderer == null)
+            {
+                hostCrownRenderer = crownObject.AddComponent<SpriteRenderer>();
+            }
+        }
+
+        hostCrownRenderer.transform.localPosition = GetNameBadgeLocalPosition();
+        hostCrownRenderer.transform.localScale = hostCrownScale;
+        hostCrownRenderer.sprite = hostCrownSprite;
+        hostCrownRenderer.color = hostCrownColor;
+        hostCrownRenderer.sortingOrder = readyCheckSortingOrder;
+        hostCrownRenderer.gameObject.SetActive(true);
     }
 
     // 이름표 뒤 가독성용 배경 박스. 글자 크기(GetPreferredValues)에 패딩을 더해 자동으로 맞춘다.
@@ -1385,8 +1567,31 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
             return;
         }
 
-        readyCheckRenderer.transform.localPosition = readyCheckOffset;
-        readyCheckRenderer.transform.localScale = readyCheckScale;
+        // 이름표가 보이면 왕관과 같은 자리(이름표 위)에 붙여 닉네임과 겹치지 않게 한다.
+        // 이름표가 숨겨지면 자식인 체크도 같이 사라지므로 그때는 플레이어 루트 기준(readyCheckOffset)으로 둔다.
+        // 이름표 스케일을 상쇄해 체크 크기는 readyCheckScale(플레이어 기준) 그대로 유지한다.
+        Transform readyCheckParent = nameLabel != null && nameLabel.gameObject.activeSelf ? nameLabel.transform : transform;
+        if (readyCheckRenderer.transform.parent != readyCheckParent)
+        {
+            readyCheckRenderer.transform.SetParent(readyCheckParent, false);
+        }
+
+        if (readyCheckParent == transform)
+        {
+            readyCheckRenderer.transform.localPosition = readyCheckOffset;
+            readyCheckRenderer.transform.localScale = readyCheckScale;
+        }
+        else
+        {
+            Vector3 parentScale = readyCheckParent.lossyScale;
+            Vector3 rootScale = transform.lossyScale;
+            readyCheckRenderer.transform.localPosition = GetNameBadgeLocalPosition();
+            readyCheckRenderer.transform.localScale = new Vector3(
+                readyCheckScale.x * rootScale.x / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                readyCheckScale.y * rootScale.y / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                readyCheckScale.z * rootScale.z / Mathf.Max(0.0001f, Mathf.Abs(parentScale.z)));
+        }
+
         readyCheckRenderer.sprite = readyCheckSprite;
         readyCheckRenderer.color = readyCheckColor;
         readyCheckRenderer.sortingOrder = readyCheckSortingOrder;
@@ -1464,8 +1669,18 @@ public class NetworkOwnedObjectActivator : NetworkBehaviour
 
         if (IsOwner)
         {
-            syncedPosition.Value = transform.position;
-            syncedRotation.Value = transform.rotation;
+            // 마지막으로 보낸 값에서 의미 있게 바뀌었을 때만 쓴다. 서 있을 때의 미세한 흔들림까지
+            // 매 틱 전체 정밀도로 보내던 트래픽을 없앤다(작은 변화는 누적되면 결국 전송된다).
+            if ((transform.position - syncedPosition.Value).sqrMagnitude >= ownerSyncPositionThreshold * ownerSyncPositionThreshold)
+            {
+                syncedPosition.Value = transform.position;
+            }
+
+            if (Quaternion.Angle(transform.rotation, syncedRotation.Value) >= ownerSyncRotationThreshold)
+            {
+                syncedRotation.Value = transform.rotation;
+            }
+
             return;
         }
 

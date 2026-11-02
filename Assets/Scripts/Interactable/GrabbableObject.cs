@@ -20,12 +20,6 @@ public class GrabbableObject : NetworkBehaviour
     [Tooltip("체크하면 무거운 물체(끌기용), 체크 해제하면 가벼운 물체(들기용)")]
     public bool isHeavy = false;
 
-    [Header("다중 상호작용 속도 설정")]
-    [Tooltip("1명일 때의 기본 속도 배율 (1 = 정상 속도, 0.5 = 절반 속도)")]
-    public float baseSpeedMultiplier = 0.6f;
-    [Tooltip("1명이 추가될 때마다 증가하는 속도 배율 보너스")]
-    public float multiPlayerSpeedBonus = 0.4f;
-
     [Header("잡기 안정화 설정")]
     [SerializeField] private float heavySingleFollowAcceleration = 12f;
     [SerializeField] private float heavyMultiFollowAccelerationBonus = 8f;
@@ -34,7 +28,19 @@ public class GrabbableObject : NetworkBehaviour
     [SerializeField] private float heavyMaxFollowAcceleration = 40f;
     [SerializeField] private float heldFollowMaxDistance = 4.5f;
 
+    [Header("던지기 설정")]
+    [Tooltip("던진/내려놓은 직후 던진 사람과의 충돌을 무시하는 시간(초). 손을 떠나는 물체가 자기 몸에 맞는 것을 막는다.")]
+    [SerializeField] private float throwerIgnoreSeconds = 0.5f;
+
+    [Header("서버 검증")]
+    [Tooltip("서버가 잡기 요청을 받아들이는 플레이어-물체 최대 거리(지연 여유 포함)")]
+    [SerializeField] private float serverMaxGrabDistance = 6f;
+    [Tooltip("클라이언트가 보낸 던지기 속도(m/s)·회전 속도(rad/s)의 상한")]
+    [SerializeField] private float serverMaxThrowSpeed = 30f;
+    [SerializeField] private float serverMaxThrowSpin = 50f;
+
     private Rigidbody rb;
+    private ThrowableBomb bomb; // 폭탄이면 숨김 중 잡기 거절·직격 넉백 중복 방지에 쓴다
     private Collider[] colliders;
 
     // 권한(서버 또는 오프라인) 인스턴스에서만 채워지는 홀더 목록.
@@ -51,6 +57,11 @@ public class GrabbableObject : NetworkBehaviour
     public bool IsBeingHeld => IsNetworkActive ? heldCount.Value > 0 : interactors.Count > 0;
     public int InteractorCount => IsNetworkActive ? heldCount.Value : interactors.Count;
     public float HeldFollowMaxDistance => Mathf.Max(0.1f, heldFollowMaxDistance);
+    public float ThrowerIgnoreSeconds => Mathf.Max(0f, throwerIgnoreSeconds);
+
+    // 각 머신 로컬: 플레이어별 충돌 무시 해제 시각. 들고 있는 동안은 무한대.
+    private readonly Dictionary<PlayerInteractor, float> ignoreCollisionUntil = new Dictionary<PlayerInteractor, float>();
+    private static readonly List<PlayerInteractor> ExpiredIgnores = new List<PlayerInteractor>();
 
     // 원본 물리 상태 저장
     private bool originalUseGravity;
@@ -70,9 +81,13 @@ public class GrabbableObject : NetworkBehaviour
     private ulong lastThrowerClientId = ulong.MaxValue;
     private float lastThrowTime = -999f;
 
+    // 마지막으로 이 물체를 집은 클라이언트(권한 측 기록). 폭탄처럼 손에서 터지는 물체의 공격자 판정용.
+    public ulong LastHolderClientId { get; private set; } = ulong.MaxValue;
+
     private void Awake()
     {
         TryGetComponent(out cachedNetworkObject);
+        TryGetComponent(out bomb);
         rb = GetComponent<Rigidbody>();
         colliders = GetComponentsInChildren<Collider>(true);
         StoreOriginalState();
@@ -150,7 +165,15 @@ public class GrabbableObject : NetworkBehaviour
     private void AddInteractorByClient(ulong clientId)
     {
         PlayerInteractor pi = ResolveInteractor(clientId);
-        if (pi != null) AddInteractor(pi);
+        if (pi != null && CanServerAcceptGrab(pi)) AddInteractor(pi);
+    }
+
+    // 거절하면 heldCount가 오르지 않으므로 요청한 클라이언트는 확인 대기 시간 뒤 스스로 잡기를 푼다.
+    private bool CanServerAcceptGrab(PlayerInteractor pi)
+    {
+        if (bomb != null && bomb.IsHidden) return false; // 터져서 숨겨진 폭탄
+        Vector3 center = rb != null ? rb.worldCenterOfMass : transform.position;
+        return (pi.transform.position - center).sqrMagnitude <= serverMaxGrabDistance * serverMaxGrabDistance;
     }
 
     private void RemoveInteractorByClient(ulong clientId, bool isSnapping)
@@ -161,8 +184,10 @@ public class GrabbableObject : NetworkBehaviour
 
     private void ApplyThrowByClient(ulong clientId, Vector3 linearVelocity, Vector3 angularVelocity)
     {
+        // 실제로 들고 있는 사람의 던지기만 받는다. (폭발로 이미 놓친 폭탄을 늦게 도착한 요청이 날려 보내던 문제)
         PlayerInteractor pi = ResolveInteractor(clientId);
-        if (pi != null) ApplyThrow(pi, linearVelocity, angularVelocity);
+        if (pi == null || !interactors.Contains(pi)) return;
+        ApplyThrow(pi, Vector3.ClampMagnitude(linearVelocity, serverMaxThrowSpeed), Vector3.ClampMagnitude(angularVelocity, serverMaxThrowSpin));
     }
 
     private PlayerInteractor ResolveInteractor(ulong clientId)
@@ -183,6 +208,7 @@ public class GrabbableObject : NetworkBehaviour
         if (interactor == null || interactors.Contains(interactor)) return;
 
         interactors.Add(interactor);
+        LastHolderClientId = interactor.OwnerClientId;
 
         if (isHeavy)
         {
@@ -284,6 +310,10 @@ public class GrabbableObject : NetworkBehaviour
             lastThrowTime = Time.time;
         }
 
+        // 권한 측 물리에서도 손을 떠나는 물체가 던진 사람 몸에 부딪히지 않도록 잠시 충돌을 끈다.
+        // (소유자 머신의 충돌 무시는 로컬이라 서버 물리에는 적용되지 않음)
+        SetIgnoreCollisionWith(interactor, false, ThrowerIgnoreSeconds);
+
         // 던지기는 스냅 없이 즉시 손에서 떼고 전방 속도를 부여합니다.
         RemoveInteractor(interactor, isSnapping: true); // isSnapping=true: 아래에서 물리 직접 세팅
         interactors.Clear();
@@ -303,6 +333,10 @@ public class GrabbableObject : NetworkBehaviour
         interactors.Clear();
         if (IsNetworkActive && IsServer) heldCount.Value = 0;
     }
+
+    // 폭발 등으로 서버가 들고 있던 사람 전원에게서 강제로 떼어낼 때 호출.
+    // 소유자 클라이언트의 PlayerInteractor는 heldCount가 0이 된 것을 보고 스스로 잡기 상태를 정리한다.
+    public void ServerReleaseAll() => DetachForSnap();
 
     // 열쇠 소모처럼 오브젝트를 없앨 때. 네트워크에서는 서버만 Despawn할 수 있습니다.
     public void RequestConsume(PlayerInteractor interactor)
@@ -354,12 +388,19 @@ public class GrabbableObject : NetworkBehaviour
         // 들려 있는 물체(운반 중)는 넉다운 대상에서 제외. 던지면 홀더가 먼저 비워지므로 무관.
         if (heldCount.Value > 0) return;
 
+        // 폭탄 직격은 폭발 넉백이 대신한다(같은 충돌로 넉다운이 두 번 들어가 힘이 합쳐지던 문제).
+        // 폭탄 쪽 OnCollisionEnter가 먼저 돌았으면 이미 숨김 상태다.
+        if (bomb != null && (bomb.IsHidden || bomb.WillExplodeOnHit(collision))) return;
+
         // 물체 자신이 충분히 움직이고 있을 때만 판정 — 바닥에 놓인 물체에 플레이어가
         // 달려와 부딪힌 경우(상대속도만 높음)는 피격이 아니다.
         if (rb == null || rb.linearVelocity.sqrMagnitude < 4f) return; // 2 m/s 미만
 
         PlayerController victim = collision.collider.GetComponentInParent<PlayerController>();
         if (victim == null) return;
+
+        // 던진 직후 던진 사람 자신은 피격 대상에서 제외.
+        if (victim.OwnerClientId == lastThrowerClientId && Time.time - lastThrowTime < ThrowerIgnoreSeconds) return;
 
         // 최근(6초 내) 던져진 물체라면 던진 사람을 공격자로 등록(킬 크레딧).
         if (lastThrowerClientId != ulong.MaxValue && Time.time - lastThrowTime <= 6f)
@@ -372,13 +413,31 @@ public class GrabbableObject : NetworkBehaviour
 
     private void FixedUpdate()
     {
+        ExpireIgnoredCollisions();
+
         // 클라이언트는 NetworkTransform이 박스를 옮기므로 물리를 굴리지 않습니다.
         if (!HasPhysicsAuthority) return;
 
         // 권한 측에서만 추종 물리. (먼 홀더는 소유자 PlayerInteractor가 스스로 놓도록 처리)
+        bool prunedHolder = false;
         for (int i = interactors.Count - 1; i >= 0; i--)
         {
-            if (interactors[i] == null) interactors.RemoveAt(i);
+            if (interactors[i] == null)
+            {
+                interactors.RemoveAt(i);
+                prunedHolder = true;
+            }
+        }
+
+        // 홀더가 접속 종료 등으로 사라졌으면 놓은 것과 똑같이 처리한다(공중에 고정된 채 '들림'으로 남는 문제 방지).
+        if (prunedHolder)
+        {
+            if (IsNetworkActive && IsServer) heldCount.Value = interactors.Count;
+            if (interactors.Count == 0)
+            {
+                if (!isHeavy) EnableDroppedLightPhysics();
+                else RestoreOriginalState();
+            }
         }
 
         if (interactors.Count == 0) return;
@@ -490,14 +549,48 @@ public class GrabbableObject : NetworkBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
     }
 
-    public float GetCarrySpeedMultiplier()
+    // 플레이어와 이 박스의 충돌을 끄고/켜는 데 사용 (각 머신 로컬 처리).
+    // ignore=false에 releaseDelay를 주면 그 시간 동안 충돌 무시를 유지했다가 해제한다(던진 직후 자기 몸 피격 방지).
+    // 그 사이 다시 집으면(ignore=true) 해제가 취소된다.
+    public void SetIgnoreCollisionWith(PlayerInteractor interactor, bool ignore, float releaseDelay = 0f)
     {
-        float multiplier = baseSpeedMultiplier + (InteractorCount - 1) * multiPlayerSpeedBonus;
-        return Mathf.Clamp(multiplier, 0.1f, 1f);
+        if (interactor == null) return;
+
+        if (ignore)
+        {
+            ignoreCollisionUntil[interactor] = float.PositiveInfinity;
+            ApplyIgnoreCollision(interactor, true);
+        }
+        else if (releaseDelay > 0f)
+        {
+            ignoreCollisionUntil[interactor] = Time.time + releaseDelay;
+            ApplyIgnoreCollision(interactor, true);
+        }
+        else
+        {
+            ignoreCollisionUntil.Remove(interactor);
+            ApplyIgnoreCollision(interactor, false);
+        }
     }
 
-    // 소유자 클라이언트가 자기 플레이어와 이 박스의 충돌을 끄고/켜는 데 사용 (각 머신 로컬 처리).
-    public void SetIgnoreCollisionWith(PlayerInteractor interactor, bool ignore)
+    private void ExpireIgnoredCollisions()
+    {
+        if (ignoreCollisionUntil.Count == 0) return;
+
+        ExpiredIgnores.Clear();
+        foreach (var pair in ignoreCollisionUntil)
+        {
+            if (pair.Key == null || Time.time >= pair.Value) ExpiredIgnores.Add(pair.Key);
+        }
+
+        foreach (var interactor in ExpiredIgnores)
+        {
+            ignoreCollisionUntil.Remove(interactor);
+            if (interactor != null) ApplyIgnoreCollision(interactor, false);
+        }
+    }
+
+    private void ApplyIgnoreCollision(PlayerInteractor interactor, bool ignore)
     {
         if (interactor == null || colliders == null) return;
 

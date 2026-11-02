@@ -62,7 +62,8 @@ public class PlayerClimber : MonoBehaviour
                 Debug.Log($"[Climber] 타겟 자동 전환: {other.name}");
             }
             // 매달려 있지 않은 상태라면 닿자마자 바로 매달리기
-            else if (!isHanging)
+            // (조작 잠금 중에는 매달리지 않는다. StopHanging이 완주/시상대 고정(kinematic)을 풀어버리기 때문)
+            else if (!isHanging && !IsInputBlocked())
             {
                 StartHanging(other);
                 Debug.Log($"[Climber] 자동 매달리기 시작: {other.name}");
@@ -94,6 +95,12 @@ public class PlayerClimber : MonoBehaviour
                 StopHanging();
             }
         }
+    }
+
+    // 일시정지 메뉴 또는 게임 규칙상 조작 잠금(카운트다운/완주/시상식) 중인지.
+    private bool IsInputBlocked()
+    {
+        return InGamePauseMenu.IsOpen || (playerController != null && !playerController.IsGameplayInputEnabled);
     }
 
     private void StartHanging(Collider ledge)
@@ -148,7 +155,7 @@ public class PlayerClimber : MonoBehaviour
         {
             // OnTriggerEnter에서 닿자마자 자동으로 매달리게 변경되었습니다.
             // 만약 점프해서 강제로 떨어졌는데 아직 트리거 안에 있다면, 이동키(W/위)를 누르면 다시 매달립니다.
-            if (!InGamePauseMenu.IsOpen && overlappingLedges.Count > 0 && moveAction != null)
+            if (!IsInputBlocked() && overlappingLedges.Count > 0 && moveAction != null)
             {
                 Vector2 input = moveAction.action.ReadValue<Vector2>();
                 if (input.y > 0.1f) // 앞/위 방향키를 누를 때 다시 매달리기
@@ -161,7 +168,7 @@ public class PlayerClimber : MonoBehaviour
         }
 
         // 2. 매달린 상태일 때: 점프키로 떨어지기
-        if (!InGamePauseMenu.IsOpen && jumpAction != null && jumpAction.action.WasPressedThisFrame())
+        if (!IsInputBlocked() && jumpAction != null && jumpAction.action.WasPressedThisFrame())
         {
             StopHanging();
             return;
@@ -170,8 +177,8 @@ public class PlayerClimber : MonoBehaviour
         // 매달린 상태에서 이동 처리
         if (moveAction != null && currentLedge != null)
         {
-            // 메뉴 중에도 몽키바의 자동 이동은 계속하고 방향키 입력만 무시합니다.
-            Vector2 input = InGamePauseMenu.IsOpen ? Vector2.zero : moveAction.action.ReadValue<Vector2>();
+            // 메뉴/조작 잠금 중에도 몽키바의 자동 이동은 계속하고 방향키 입력만 무시합니다.
+            Vector2 input = IsInputBlocked() ? Vector2.zero : moveAction.action.ReadValue<Vector2>();
             bool isMonkeyBar = currentLedge.CompareTag(monkeyBarTag);
 
             // 몽키바는 입력과 무관하게 자동 이동, 사다리는 입력이 있을 때만 이동

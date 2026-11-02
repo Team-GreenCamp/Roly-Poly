@@ -11,6 +11,32 @@ public static class GameLocalization
     private static LocalizationLanguage cachedLanguage;
     private static readonly Dictionary<string, string> translations = new();
 
+    // 도메인 리로드를 끈 플레이 모드에서는 정적 캐시가 남아 수정한 번역이 반영되지 않으므로 매번 비운다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetCache()
+    {
+        uiManager = null;
+        cachedLanguage = null;
+        translations.Clear();
+    }
+
+    // 처음 실행할 때는 저장된 언어가 없으므로 운영체제 언어를 저장해 HEAT의 LocalizationManager가 그 언어로 시작하게 합니다.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void SelectSystemLanguageOnFirstLaunch()
+    {
+        if (PlayerPrefs.HasKey(UIManager.localizationSaveKey)) return;
+        if (uiManager == null) uiManager = Resources.Load<UIManager>("Heat UI Manager");
+        if (uiManager == null || uiManager.localizationSettings == null) return;
+
+        string languageId = Application.systemLanguage == SystemLanguage.Korean ? "ko-KR" : "en-US";
+        foreach (var language in uiManager.localizationSettings.languages)
+        {
+            if (language.languageID != languageId) continue;
+            PlayerPrefs.SetString(UIManager.localizationSaveKey, languageId);
+            return;
+        }
+    }
+
     public static LocalizationLanguage Language
     {
         get
@@ -54,6 +80,20 @@ public static class GameLocalization
         if (!text.TryGetComponent<GameLocalizedText>(out var binding))
             binding = text.gameObject.AddComponent<GameLocalizedText>();
         binding.Set(key, arguments);
+    }
+
+    // HUD처럼 매 프레임 부르는 정수 인수 문구용: 키·값이 그대로면 박싱·포맷 없이 건너뛴다.
+    public static void Set(TMP_Text text, string key) => SetInts(text, key, 0, 0, 0, 0);
+    public static void Set(TMP_Text text, string key, int a) => SetInts(text, key, 1, a, 0, 0);
+    public static void Set(TMP_Text text, string key, int a, int b) => SetInts(text, key, 2, a, b, 0);
+    public static void Set(TMP_Text text, string key, int a, int b, int c) => SetInts(text, key, 3, a, b, c);
+
+    private static void SetInts(TMP_Text text, string key, int count, int a, int b, int c)
+    {
+        if (text == null) return;
+        if (!text.TryGetComponent<GameLocalizedText>(out var binding))
+            binding = text.gameObject.AddComponent<GameLocalizedText>();
+        binding.SetInts(key, count, a, b, c);
     }
 
     // 서버의 맵 식별자는 유지하고 화면에 표시하는 이름만 번역합니다.

@@ -267,11 +267,11 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: PrevChapterLabel
-      value: Previous Chapter
+      value: Previous Map
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: NextChapterLabel
-      value: Next Chapter
+      value: Next Map
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: GoBackLabel
@@ -772,15 +772,19 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudKill
-      value: "Player {0} \u25B6 Player {1} knocked off!"
+      value: "{0} \u25B6 {1} knocked off!"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudFall
-      value: Player {0} fell...
+      value: '{0} fell...'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalRule
       value: Coins decide at time limit
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudTimeLeft
+      value: TIME LEFT
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSurvivalBonusRule
@@ -796,7 +800,19 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceTimer
-      value: TIME {0}s  |  FINISHED {1}/{2}
+      value: TIME {0}s
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRanking
+      value: RANKING
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRowFinished
+      value: FINISHED
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudRaceRowProgress
+      value: '{0}%'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudRaceFinished
@@ -820,7 +836,15 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudSpectating
-      value: 'Spectating: {0}   (Left click: next / Tab: previous)'
+      value: 'Spectating: {0}   (A/D or click to switch)'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSpectatingLabel
+      value: SPECTATING
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HudSpectateAlive
+      value: '{0} ALIVE'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudYouWin
@@ -828,7 +852,7 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudPlayerWins
-      value: Player {0} WINS!
+      value: '{0} WINS!'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: HudWins
@@ -899,6 +923,14 @@ MonoBehaviour:
       spriteValue: {fileID: 0}
     - key: LobbyJoinFailed
       value: 'Failed to join room: {0}'
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: DisconnectLost
+      value: Disconnected from the server.
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: DisconnectWithReason
+      value: 'Disconnected: {0}'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: LobbyLoading
@@ -1102,17 +1134,27 @@ MonoBehaviour:
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSurvivalDesc
-      value: Stepped tiles disappear and regenerate. Be the last survivor, or lead
-        in coins when the 2-minute timer ends.
+      value: 'Push rivals off the tiles with bombs and bumpers.
+
+        Stepped
+        tiles vanish and come back after a moment.
+
+        Last survivor wins; after
+        2 minutes, coins decide the winner.'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapSumoDesc
-      value: Dodge moving obstacles and race to the finish. Falling returns you to
-        the last checkpoint.
+      value: 'Dodge hammers, pistons and rolling logs to finish in 4 minutes.
+
+        Falling
+        returns you to the last checkpoint.'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: MapFallingDesc
-      value: Outlast everyone on floors that collapse layer by layer.
+      value: 'Four floors crumble beneath your feet.
+
+        Knock rivals down with
+        bombs and be the last one standing.'
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
     - key: Key #174
@@ -1146,12 +1188,43 @@ MonoBehaviour:
       value: "Esc  \xB7  Return to game"
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
-    - key: MapDoorDash
-      value: Door Dash
+    - key: HudFinalRank
+      value: Final rank #{0} of {1}
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
-    - key: MapDoorDashDesc
-      value: Break through the real doors and dash to the finish line!
+    - key: HudReturnLobby
+      value: Returning to lobby in {0}s
       audioValue: {fileID: 0}
       spriteValue: {fileID: 0}
-
+    - key: HintGrab
+      value: Grab
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintThrow
+      value: Throw
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintDash
+      value: Dash
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintJumpHold
+      value: Jump
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintSprint
+      value: Sprint
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintCharacterChange
+      value: Change Character
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintEmote
+      value: Emote
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}
+    - key: HintPickUp
+      value: Pick Up
+      audioValue: {fileID: 0}
+      spriteValue: {fileID: 0}

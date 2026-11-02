@@ -5,12 +5,12 @@ using UnityEngine;
 // 서버 빌드(UNITY_SERVER) 또는 -dedicatedServer 커맨드라인 인자로 실행하면
 // 로비/입력 없이 순수 서버로 열고 지정한 아레나 씬을 로드한다.
 //
-// 실행 예:  ./BattleRoyalServer.x86_64 -dedicatedServer -port 7777 -scene "Sumo Arena"
+// 실행 예:  ./BattleRoyalServer.x86_64 -dedicatedServer -port 7777 -scene "Survival Arena"
 // (서버 빌드에서는 인자 없이도 자동 서버 모드로 동작)
 public static class DedicatedServerBootstrap
 {
     private const int DefaultPort = 7777;
-    private const string DefaultScene = "Sumo Arena";
+    private const string DefaultScene = "Survival Arena";
 
     // SGM이 매치 종료 시 로비 복귀 대신 아레나를 재시작(루프)할지 판단하는 플래그.
     public static bool IsDedicatedServer { get; private set; }

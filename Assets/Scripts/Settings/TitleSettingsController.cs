@@ -20,6 +20,13 @@ public sealed class TitleSettingsController : MonoBehaviour
         GameSettings.ApplyRuntimeSettings();
     }
 
+    private void OnDisable()
+    {
+        // 슬라이더는 드래그 중 매 프레임 값을 쓰므로 그때마다 저장하지 않고, 창을 닫거나 씬을 떠날 때 한 번 저장한다.
+        // (종료 시 자동 저장에만 기대면 크래시 때 바꾼 설정이 사라진다)
+        PlayerPrefs.Save();
+    }
+
     private void BindSliders()
     {
         foreach (SliderManager slider in GetComponentsInChildren<SliderManager>(true))
@@ -54,12 +61,6 @@ public sealed class TitleSettingsController : MonoBehaviour
                 case "Language":
                     // 언어 목록과 선택 복원은 씬의 LocalizationManager가 처리합니다.
                     selector.saveSelected = false;
-                    break;
-                case "UI Scale":
-                    ConfigureSelector(selector, "UI Scale", GameSettings.SetUiScale);
-                    break;
-                case "Subtitle Scale":
-                    ConfigureSelector(selector, "SubtitleScale", GameSettings.SetSubtitleScale);
                     break;
                 case "Sprint Mode":
                     ConfigureSelector(selector, "SprintMode", GameSettings.SetSprintMode);
@@ -131,12 +132,6 @@ public sealed class TitleSettingsController : MonoBehaviour
         {
             switch (toggle.transform.parent.name)
             {
-                case "Enable Hints":
-                    ConfigureSwitch(toggle, "EnableHints", GameSettings.SetHintsEnabled);
-                    break;
-                case "Enable Subtitles":
-                    ConfigureSwitch(toggle, "EnableSubtitles", GameSettings.SetSubtitlesEnabled);
-                    break;
                 case "Reverse Look":
                     ConfigureSwitch(toggle, "ReverseLook", GameSettings.SetReverseLook);
                     break;

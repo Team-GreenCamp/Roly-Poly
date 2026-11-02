@@ -105,20 +105,29 @@ public class DedicatedServerRoomRegistrar : MonoBehaviour
         }
 
         int count = NetworkManager.Singleton != null ? NetworkManager.Singleton.ConnectedClientsIds.Count : 0;
+        long requestedRoomId = roomId;
         try
         {
-            await api.SetRoomPlayerCountAsync(roomId, count);
+            // 데디케이티드 방은 0명이어도 목록에 남아야 한다.
+            await api.SetRoomPlayerCountAsync(requestedRoomId, count, keepWhenEmpty: true);
         }
         catch (Exception e)
         {
             Debug.LogWarning($"[Dedicated] 인원 갱신 실패: {e.Message}");
+
+            // 백엔드에서 방이 정리됐으면 다음 하트비트에서 다시 등록한다.
+            if (e.Message.StartsWith("404") && roomId == requestedRoomId)
+            {
+                roomId = -1;
+            }
         }
     }
 
     // 백엔드가 오래된 방을 정리하지 않도록 주기적으로 updatedAt을 갱신한다.
+    // 주기는 백엔드 stale 기준(30초)보다 충분히 짧아야 한다.
     private IEnumerator Heartbeat()
     {
-        var wait = new WaitForSecondsRealtime(30f);
+        var wait = new WaitForSecondsRealtime(10f);
         while (true)
         {
             yield return wait;

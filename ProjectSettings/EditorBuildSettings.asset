@@ -15,9 +15,6 @@ EditorBuildSettings:
     path: Assets/Scenes/Survival Arena.unity
     guid: 424b66e9db3e14372ad0e23fef535d82
   - enabled: 1
-    path: Assets/Scenes/Sumo Arena.unity
-    guid: 786ae23371404fd89f2f6322b5643ad0
-  - enabled: 1
     path: Assets/Scenes/Falling Floors.unity
     guid: c95b9adf2f004edc9dee2a6562b29f60
   - enabled: 1

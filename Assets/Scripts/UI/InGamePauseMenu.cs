@@ -15,7 +15,8 @@ public sealed class InGamePauseMenu : MonoBehaviour
 {
     [SerializeField] private GameObject menuPanel;
     [SerializeField] private ModalWindowManager settingsWindow;
-    [SerializeField] private UnityEngine.UI.Button resumeButton;
+    // Heat 버튼을 기본 선택 대상으로 지정해 키보드 탐색과 강조 효과를 유지합니다.
+    [SerializeField] private ButtonManager resumeButton;
     [SerializeField] private TMP_Text noticeText;
     [SerializeField] private string lobbySceneName = "Lobby Scene";
 

@@ -83,6 +83,22 @@ public partial class PlayerController
             return;
         }
 
+        // 범퍼: 고정 장치라 부딪힌 소유자가 직접 튕겨 나간다.
+        Bumper bumper = collision.collider.GetComponentInParent<Bumper>();
+        if (bumper != null)
+        {
+            HandleBumperHit(bumper);
+            return;
+        }
+
+        // 레이스 장애물: 모든 클라가 같은 서버 시각으로 움직이므로 피해자 소유자가 직접 판정한다.
+        RaceObstacle obstacle = collision.collider.GetComponentInParent<RaceObstacle>();
+        if (obstacle != null)
+        {
+            HandleObstacleHit(obstacle, contact);
+            return;
+        }
+
         Rigidbody otherBody = collision.rigidbody;
         if (otherBody == null)
         {
@@ -184,6 +200,52 @@ public partial class PlayerController
             }
         };
         ApplyCombatHitOwnerClientRpc(knockdownForce, contactPoint, CombatEffectKnockdown, target);
+    }
+
+    // 폭발처럼 서버가 범위로 판정한 피해. 공격자를 기록하고 넉다운 임펄스를 피해자 소유자에게 릴레이한다.
+    public void ServerApplyBlast(Vector3 force, Vector3 point, ulong attackerClientId)
+    {
+        if (!IsServer)
+        {
+            return;
+        }
+
+        ServerRegisterAttacker(attackerClientId);
+        ClientRpcParams target = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { OwnerClientId }
+            }
+        };
+        ApplyCombatHitOwnerClientRpc(force, point, CombatEffectBlast, target);
+    }
+
+    private float nextObstacleHitTime;
+
+    // 장애물에 맞으면 넘어지며(피격 애니메이션) 장애물이 움직이는 방향으로 날아간다.
+    // 넘어진 동안이나 직후의 연속 접촉은 한 번만 처리한다.
+    private void HandleObstacleHit(RaceObstacle obstacle, ContactPoint contact)
+    {
+        if (Time.time < nextObstacleHitTime)
+        {
+            return;
+        }
+
+        nextObstacleHitTime = Time.time + obstacleHitCooldown;
+        Vector3 impulse = obstacle.ComputeHitImpulse(contact.point, BodyCenter);
+        // 날아가기 직전 속도를 지워 장애물에 밀리던 속도와 겹쳐 과하게 튀지 않게 한다.
+        if (physicsBody != null && !physicsBody.isKinematic)
+        {
+            physicsBody.linearVelocity = new Vector3(0f, Mathf.Max(0f, physicsBody.linearVelocity.y), 0f);
+        }
+
+        ApplyExternalImpulse(impulse, contact.point);
+        if (obstacle.knockdown)
+        {
+            StartKnockdown();
+            HitVignette.Show(0.7f);
+        }
     }
 
     // 위에서 하강하며 상대의 머리 영역을 밟았는지 판정한다.(공격자=자기 머신, self 속도는 신뢰 가능)

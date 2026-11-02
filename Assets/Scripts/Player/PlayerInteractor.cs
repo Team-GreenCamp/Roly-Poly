@@ -51,6 +51,14 @@ public class PlayerInteractor : MonoBehaviour
     private bool currentHeldIsHeavy;
     private bool hasActiveHold;        // BeginHold~ClearHeldObjectState 사이 true. 물체 Despawn(참조 fake-null) 감지용.
     private bool heldHoldConfirmed;    // 서버 홀더 목록에 실제로 올라온 것을 한 번이라도 확인했는지.
+    private float holdRequestTime;     // 잡기 요청 시각. 서버가 거절해 확인이 오지 않으면 일정 시간 뒤 로컬 잡기 상태를 푼다.
+    private const float HoldConfirmTimeout = 2f;
+
+    // 매 프레임 조준 검사용 버퍼(할당 없이 재사용).
+    // 버퍼가 차면 가까운 대상이 빠질 수 있으므로 넉넉하게 잡는다(조준 범위 안 콜라이더 수보다 충분히 크게).
+    private static readonly RaycastHit[] InteractHitBuffer = new RaycastHit[64];
+    private static readonly System.Collections.Generic.IComparer<RaycastHit> HitDistanceComparer =
+        System.Collections.Generic.Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
     private InteractableOutlineHighlight currentOutlineHighlight;
     private InteractableOutlineHighlight currentHeldOutlineHighlight;
 
@@ -141,6 +149,14 @@ public class PlayerInteractor : MonoBehaviour
             }
             else if (heldHoldConfirmed)
             {
+                // 확인 후 홀더 목록이 비었다(다른 홀더가 던짐, 폭발 등).
+                ClearHeldObjectState();
+            }
+            else if (Time.time - holdRequestTime > HoldConfirmTimeout)
+            {
+                // 서버가 거절했거나 확인이 너무 늦다. 늦게 수락됐을 경우를 대비해 놓기도 요청한다
+                // (요청 순서가 보장되므로 서버는 잡기 뒤에 놓기를 처리하고, 홀더가 아니면 무시한다).
+                currentHeldGrabbable.RequestRemoveInteractor(this, false);
                 ClearHeldObjectState();
             }
         }
@@ -153,6 +169,15 @@ public class PlayerInteractor : MonoBehaviour
             {
                 ForceDropHeldObject();
             }
+        }
+
+        // 카운트다운/완주/시상식 등 조작 잠금 중에는 들고 있던 물체를 놓고 상호작용을 막습니다.
+        if (playerController != null && !playerController.IsGameplayInputEnabled)
+        {
+            ClearCurrentInteractionTargets();
+            ForceDropHeldObject();
+            holdTimer = 0f;
+            return;
         }
 
         // 피격·소모된 물체 정리는 유지하고 메뉴 아래의 상호작용 입력만 차단합니다.
@@ -193,7 +218,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnThrowStarted(InputAction.CallbackContext context)
     {
-        if (InGamePauseMenu.IsOpen || (playerController != null && !playerController.HasInputAuthority))
+        if (InGamePauseMenu.IsOpen || (playerController != null && (!playerController.HasInputAuthority || !playerController.IsGameplayInputEnabled)))
         {
             return;
         }
@@ -213,7 +238,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnInteractStarted(InputAction.CallbackContext context)
     {
-        if (InGamePauseMenu.IsOpen || (playerController != null && !playerController.HasInputAuthority))
+        if (InGamePauseMenu.IsOpen || (playerController != null && (!playerController.HasInputAuthority || !playerController.IsGameplayInputEnabled)))
         {
             return;
         }
@@ -262,14 +287,22 @@ public class PlayerInteractor : MonoBehaviour
         Vector3 origin = transform.position + Vector3.up * raycastHeightOffset;
         Ray ray = new Ray(origin, transform.forward);
 
-        RaycastHit[] hits = Physics.SphereCastAll(ray, sphereCastRadius, interactRange, interactLayerMask, QueryTriggerInteraction.Collide);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        RaycastHit[] hits = InteractHitBuffer;
+        int hitCount = Physics.SphereCastNonAlloc(ray, sphereCastRadius, hits, interactRange, interactLayerMask, QueryTriggerInteraction.Collide);
+        if (hitCount == hits.Length)
+        {
+            // 버퍼가 꽉 차면 가까운 대상이 빠졌을 수 있으므로, 이 드문 경우에만 할당하는 전체 검색으로 다시 찾는다.
+            hits = Physics.SphereCastAll(ray, sphereCastRadius, interactRange, interactLayerMask, QueryTriggerInteraction.Collide);
+            hitCount = hits.Length;
+        }
+        System.Array.Sort(hits, 0, hitCount, HitDistanceComparer);
 
         GrabbableObject foundGrabbable = null;
         IInteractable foundInteractable = null;
 
-        foreach (var hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
+            RaycastHit hit = hits[i];
             GrabbableObject grabbable = hit.collider.GetComponentInParent<GrabbableObject>();
 
             // 내가 이미 들고 있는 물건은 조준 검사 대상에서 제외
@@ -539,6 +572,7 @@ public class PlayerInteractor : MonoBehaviour
         currentHeldIsHeavy = grabbable.isHeavy;
         hasActiveHold = true;
         heldHoldConfirmed = false;
+        holdRequestTime = Time.time;
 
         grabbable.RequestAddInteractor(this);
 
@@ -550,7 +584,7 @@ public class PlayerInteractor : MonoBehaviour
 
         if (playerController != null)
         {
-            playerController.SetCarrySpeedMultiplier(grabbable.GetCarrySpeedMultiplier());
+            playerController.SetCarryingObject(true);
         }
 
         SetHeldOutlineTarget(grabbable.gameObject);
@@ -563,15 +597,9 @@ public class PlayerInteractor : MonoBehaviour
         GrabbableObject grabbable = currentHeldGrabbable;
         Rigidbody body = grabbable.GetComponent<Rigidbody>();
 
-        // --- 스냅존(SnapZone) 확인 ---
-        SnapZone closestSnapZone = FindSnapZone(grabbable);
+        float ignoreReleaseDelay = 0f;
 
-        if (closestSnapZone != null)
-        {
-            grabbable.RequestRemoveInteractor(this, true);
-            closestSnapZone.RequestSnap(grabbable);
-        }
-        else if (!grabbable.isHeavy)
+        if (!grabbable.isHeavy)
         {
             // 가벼운 물체: 플레이어의 이동 속도를 실어 살짝 던지듯 내려놓기 (서버에서 물리 적용)
             Vector3 tossVelocity = Vector3.zero;
@@ -581,13 +609,14 @@ public class PlayerInteractor : MonoBehaviour
                 tossVelocity = Vector3.ProjectOnPlane(playerRb.linearVelocity, Vector3.up);
             }
             grabbable.RequestThrow(this, tossVelocity, Vector3.zero);
+            ignoreReleaseDelay = grabbable.ThrowerIgnoreSeconds;
         }
         else
         {
             grabbable.RequestRemoveInteractor(this, false);
         }
 
-        ClearHeldObjectState();
+        ClearHeldObjectState(ignoreReleaseDelay);
     }
 
     private void ThrowHeldObject()
@@ -621,7 +650,8 @@ public class PlayerInteractor : MonoBehaviour
             : Vector3.zero;
 
         objectToThrow.RequestThrow(this, throwVelocity, angularVelocity);
-        ClearHeldObjectState();
+        // 손을 떠난 물체가 내 몸에 바로 부딪혀 피격되지 않도록 잠시 충돌 무시를 유지한다.
+        ClearHeldObjectState(objectToThrow.ThrowerIgnoreSeconds);
     }
 
     private void ForceDropHeldObject()
@@ -633,17 +663,18 @@ public class PlayerInteractor : MonoBehaviour
         }
     }
 
-    private void ClearHeldObjectState()
+    // ignoreReleaseDelay > 0이면 그 시간 뒤에 충돌 무시를 해제한다(던지기). 무거운 물체도 던질 때는 잠시 무시한다.
+    private void ClearHeldObjectState(float ignoreReleaseDelay = 0f)
     {
-        if (currentHeldGrabbable != null && !currentHeldIsHeavy)
+        if (currentHeldGrabbable != null && (!currentHeldIsHeavy || ignoreReleaseDelay > 0f))
         {
             // 충돌 무시 해제(로컬)
-            currentHeldGrabbable.SetIgnoreCollisionWith(this, false);
+            currentHeldGrabbable.SetIgnoreCollisionWith(this, false, ignoreReleaseDelay);
         }
 
         if (playerController != null)
         {
-            playerController.ResetCarrySpeedMultiplier();
+            playerController.SetCarryingObject(false);
         }
 
         ClearHeldOutlineHighlight();
@@ -651,32 +682,6 @@ public class PlayerInteractor : MonoBehaviour
         currentHeldIsHeavy = false;
         hasActiveHold = false;
         heldHoldConfirmed = false;
-    }
-
-    private SnapZone FindSnapZone(GrabbableObject grabbable)
-    {
-        Rigidbody body = grabbable.GetComponent<Rigidbody>();
-        Vector3 center = body != null ? body.position : grabbable.transform.position;
-
-        Collider[] snapZones = Physics.OverlapSphere(center, 1.5f, interactLayerMask, QueryTriggerInteraction.Collide);
-        SnapZone closest = null;
-        float minDistance = float.MaxValue;
-
-        foreach (var col in snapZones)
-        {
-            SnapZone snapZone = col.GetComponent<SnapZone>();
-            if (snapZone != null && snapZone.CanSnap(grabbable))
-            {
-                float dist = Vector3.Distance(center, snapZone.transform.position);
-                if (dist < minDistance)
-                {
-                    minDistance = dist;
-                    closest = snapZone;
-                }
-            }
-        }
-
-        return closest;
     }
 
     public GrabbableObject CurrentHeldGrabbable => currentHeldGrabbable;
