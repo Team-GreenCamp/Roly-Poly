@@ -1726,7 +1726,14 @@ public class LobbyUIController : MonoBehaviour
         if (buttonPanel != null)
         {
             // 게임 클리어 후 로비 씬이 다시 로드되어도 세션이 살아 있으면 처음 버튼 패널 대신 대기방 UI를 보여줍니다.
+            bool reopenButtonPanel = !isOnline && !buttonPanel.activeSelf;
             buttonPanel.SetActive(!isOnline);
+
+            if (reopenButtonPanel)
+            {
+                // Button Panel Animator는 다시 켜지면 기본 상태(InstaOut, 투명)로 돌아가므로 Panel In을 재생해 버튼을 보이게 한다.
+                ReopenJoinPanel();
+            }
         }
     }
 
