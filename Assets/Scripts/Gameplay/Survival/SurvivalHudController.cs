@@ -254,7 +254,8 @@ public class SurvivalHudController : MonoBehaviour
         {
             GameLocalization.Set(suddenDeathText, gameManager.LocalRaceFinished ? "HudRaceFinished" : "HudRaceTimer",
                 Mathf.CeilToInt((float)gameManager.RaceRemaining), gameManager.RaceFinishCount, gameManager.TotalPlayerCount);
-            SetSuddenDeathAccent(false);
+            // 첫 완주 뒤 마감 카운트다운 중에는 경고색으로 표시한다.
+            SetSuddenDeathAccent(gameManager.RaceFinishCountdownActive && !gameManager.LocalRaceFinished);
             SetActiveSafe(SuddenDeathRoot, true);
             return;
         }
