@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using Unity.Netcode;
@@ -10,7 +11,10 @@ using UnityEngine.SceneManagement;
 public static class BuildDoorDash
 {
     private const string Path = "Assets/Scenes/Door Dash.unity";
-    private const string TemplatePath = "Assets/Scenes/Sumo Arena.unity";
+    private const string TemplatePath = "Assets/Scenes/Survival Arena.unity";
+    private const int SpawnCount = 8;
+    private const float StandFrontX = 12f;              // 트랙(폭 18m) 바깥, 관중석 앞면까지의 거리
+    private static readonly float[] StandCentersZ = { 8f, 52f, 96f }; // 관중석 한 면(44m) 3개로 트랙 전체를 덮는다
     private static Transform root;
 
     private static Material Mat(string name) =>
@@ -26,19 +30,22 @@ public static class BuildDoorDash
             return;
         }
 
+        // Survival Arena 씬(HUD, 시상대, 관중석, 하늘, 네트워크가 세팅된 템플릿)을 복사.
+        // 기존 씬이 있으면 .meta(GUID)는 두고 내용만 덮어써 빌드 설정·참조가 끊기지 않게 한다.
         if (AssetDatabase.LoadAssetAtPath<SceneAsset>(Path) != null)
         {
-            // 기존 씬이 있으면 덮어쓰기 위해 삭제 후 재생성
-            AssetDatabase.DeleteAsset(Path);
+            System.IO.File.Copy(TemplatePath, Path, true);
+            AssetDatabase.ImportAsset(Path, ImportAssetOptions.ForceUpdate);
         }
-
-        // Sumo Arena 씬(공통 UI, BGM, HUD, 시상대, 네트워크가 완벽 세팅된 템플릿)을 복사
-        AssetDatabase.CopyAsset(TemplatePath, Path);
+        else
+        {
+            AssetDatabase.CopyAsset(TemplatePath, Path);
+        }
         var previous = SceneManager.GetActiveScene();
         var scene = EditorSceneManager.OpenScene(Path, OpenSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
 
-        // 기존 스모 프랍 및 타일 정리
+        // 서바이벌 전용 발판·소품·범퍼와 정사각형 경기장용 장식 정리
         foreach (var obj in scene.GetRootGameObjects())
         {
             if (IsOldArenaProp(obj))
@@ -46,12 +53,24 @@ public static class BuildDoorDash
                 Object.DestroyImmediate(obj);
             }
         }
+        var decor = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "Arena Decor");
+        if (decor != null)
+        {
+            DestroyChild(decor.transform, "Edge Trim");
+            DestroyChild(decor.transform, "Stadium Dressing/Bunting");
+        }
 
         root = new GameObject("Door Dash Course").transform;
 
         // 1. 코어 매니저 설정 (SurvivalGameManager -> Door Dash 레이스 모드)
         var manager = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<SurvivalGameManager>(true)).Single();
+        // 코인 매니저는 모드와 무관하게 코인을 뿌리므로 레이스 씬에서는 뺀다
+        if (manager.TryGetComponent<SurvivalCoinManager>(out var coins))
+        {
+            Object.DestroyImmediate(coins);
+        }
         var serialized = new SerializedObject(manager);
+        serialized.FindProperty("timedCoinSurvival").boolValue = false;
         serialized.FindProperty("raceMode").boolValue = true;
         serialized.FindProperty("modeName").stringValue = "Door Dash";
         serialized.FindProperty("knockbackMultiplier").floatValue = 1.2f;
@@ -79,14 +98,30 @@ public static class BuildDoorDash
         }
         serialized.ApplyModifiedPropertiesWithoutUndo();
 
-        // 2. 스폰 포인트 배치 (출발선 정렬)
+        // 2. 스폰 포인트 배치 (출발선 정렬, 최대 인원만큼)
         var spawns = scene.GetRootGameObjects().Single(g => g.name == "Spawn Points").transform;
         spawns.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-        int spawnCount = spawns.childCount;
-        for (int i = 0; i < spawnCount; i++)
+        while (spawns.childCount < SpawnCount)
         {
-            float x = -7f + (14f / Mathf.Max(1, spawnCount - 1)) * i;
-            spawns.GetChild(i).SetPositionAndRotation(new Vector3(x, 1.5f, 2f), Quaternion.identity);
+            new GameObject("Spawn Point " + spawns.childCount).transform.SetParent(spawns, false);
+        }
+        var spawnPoints = new Transform[spawns.childCount];
+        for (int i = 0; i < spawnPoints.Length; i++)
+        {
+            float x = -7f + (14f / Mathf.Max(1, spawnPoints.Length - 1)) * i;
+            spawnPoints[i] = spawns.GetChild(i);
+            spawnPoints[i].SetPositionAndRotation(new Vector3(x, 1.5f, 2f), Quaternion.identity);
+        }
+        if (spawns.TryGetComponent<LobbySpawnPointGroup>(out var spawnGroup))
+        {
+            var spawnSerialized = new SerializedObject(spawnGroup);
+            var pointsProp = spawnSerialized.FindProperty("spawnPoints");
+            pointsProp.arraySize = spawnPoints.Length;
+            for (int i = 0; i < spawnPoints.Length; i++)
+            {
+                pointsProp.GetArrayElementAtIndex(i).objectReferenceValue = spawnPoints[i];
+            }
+            spawnSerialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // 3. 직선 메인 트랙 바닥 구축 (폭 18m, 길이 105m)
@@ -133,17 +168,8 @@ public static class BuildDoorDash
             }
         }
 
-        // 7. 경기장 관중석 및 축제 깃발 장식
-        for (int i = 0; i < 12; i++)
-        {
-            float z = i * 8.5f + 5f;
-            foreach (int side in new[] { -1, 1 })
-            {
-                Box("Stadium Seat Block", new Vector3(side * 14f, 1f, z), new Vector3(4f, 3f, 7f), i % 2 == 0 ? "Plum" : "Sky");
-                Box("Stadium Banner Pole", new Vector3(side * 13f, 5f, z), new Vector3(0.2f, 6f, 0.2f), "Cream");
-                Box("Festival Banner", new Vector3(side * 13f, 6.5f, z), new Vector3(1.8f, 2.2f, 0.1f), i % 2 == 0 ? "Gold" : "Pink");
-            }
-        }
+        // 7. Survival Arena 관중석과 관중을 트랙 양옆으로 재배치
+        ArrangeStadium(scene);
 
         // 8. 게임 피드백(SFX/VFX) 자동 연결
         GameFeedbackAutoWire.Wire();
@@ -246,8 +272,127 @@ public static class BuildDoorDash
         text.rectTransform.sizeDelta = new Vector2(12, 2);
     }
 
+    // 정사각형 경기장을 둘러싼 관중석 4면을 트랙 양옆 3면씩(총 6면)으로 옮긴다.
+    // 관중(CrowdBounce)은 0번 면 좌석의 관중만 골라 각 면의 위치로 복제한다.
+    private static void ArrangeStadium(Scene scene)
+    {
+        var stadium = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "Survival Festival Stadium");
+        if (stadium == null)
+        {
+            Debug.LogWarning("[Door Dash] 템플릿에 관중석(Survival Festival Stadium)이 없어 건너뜁니다.");
+            return;
+        }
+
+        var sides = stadium.transform.Cast<Transform>().Where(t => t.name.StartsWith("Stadium Side")).ToList();
+        var towers = stadium.transform.Cast<Transform>().Where(t => t.name == "Corner Light Tower").ToList();
+        if (sides.Count == 0) return;
+
+        // 원본 0번 면의 배치를 기준으로 관중을 옮기므로 이동 전에 행렬을 기록해 둔다.
+        var source = sides[0];
+        Matrix4x4 sourceToLocal = source.worldToLocalMatrix;
+        float sourceYaw = source.eulerAngles.y;
+
+        // 관중석 면은 로컬 +z 쪽(앞면 z=23)에 놓여 있다. y축으로 ±90° 돌리면 앞면이 트랙 옆 x=±StandFrontX에 온다.
+        const float sectionFrontZ = 23f;
+        var placements = new List<(Vector3 position, float yaw)>();
+        foreach (float z in StandCentersZ)
+        {
+            placements.Add((new Vector3(StandFrontX - sectionFrontZ, 0f, z), 90f));  // 오른쪽(+x)
+            placements.Add((new Vector3(sectionFrontZ - StandFrontX, 0f, z), -90f)); // 왼쪽(-x)
+        }
+
+        while (sides.Count < placements.Count)
+        {
+            var clone = Object.Instantiate(source.gameObject, stadium.transform);
+            clone.name = "Stadium Side " + sides.Count;
+            sides.Add(clone.transform);
+        }
+
+        var sectionMatrices = new List<(Matrix4x4 matrix, float yaw)>();
+        for (int i = 0; i < sides.Count; i++)
+        {
+            if (i >= placements.Count)
+            {
+                Object.DestroyImmediate(sides[i].gameObject);
+                continue;
+            }
+            sides[i].SetPositionAndRotation(placements[i].position, Quaternion.Euler(0f, placements[i].yaw, 0f));
+            sectionMatrices.Add((sides[i].localToWorldMatrix, placements[i].yaw));
+        }
+
+        // 조명탑은 트랙 네 모서리 바깥에서 코스 중앙을 향하게 둔다.
+        var towerSpots = new[] { new Vector3(-18f, 0f, -12f), new Vector3(18f, 0f, -12f), new Vector3(-18f, 0f, 116f), new Vector3(18f, 0f, 116f) };
+        for (int i = 0; i < towers.Count; i++)
+        {
+            if (i >= towerSpots.Length)
+            {
+                Object.DestroyImmediate(towers[i].gameObject);
+                continue;
+            }
+            towers[i].position = towerSpots[i];
+            towers[i].LookAt(new Vector3(0f, 0f, 52f));
+        }
+
+        var crowd = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<CrowdBounce>(true)).FirstOrDefault();
+        if (crowd == null) return;
+
+        var crowdSerialized = new SerializedObject(crowd);
+        var spectatorsProp = crowdSerialized.FindProperty("spectators");
+        var materialsProp = crowdSerialized.FindProperty("materials");
+        var mesh = (Mesh)crowdSerialized.FindProperty("bodyMesh").objectReferenceValue;
+        var materials = new Material[materialsProp.arraySize];
+        for (int i = 0; i < materials.Length; i++)
+        {
+            materials[i] = (Material)materialsProp.GetArrayElementAtIndex(i).objectReferenceValue;
+        }
+
+        Transform crowdTransform = crowd.transform;
+        var arranged = new List<CrowdBounce.Spectator>();
+        for (int i = 0; i < spectatorsProp.arraySize; i++)
+        {
+            var element = spectatorsProp.GetArrayElementAtIndex(i);
+            var spectator = new CrowdBounce.Spectator
+            {
+                position = element.FindPropertyRelative("position").vector3Value,
+                yaw = element.FindPropertyRelative("yaw").floatValue,
+                scale = element.FindPropertyRelative("scale").floatValue,
+                bodyMaterial = (byte)element.FindPropertyRelative("bodyMaterial").intValue,
+                headMaterial = (byte)element.FindPropertyRelative("headMaterial").intValue,
+                phase = element.FindPropertyRelative("phase").floatValue,
+                tempo = element.FindPropertyRelative("tempo").floatValue,
+                hopHeight = element.FindPropertyRelative("hopHeight").floatValue,
+            };
+
+            // 0번 면 좌석에 앉은 관중만 기준으로 쓴다.
+            Vector3 inSource = sourceToLocal.MultiplyPoint3x4(crowdTransform.TransformPoint(spectator.position));
+            if (inSource.z < 20f || Mathf.Abs(inSource.x) > 23f) continue;
+
+            for (int s = 0; s < sectionMatrices.Count; s++)
+            {
+                var copy = spectator;
+                copy.position = crowdTransform.InverseTransformPoint(sectionMatrices[s].matrix.MultiplyPoint3x4(inSource));
+                copy.yaw = spectator.yaw + sectionMatrices[s].yaw - sourceYaw;
+                copy.phase = Mathf.Repeat(spectator.phase + s * 0.37f, 1f); // 면마다 박자를 엇갈리게
+                arranged.Add(copy);
+            }
+        }
+
+        crowd.SetData(mesh, materials, arranged);
+        EditorUtility.SetDirty(crowd);
+    }
+
+    private static void DestroyChild(Transform parent, string path)
+    {
+        var child = parent.Find(path);
+        if (child != null)
+        {
+            Object.DestroyImmediate(child.gameObject);
+        }
+    }
+
     private static bool IsOldArenaProp(GameObject obj) =>
         obj.name == "Arena Props" || obj.name == "Arena Tiles" || obj.name == "Elimination Zone"
+        || obj.name == "Bumpers" || obj.name.StartsWith("Bomb ")
         || obj.name.StartsWith("Barrel ") || obj.name.StartsWith("SM_")
         || obj.name.StartsWith("PressurePlate") || obj.name == "HeavyObject"
         || obj.name.StartsWith("ArenaTile");

@@ -1,5 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // 도어 대시(Door Dash) 전용 관문 도어 컴포넌트.
 // 진짜 문은 플레이어가 들이받으면 부서지듯 앞으로 젖혀지며 열리고,
@@ -26,7 +29,13 @@ public class DoorDashGate : NetworkBehaviour
     [SerializeField] private Renderer doorRenderer;
     [SerializeField] private Material brokenOrOpenMaterial;
 
+    [Tooltip("경기마다 같은 벽의 진짜 문 위치를 서버가 무작위로 섞는다. 진짜 문 개수는 씬에 배치한 수를 유지한다.")]
+    [SerializeField] private bool shuffleRealDoors = true;
+
     private readonly NetworkVariable<bool> networkOpened =
+        new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private readonly NetworkVariable<bool> networkIsReal =
         new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private NetworkObject cachedNetworkObject;
@@ -34,7 +43,8 @@ public class DoorDashGate : NetworkBehaviour
 
     private bool isOpened;
 
-    public bool IsRealDoor => isRealDoor;
+    public bool IsRealDoor => IsNetworkActive ? networkIsReal.Value : isRealDoor;
+    public bool AuthoredReal => isRealDoor;
     public bool IsOpened => IsNetworkActive ? networkOpened.Value : isOpened;
 
     private void Awake()
@@ -60,6 +70,11 @@ public class DoorDashGate : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (IsServer)
+        {
+            networkIsReal.Value = shuffleRealDoors ? DoorDashShuffle.IsReal(this, isRealDoor) : isRealDoor;
+        }
+
         networkOpened.OnValueChanged += HandleOpenedChanged;
 
         // 스폰 시점에 이미 문이 열린 상태(지각 접속 또는 늦은 동기화)라면 즉시 반영
@@ -117,7 +132,7 @@ public class DoorDashGate : NetworkBehaviour
         Vector3 contactPoint = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
         GameFeedback.HitAt(contactPoint);
 
-        if (isRealDoor)
+        if (IsRealDoor)
         {
             if (!IsNetworkActive)
             {
@@ -157,7 +172,7 @@ public class DoorDashGate : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestBreakOpenServerRpc(Vector3 pushDirection, ServerRpcParams rpcParams = default)
     {
-        if (!isRealDoor || networkOpened.Value) return;
+        if (!networkIsReal.Value || networkOpened.Value) return;
 
         networkOpened.Value = true;
         BreakOpenClientRpc(pushDirection);
@@ -224,6 +239,57 @@ public class DoorDashGate : NetworkBehaviour
         if (TryGetComponent<Collider>(out var col))
         {
             col.isTrigger = true;
+        }
+    }
+}
+
+// 서버에서 같은 벽(같은 z)에 놓인 문들의 진짜 문 위치를 경기(씬 로드)마다 한 번 섞는다.
+// 벽마다 씬에 배치한 진짜 문 개수는 유지하고, 하나도 없으면 1개로 본다.
+public static class DoorDashShuffle
+{
+    private static int sceneHandle = -1;
+    private static readonly Dictionary<DoorDashGate, bool> assignments = new();
+
+    public static bool IsReal(DoorDashGate gate, bool authoredReal)
+    {
+        int handle = gate.gameObject.scene.handle;
+        if (handle != sceneHandle)
+        {
+            sceneHandle = handle;
+            Shuffle(gate.gameObject.scene);
+        }
+
+        return assignments.TryGetValue(gate, out bool real) ? real : authoredReal;
+    }
+
+    private static void Shuffle(Scene scene)
+    {
+        assignments.Clear();
+
+        var walls = new Dictionary<int, List<DoorDashGate>>();
+        foreach (var gate in Object.FindObjectsByType<DoorDashGate>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (gate.gameObject.scene != scene) continue;
+            int key = Mathf.RoundToInt(gate.transform.position.z * 2f);
+            if (!walls.TryGetValue(key, out var list)) walls[key] = list = new List<DoorDashGate>();
+            list.Add(gate);
+        }
+
+        foreach (var doors in walls.Values)
+        {
+            int realCount = Mathf.Max(1, doors.Count(d => d.AuthoredReal));
+            if (doors.Count > 1) realCount = Mathf.Min(realCount, doors.Count - 1);
+
+            for (int i = doors.Count - 1; i > 0; i--)
+            {
+                int j = Random.Range(0, i + 1);
+                (doors[i], doors[j]) = (doors[j], doors[i]);
+            }
+
+            for (int i = 0; i < doors.Count; i++)
+            {
+                assignments[doors[i]] = i < realCount;
+            }
         }
     }
 }
