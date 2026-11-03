@@ -10,6 +10,7 @@ using UnityEngine.SceneManagement;
 public static class BuildDoorDash
 {
     private const string Path = "Assets/Scenes/Door Dash.unity";
+    private const string TemplatePath = "Assets/Scenes/Sumo Arena.unity";
     private static Transform root;
 
     private static Material Mat(string name) =>
@@ -18,6 +19,13 @@ public static class BuildDoorDash
     [MenuItem("Tools/Battle Royal/Build Door Dash")]
     public static void Build()
     {
+        // 템플릿이 없으면 기존 씬을 지우기 전에 중단 (지우고 나서 복사에 실패하면 씬이 사라진다)
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(TemplatePath) == null)
+        {
+            Debug.LogError("[Door Dash] 템플릿 씬이 없어 빌드를 중단합니다: " + TemplatePath);
+            return;
+        }
+
         if (AssetDatabase.LoadAssetAtPath<SceneAsset>(Path) != null)
         {
             // 기존 씬이 있으면 덮어쓰기 위해 삭제 후 재생성
@@ -25,7 +33,7 @@ public static class BuildDoorDash
         }
 
         // Sumo Arena 씬(공통 UI, BGM, HUD, 시상대, 네트워크가 완벽 세팅된 템플릿)을 복사
-        AssetDatabase.CopyAsset("Assets/Scenes/Sumo Arena.unity", Path);
+        AssetDatabase.CopyAsset(TemplatePath, Path);
         var previous = SceneManager.GetActiveScene();
         var scene = EditorSceneManager.OpenScene(Path, OpenSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
@@ -50,16 +58,20 @@ public static class BuildDoorDash
         serialized.FindProperty("suddenDeathStartSeconds").floatValue = 0f;
         serialized.FindProperty("raceTimeLimit").floatValue = 150f;
 
-        // 커스텀 체크포인트 게이트 (1차문, 2차문, 3차문, 4차문, 피니시 라인)
-        var gatesProp = serialized.FindProperty("customRaceGates");
+        // 체크포인트 게이트 (1~4차 문 벽 바로 뒤, 피니시 라인)
+        // 게이트 좌표는 리스폰 위치도 되므로 벽 안이 아니라 벽을 지난 트랙 위에 둔다.
+        var gatesProp = serialized.FindProperty("raceGates");
         Vector3[] gates = new Vector3[]
         {
-            new Vector3(0, 1.5f, 20f), // 1차 관문
-            new Vector3(0, 1.5f, 40f), // 2차 관문
-            new Vector3(0, 1.5f, 60f), // 3차 관문
-            new Vector3(0, 1.5f, 80f), // 4차 관문
+            new Vector3(0, 1.5f, 23f), // 1차 관문
+            new Vector3(0, 1.5f, 43f), // 2차 관문
+            new Vector3(0, 1.5f, 63f), // 3차 관문
+            new Vector3(0, 1.5f, 83f), // 4차 관문
             new Vector3(0, 1.5f, 98f)  // 피니시 라인
         };
+        serialized.FindProperty("raceStartRespawn").vector3Value = new Vector3(0, 1.5f, 2f);
+        serialized.FindProperty("raceReturnGateCount").intValue = 99; // 직선 코스라 리스폰 방향을 뒤집지 않음
+        serialized.FindProperty("raceGateHalfWidth").floatValue = 9f; // 트랙 폭 18m 전체(바깥 문 포함)
         gatesProp.arraySize = gates.Length;
         for (int i = 0; i < gates.Length; i++)
         {

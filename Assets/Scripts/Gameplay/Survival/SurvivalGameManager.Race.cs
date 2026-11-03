@@ -35,6 +35,8 @@ public partial class SurvivalGameManager
     [SerializeField] private Vector3 raceStartRespawn = new(-12, 1.5f, 0);
     [Tooltip("이 번호(통과한 게이트 수) 이상이면 돌아오는 구간으로 보고 리스폰 방향을 뒤집는다.")]
     [SerializeField] private int raceReturnGateCount = 4;
+    [Tooltip("게이트 중심에서 좌우로 이 거리 안을 지나야 통과로 본다. 코스 폭이 넓으면 늘린다.")]
+    [SerializeField] private float raceGateHalfWidth = 5f;
     private Vector3[] RaceGates => raceGates;
 
     // 실시간 순위표용 상태. 서버가 순위 순서대로 채우고 모든 클라가 그대로 그린다.
@@ -166,14 +168,14 @@ public partial class SurvivalGameManager
         Vector3 gate = RaceGates[index];
         Vector3 delta = position - gate;
         if (index < RaceGates.Length - 1)
-            return Mathf.Abs(delta.x) <= 5 && Mathf.Abs(delta.z) <= 3;
+            return Mathf.Abs(delta.x) <= raceGateHalfWidth && Mathf.Abs(delta.z) <= 3;
 
         Vector3 from = index > 0 ? RaceGates[index - 1] : raceStartRespawn;
         Vector3 forward = Vector3.ProjectOnPlane(gate - from, Vector3.up).normalized;
         Vector3 side = Vector3.Cross(Vector3.up, forward);
         float along = Vector3.Dot(Vector3.ProjectOnPlane(delta, Vector3.up), forward);
         float lateral = Mathf.Abs(Vector3.Dot(delta, side));
-        return along >= 0f && along <= 4f && lateral <= 5f;
+        return along >= 0f && along <= 4f && lateral <= raceGateHalfWidth;
     }
 
     private void CheckRaceFinished()

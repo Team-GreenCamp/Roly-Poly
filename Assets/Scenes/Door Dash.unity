@@ -8704,6 +8704,7 @@ GameObject:
   - component: {fileID: 404501532}
   - component: {fileID: 404501531}
   - component: {fileID: 404501530}
+  - component: {fileID: 404501535}
   m_Layer: 0
   m_Name: Door_40_0_REAL
   m_TagString: Untagged
@@ -8739,6 +8740,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 1
   openPushForce: 12
   fakeBounceForce: 8
@@ -8850,6 +8852,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 404501528}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &404501535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 404501528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 649227218
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &409415002
 GameObject:
   m_ObjectHideFlags: 0
@@ -9722,6 +9749,7 @@ GameObject:
   - component: {fileID: 467299854}
   - component: {fileID: 467299853}
   - component: {fileID: 467299852}
+  - component: {fileID: 467299857}
   m_Layer: 0
   m_Name: Door_20_3_REAL
   m_TagString: Untagged
@@ -9757,6 +9785,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 1
   openPushForce: 12
   fakeBounceForce: 8
@@ -9868,6 +9897,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 467299850}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &467299857
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 467299850}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 339984289
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &468607435
 GameObject:
   m_ObjectHideFlags: 0
@@ -18409,6 +18463,7 @@ GameObject:
   - component: {fileID: 706225263}
   - component: {fileID: 706225262}
   - component: {fileID: 706225261}
+  - component: {fileID: 706225266}
   m_Layer: 0
   m_Name: Door_80_0_FAKE
   m_TagString: Untagged
@@ -18444,6 +18499,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 0
   openPushForce: 12
   fakeBounceForce: 8
@@ -18555,6 +18611,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 706225259}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &706225266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 706225259}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1586454204
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &731159510
 GameObject:
   m_ObjectHideFlags: 0
@@ -19139,12 +19220,16 @@ MonoBehaviour:
   winnerPanelSeconds: 3
   raceMode: 1
   raceTimeLimit: 150
-  customRaceGates:
-  - {x: 0, y: 1.5, z: 20}
-  - {x: 0, y: 1.5, z: 40}
-  - {x: 0, y: 1.5, z: 60}
-  - {x: 0, y: 1.5, z: 80}
+  raceFinishGraceTime: 20
+  raceGates:
+  - {x: 0, y: 1.5, z: 23}
+  - {x: 0, y: 1.5, z: 43}
+  - {x: 0, y: 1.5, z: 63}
+  - {x: 0, y: 1.5, z: 83}
   - {x: 0, y: 1.5, z: 98}
+  raceStartRespawn: {x: 0, y: 1.5, z: 2}
+  raceReturnGateCount: 99
+  raceGateHalfWidth: 9
   timedCoinSurvival: 0
 --- !u!1 &749921439
 GameObject:
@@ -19430,6 +19515,7 @@ GameObject:
   - component: {fileID: 762094226}
   - component: {fileID: 762094225}
   - component: {fileID: 762094224}
+  - component: {fileID: 762094229}
   m_Layer: 0
   m_Name: Door_40_2_REAL
   m_TagString: Untagged
@@ -19465,6 +19551,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 1
   openPushForce: 12
   fakeBounceForce: 8
@@ -19576,6 +19663,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 762094222}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &762094229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 762094222}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2518483555
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &764407564
 GameObject:
   m_ObjectHideFlags: 0
@@ -21354,6 +21466,7 @@ GameObject:
   - component: {fileID: 830846405}
   - component: {fileID: 830846404}
   - component: {fileID: 830846403}
+  - component: {fileID: 830846408}
   m_Layer: 0
   m_Name: Door_20_0_FAKE
   m_TagString: Untagged
@@ -21389,6 +21502,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 0
   openPushForce: 12
   fakeBounceForce: 8
@@ -21500,6 +21614,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 830846401}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &830846408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 830846401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2173366066
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!43 &834185614
 Mesh:
   m_ObjectHideFlags: 0
@@ -24153,6 +24292,7 @@ GameObject:
   - component: {fileID: 894206092}
   - component: {fileID: 894206091}
   - component: {fileID: 894206090}
+  - component: {fileID: 894206095}
   m_Layer: 0
   m_Name: Door_40_3_FAKE
   m_TagString: Untagged
@@ -24188,6 +24328,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 0
   openPushForce: 12
   fakeBounceForce: 8
@@ -24299,6 +24440,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 894206088}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &894206095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 894206088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 4238137449
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &899115815
 GameObject:
   m_ObjectHideFlags: 0
@@ -29651,6 +29817,7 @@ GameObject:
   - component: {fileID: 1071705154}
   - component: {fileID: 1071705153}
   - component: {fileID: 1071705152}
+  - component: {fileID: 1071705157}
   m_Layer: 0
   m_Name: Door_80_1_FAKE
   m_TagString: Untagged
@@ -29686,6 +29853,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 0
   openPushForce: 12
   fakeBounceForce: 8
@@ -29797,6 +29965,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1071705150}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1071705157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1071705150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2946700967
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1072548956
 GameObject:
   m_ObjectHideFlags: 0
@@ -36195,6 +36388,7 @@ GameObject:
   - component: {fileID: 1206886016}
   - component: {fileID: 1206886015}
   - component: {fileID: 1206886014}
+  - component: {fileID: 1206886019}
   m_Layer: 0
   m_Name: Door_40_1_FAKE
   m_TagString: Untagged
@@ -36230,6 +36424,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 0
   openPushForce: 12
   fakeBounceForce: 8
@@ -36341,6 +36536,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1206886012}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1206886019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1206886012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 623285427
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1208380107
 GameObject:
   m_ObjectHideFlags: 0
@@ -46443,6 +46663,7 @@ GameObject:
   - component: {fileID: 1732860036}
   - component: {fileID: 1732860035}
   - component: {fileID: 1732860034}
+  - component: {fileID: 1732860039}
   m_Layer: 0
   m_Name: Door_80_2_REAL
   m_TagString: Untagged
@@ -46478,6 +46699,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 1
   openPushForce: 12
   fakeBounceForce: 8
@@ -46589,6 +46811,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1732860032}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1732860039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1732860032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1203828884
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1733272018
 GameObject:
   m_ObjectHideFlags: 0
@@ -46693,6 +46940,7 @@ GameObject:
   - component: {fileID: 1742337716}
   - component: {fileID: 1742337715}
   - component: {fileID: 1742337714}
+  - component: {fileID: 1742337719}
   m_Layer: 0
   m_Name: Door_20_1_REAL
   m_TagString: Untagged
@@ -46728,6 +46976,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 1
   openPushForce: 12
   fakeBounceForce: 8
@@ -46839,6 +47088,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1742337712}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1742337719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1742337712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1823488420
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!43 &1748070120
 Mesh:
   m_ObjectHideFlags: 0
@@ -47772,6 +48046,7 @@ GameObject:
   - component: {fileID: 1789102855}
   - component: {fileID: 1789102854}
   - component: {fileID: 1789102853}
+  - component: {fileID: 1789102858}
   m_Layer: 0
   m_Name: Door_60_1_REAL
   m_TagString: Untagged
@@ -47807,6 +48082,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 1
   openPushForce: 12
   fakeBounceForce: 8
@@ -47918,6 +48194,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1789102851}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1789102858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1789102851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3160834373
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1794663157
 GameObject:
   m_ObjectHideFlags: 0
@@ -56682,6 +56983,7 @@ GameObject:
   - component: {fileID: 2013085738}
   - component: {fileID: 2013085737}
   - component: {fileID: 2013085736}
+  - component: {fileID: 2013085741}
   m_Layer: 0
   m_Name: Door_60_0_FAKE
   m_TagString: Untagged
@@ -56717,6 +57019,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 0
   openPushForce: 12
   fakeBounceForce: 8
@@ -56828,6 +57131,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2013085734}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2013085741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2013085734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1076385074
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &2018531474
 GameObject:
   m_ObjectHideFlags: 0
@@ -61403,6 +61731,7 @@ GameObject:
   - component: {fileID: 2130897071}
   - component: {fileID: 2130897070}
   - component: {fileID: 2130897069}
+  - component: {fileID: 2130897074}
   m_Layer: 0
   m_Name: Door_20_2_FAKE
   m_TagString: Untagged
@@ -61438,6 +61767,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 0
   openPushForce: 12
   fakeBounceForce: 8
@@ -61549,6 +61879,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2130897067}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2130897074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2130897067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3981544783
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &2136918134
 GameObject:
   m_ObjectHideFlags: 0
@@ -61563,6 +61918,7 @@ GameObject:
   - component: {fileID: 2136918138}
   - component: {fileID: 2136918137}
   - component: {fileID: 2136918136}
+  - component: {fileID: 2136918141}
   m_Layer: 0
   m_Name: Door_60_2_FAKE
   m_TagString: Untagged
@@ -61598,6 +61954,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06612664251454f4b9fc48c502879bf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorDashGate
+  ShowTopMostFoldoutHeaderGroup: 1
   isRealDoor: 0
   openPushForce: 12
   fakeBounceForce: 8
@@ -61709,6 +62066,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2136918134}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2136918141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2136918134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1363250617
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1001 &2052649769234426079
 PrefabInstance:
   m_ObjectHideFlags: 0
