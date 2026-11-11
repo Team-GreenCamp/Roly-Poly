@@ -14,6 +14,8 @@ using UnityEngine;
 public class SurvivalCoinManager : NetworkBehaviour
 {
     [Header("스폰")]
+    [Tooltip("끄면 코인을 뿌리지 않고 점수판만 쓴다(왕관 잡기처럼 다른 규칙이 AddScoreOnServer로 점수를 줄 때).")]
+    [SerializeField] private bool spawnCoins = true;
     [Tooltip("동시에 존재할 수 있는 최대 코인 수.")]
     [SerializeField] private int maxActiveCoins = 24;
     [Tooltip("코인 리스폰 웨이브 간격(초). 웨이브마다 최대치까지 다시 채운다.")]
@@ -114,7 +116,7 @@ public class SurvivalCoinManager : NetworkBehaviour
     // ─────────────────────────────────────────────────────────────
     private void UpdateServerSpawning()
     {
-        if (!IsSpawned || !IsServer || spawningStopped)
+        if (!IsSpawned || !IsServer || spawningStopped || !spawnCoins)
         {
             return;
         }
@@ -376,6 +378,27 @@ public class SurvivalCoinManager : NetworkBehaviour
         // 획득 지점 반짝임/사운드는 모든 클라이언트에서 재생(누가 먹었는지 주변에서도 보인다).
         // 위치는 파라미터로 받는다 — 호스트는 서버가 이미 코인을 제거한 뒤라 로컬 조회가 안 된다.
         GameFeedback.CoinPickupAt(position);
+    }
+
+    // 코인 외의 규칙(왕관 보유 등)으로 서버가 점수를 줄 때 쓴다. 순위·HUD는 코인 점수와 같은 경로를 탄다.
+    public void AddScoreOnServer(ulong clientId, int amount)
+    {
+        if (!IsServer || amount == 0)
+        {
+            return;
+        }
+
+        scores.TryGetValue(clientId, out int score);
+        score += amount;
+        scores[clientId] = score;
+        scoreReachedAt[clientId] = NetworkManager.ServerTime.Time;
+        ScoreChangedClientRpc(clientId, score);
+    }
+
+    [ClientRpc]
+    private void ScoreChangedClientRpc(ulong clientId, int newScore)
+    {
+        scores[clientId] = newScore;
     }
 
     // 발판 낙하 등으로 서버가 코인을 회수할 때(획득 아님 — 연출 없이 조용히 제거).

@@ -26,6 +26,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Spin Survival.unity
     guid: 48af9853ff97a434a9ee9b95bcad79ff
+  - enabled: 1
+    path: Assets/Scenes/Crown Grab.unity
+    guid: df9f71aa44d4e764a8411642eb8c27cd
+  - enabled: 1
+    path: Assets/Scenes/Hot Potato.unity
+    guid: 9cb633b687d4b3c40a9fec1e80324e20
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

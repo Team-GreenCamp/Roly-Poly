@@ -430,6 +430,10 @@ public partial class SurvivalGameManager : NetworkBehaviour
         }
     }
 
+    // 모드 규칙(폭탄 돌리기 폭발 등)으로 서버가 직접 탈락시키거나 생존 여부를 확인할 때 쓴다.
+    public void ServerEliminate(ulong clientId) => EliminateOnServer(clientId);
+    public bool IsAliveOnServer(ulong clientId) => IsServer && aliveClients.Contains(clientId);
+
     // 탈락 확정(서버 전용). aliveClients에서 제거 성공했을 때만 진행하므로 중복 보고는 자연 무시된다.
     // checkWinner=false는 동시 탈락 일괄 처리용 — 호출자가 전원 제거 후 CheckWinnerOnServer를 직접 부른다.
     private void EliminateOnServer(ulong clientId, bool checkWinner = true)
