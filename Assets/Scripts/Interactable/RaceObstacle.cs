@@ -10,9 +10,12 @@ public class RaceObstacle : MonoBehaviour
         Legacy,   // rotate 값에 따라 Y축 회전(true) 또는 X축 왕복(false)
         Pendulum, // 로컬 Z축 기준 좌우 진자(travel = 최대 각도, speed = 각속도)
         SpinX,    // 로컬 X축 기준 회전(굴러가는 통나무형)
+        Driven,   // driver가 정한 각도로 Y축 회전(점점 빨라지고 방향이 바뀜). phase = 각도 오프셋(도)
     }
 
     public Motion motion = Motion.Legacy;
+    [Tooltip("Driven 모드에서 각도와 각속도를 정하는 컨트롤러.")]
+    public SpinSweeperController driver;
     public bool rotate = true;
     public float speed = 65f;
     public float travel = 3.5f;
@@ -53,6 +56,9 @@ public class RaceObstacle : MonoBehaviour
             case Motion.SpinX:
                 body.MoveRotation(rotation * Quaternion.Euler((float)((time * speed + phase) % 360), 0, 0));
                 break;
+            case Motion.Driven:
+                body.MoveRotation(rotation * Quaternion.Euler(0, (driver != null ? driver.AngleAt(time) : 0f) + phase, 0));
+                break;
             default:
                 if (rotate)
                     body.MoveRotation(rotation * Quaternion.Euler(0, (float)((time * speed + phase) % 360), 0));
@@ -89,6 +95,8 @@ public class RaceObstacle : MonoBehaviour
             }
             case Motion.SpinX:
                 return Vector3.Cross(transform.right * (speed * Mathf.Deg2Rad), r);
+            case Motion.Driven:
+                return Vector3.Cross(Vector3.up * ((driver != null ? driver.AngularSpeedAt(time) : 0f) * Mathf.Deg2Rad), r);
             default:
                 if (rotate) return Vector3.Cross(Vector3.up * (speed * Mathf.Deg2Rad), r);
                 return Vector3.right * (Mathf.Cos((float)(time * speed) + phase) * speed * travel);
