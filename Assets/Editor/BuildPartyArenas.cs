@@ -51,7 +51,8 @@ public static class BuildPartyArenas
 
         float tileTop = StabilizeTiles(scene);
         ArrangeSpawns(scene, tileTop);
-        CreateCrown(scene, tileTop);
+        BuildCrownStructures(scene, tileTop);
+        CreateCrown(scene, tileTop + CrownStageHeight);
 
         Save(scene, previous, CrownPath);
     }
@@ -64,6 +65,12 @@ public static class BuildPartyArenas
         if (!scene.IsValid()) return;
 
         RemoveRoots(scene, name => name.StartsWith("Barrel ") || name.StartsWith("Bomb "));
+        var potatoBumpers = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "Bumpers");
+        var middleBumper = potatoBumpers != null ? potatoBumpers.transform.Find("Bumper 0") : null;
+        if (middleBumper != null)
+        {
+            Object.DestroyImmediate(middleBumper.gameObject); // 가운데는 단상 자리
+        }
 
         var manager = Manager(scene);
         if (manager.TryGetComponent<SurvivalCoinManager>(out var coins))
@@ -79,9 +86,113 @@ public static class BuildPartyArenas
 
         float tileTop = StabilizeTiles(scene);
         ArrangeSpawns(scene, tileTop);
+        BuildHotPotatoStructures(scene, tileTop);
         CreateHotPotato(scene);
 
         Save(scene, previous, HotPotatoPath);
+    }
+
+    // ───── 구조물 ─────
+    // 걸어서 오를 수 있는 단차는 0.35m, 점프 높이는 1.2m. 단상은 경사로로 오르고, 벽·블록은 점프로 넘는다.
+    // 카메라를 가리지 않도록 높은 구조물은 가는 기둥만 쓴다.
+
+    private const float CrownStageHeight = 0.9f;
+
+    // 왕관 잡기: 가운데 단상(왕관 자리)과 네 방향 경사로, 대각선 기둥 4개, 바깥 엄폐 벽 4개.
+    // 왕관을 든 사람은 단상 위에서 버티거나 기둥·벽을 돌며 도망가고, 쫓는 사람은 경사로로 올라온다.
+    private static void BuildCrownStructures(Scene scene, float tileTop)
+    {
+        var root = StructureRoot(scene, "Crown Structures");
+        const float half = 3.5f;
+        Block(root, "Crown Stage", new Vector3(0f, tileTop + CrownStageHeight / 2f, 0f), new Vector3(half * 2f, CrownStageHeight, half * 2f), Quaternion.identity, "Plum");
+        Block(root, "Stage Carpet", new Vector3(0f, tileTop + CrownStageHeight + 0.03f, 0f), new Vector3(3f, 0.06f, 3f), Quaternion.identity, "Gold", false);
+        for (int i = 0; i < 4; i++)
+        {
+            Quaternion facing = Quaternion.Euler(0f, i * 90f, 0f);
+            Ramp(root, "Stage Ramp", facing, half, 3f, 2.6f, tileTop, CrownStageHeight, i % 2 == 0 ? "Sky" : "Violet");
+            Block(root, "Cover Wall", facing * new Vector3(0f, 0f, 10f) + Vector3.up * (tileTop + 0.5f), new Vector3(4f, 1f, 0.6f), facing, "Violet");
+        }
+        foreach (int x in new[] { -1, 1 })
+        {
+            foreach (int z in new[] { -1, 1 })
+            {
+                Pillar(root, new Vector3(x * 6.3f, tileTop, z * 6.3f), 0.8f, 2.4f, "Orange");
+            }
+        }
+
+        // 템플릿의 가운데 폭탄 2개는 단상 안에 묻히므로 바깥 벽 뒤로 옮긴다.
+        foreach (var bomb in scene.GetRootGameObjects().Where(g => g.name == "Bomb 4" || g.name == "Bomb 5"))
+        {
+            float side = bomb.name == "Bomb 4" ? 1f : -1f;
+            bomb.transform.position = new Vector3(side * 13f, bomb.transform.position.y, 0f);
+        }
+    }
+
+    // 폭탄 돌리기: 쫓고 도망가는 술래잡기용. 가운데 낮은 단상, 기둥 고리 8개, 바깥 벽 4개.
+    // 기둥을 끼고 돌며 따돌리거나 단상 위로 점프해 피할 수 있다.
+    private static void BuildHotPotatoStructures(Scene scene, float tileTop)
+    {
+        var root = StructureRoot(scene, "Hot Potato Structures");
+        Block(root, "Center Block", new Vector3(0f, tileTop + 0.45f, 0f), new Vector3(3.2f, 0.9f, 3.2f), Quaternion.identity, "Plum");
+        for (int i = 0; i < 8; i++)
+        {
+            Quaternion around = Quaternion.Euler(0f, i * 45f, 0f);
+            Pillar(root, around * new Vector3(0f, 0f, 6f) + Vector3.up * tileTop, 0.6f, 2.2f, i % 2 == 0 ? "Orange" : "Mint");
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            Quaternion facing = Quaternion.Euler(0f, i * 90f, 0f);
+            Block(root, "Dodge Wall", facing * new Vector3(0f, 0f, 13f) + Vector3.up * (tileTop + 0.55f), new Vector3(5f, 1.1f, 0.6f), facing, i % 2 == 0 ? "Sky" : "Violet");
+        }
+    }
+
+    private static Transform StructureRoot(Scene scene, string name)
+    {
+        var root = new GameObject(name);
+        SceneManager.MoveGameObjectToScene(root, scene);
+        return root.transform;
+    }
+
+    // 모따기한 상자 + 같은 크기의 BoxCollider.
+    private static GameObject Block(Transform parent, string name, Vector3 position, Vector3 size, Quaternion rotation, string color, bool solid = true)
+    {
+        var mesh = DetailRaceObstacles.BeveledBox(name, parent, Vector3.zero, size, 0.12f, Mat(color), Mat("Cream"));
+        var obj = mesh.gameObject;
+        obj.transform.localPosition = position;
+        obj.transform.localRotation = rotation;
+        if (solid)
+        {
+            var box = obj.AddComponent<BoxCollider>();
+            box.center = Vector3.zero;
+            box.size = size;
+        }
+        obj.isStatic = true;
+        return obj;
+    }
+
+    // 단상 가장자리(start)에서 바깥으로 length만큼 내려가는 경사로. facing 방향(+z 기준)으로 놓인다.
+    private static void Ramp(Transform parent, string name, Quaternion facing, float start, float length, float width, float tileTop, float height, string color)
+    {
+        const float thickness = 0.3f;
+        float angle = Mathf.Atan2(height, length) * Mathf.Rad2Deg;
+        float slant = Mathf.Sqrt(length * length + height * height);
+        // 경사면 윗면이 단상 모서리(높이 height)와 바닥(높이 0)을 잇도록 두께 절반만큼 내린다.
+        Vector3 mid = new Vector3(0f, tileTop + height / 2f, start + length / 2f);
+        Vector3 down = Quaternion.Euler(angle, 0f, 0f) * Vector3.down * (thickness / 2f);
+        Block(parent, name, facing * (mid + down - Vector3.up * tileTop) + Vector3.up * tileTop, new Vector3(width, thickness, slant + 0.2f), facing * Quaternion.Euler(angle, 0f, 0f), color);
+    }
+
+    private static void Pillar(Transform parent, Vector3 basePosition, float radius, float height, string color)
+    {
+        var pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        pillar.name = "Pillar";
+        pillar.transform.SetParent(parent, false);
+        pillar.transform.localPosition = basePosition + Vector3.up * (height / 2f);
+        pillar.transform.localScale = new Vector3(radius * 2f, height / 2f, radius * 2f);
+        pillar.GetComponent<Renderer>().sharedMaterial = Mat(color);
+        pillar.isStatic = true;
+        var cap = Part(PrimitiveType.Sphere, "Pillar Cap", pillar.transform, Vector3.up * 1f, new Vector3(1.15f, 0.25f, 1.15f), Quaternion.identity, "Cream");
+        cap.isStatic = true;
     }
 
     private static void CreateCrown(Scene scene, float tileTop)
@@ -175,13 +286,38 @@ public static class BuildPartyArenas
 
     // ───── 공통 ─────
 
+    private static string reopenAfterBuild;
+
     private static Scene OpenFromTemplate(string path, out Scene previous)
     {
         previous = SceneManager.GetActiveScene();
+        reopenAfterBuild = null;
         if (AssetDatabase.LoadAssetAtPath<SceneAsset>(TemplatePath) == null)
         {
             Debug.LogError("[Party Arenas] 템플릿 씬이 없어 빌드를 중단합니다: " + TemplatePath);
             return default;
+        }
+
+        // 만들 씬이 에디터에 열려 있으면 파일을 덮어써도 열린 씬(이전 버전)에 덧붙게 된다. 먼저 닫고, 끝나면 다시 연다.
+        var open = SceneManager.GetSceneByPath(path);
+        if (open.isLoaded)
+        {
+            if (open.isDirty)
+            {
+                Debug.LogError("[Party Arenas] 저장하지 않은 변경이 있어 빌드를 중단합니다. 씬을 저장하거나 닫아 주세요: " + path);
+                return default;
+            }
+
+            if (SceneManager.sceneCount == 1)
+            {
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            }
+            else
+            {
+                EditorSceneManager.CloseScene(open, true);
+            }
+            reopenAfterBuild = path;
+            previous = SceneManager.GetActiveScene();
         }
 
         // 기존 씬이 있으면 .meta(GUID)는 두고 내용만 덮어써 빌드 설정·참조가 끊기지 않게 한다.
@@ -215,6 +351,12 @@ public static class BuildPartyArenas
         }
         EditorSceneManager.CloseScene(scene, true);
         AssetDatabase.SaveAssets();
+        if (reopenAfterBuild == path)
+        {
+            EditorSceneManager.OpenScene(path, SceneManager.sceneCount == 1 && string.IsNullOrEmpty(SceneManager.GetActiveScene().path)
+                ? OpenSceneMode.Single : OpenSceneMode.Additive);
+            reopenAfterBuild = null;
+        }
         Debug.Log("[Party Arenas] 씬을 생성했습니다: " + path);
     }
 
